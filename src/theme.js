@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useMemo } from 'react';
 
-// 设计令牌（v4）。色值来自 design/APP设计令牌.md 的定案；字号/间距/圆角收紧到令牌规定的档位。
+// 设计令牌（v4）。色值来自 design/APP设计令牌.md 的定案。
 //
-// 硬约束（改样式前先看）：
-//   字号只五档：34 / 24 / 17 / 15 / 11，行高 41 / 30 / 22 / 21 / 15
-//   间距只用 4 的倍数；页面左右边距固定 20
-//   圆角只两档：大卡 32、小卡 24，其余一律胶囊
-//   不要线：无 1px 边框、无分割线、无投影 —— line 一律 transparent
+// 硬约束：
+//   字号只五档 34 / 24 / 17 / 15 / 11
+//   间距只用 4 的倍数，页面边距 20
+//   圆角只两档：大卡 32、小卡 24，其余胶囊
+//   不要线：无边框、无分割线、无投影
 
 export const darkPalette = {
   bg: '#151518',
@@ -71,6 +71,44 @@ export const radius = {
   small: 24,
   capsule: 999,
 };
+
+// 头像语义色。来源：ds-bot 客户端 src/client/inks.js 的 INKS 表（打包在 client.js:1763-1784），
+// 每项是 [浅色值, 深色值]，与电脑端逐个对上，不许自己调色。
+export const AVATAR_INKS = {
+  deepseek: ['#4D6BFE', '#6A84FF'],
+  charcoal: ['#141416', '#F1F2F4'],
+  graphite: ['#2D2D2D', '#D6D6DA'],
+  rose: ['#EC2F6B', '#FF5A7A'],
+  sky: ['#0AA8D6', '#2EE6E0'],
+  tangerine: ['#FF6900', '#FF8A2E'],
+  cobalt: ['#082DFF', '#5C78FF'],
+  black: ['#000000', '#FFFFFF'],
+  brown: ['#9A6B44', '#7C5332'],
+  red: ['#FF3E51', '#E02135'],
+  orange: ['#FF6B1A', '#FF5E00'],
+  yellow: ['#FFB020', '#F59E0B'],
+  green: ['#10B981', '#059669'],
+  cyan: ['#06B6D4', '#0891B2'],
+  blue: ['#2563EB', '#3B82F6'],
+  violet: ['#8B5CF6', '#7C3AED'],
+  magenta: ['#F43F85', '#E11D74'],
+  gray: ['#8A8F98', '#6E737B'],
+  aurora: ['#00B8D4', '#2EE6E0'],
+};
+
+export function avatarInk(name, scheme) {
+  const pair = AVATAR_INKS[name] || AVATAR_INKS.gray;
+  return scheme === 'light' ? pair[0] : pair[1];
+}
+
+// 压在头像色上的字：按相对亮度选白字或深字（与 client.js 的 luminance 算法一致）
+export function inkOn(bg) {
+  if (typeof bg !== 'string' || !/^#[0-9a-f]{6}$/i.test(bg)) return '#FFFFFF';
+  const ch = [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16) / 255);
+  const lin = ch.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const l = lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+  return l > 0.42 ? '#1A1A1A' : '#FFFFFF';
+}
 
 const ThemeContext = createContext({
   scheme: 'dark',
