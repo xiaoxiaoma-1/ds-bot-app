@@ -15,7 +15,8 @@ import { useTheme } from '../theme';
 import { login } from '../api';
 import { setBase, setPass } from '../store';
 
-export default function SetupScreen({ onDone }) {
+// 同一屏两用：首次启动=登录页（onBack 不传，无返回）；从列表进=设置页（onBack 传进来，带返回）。
+export default function SetupScreen({ onDone, onBack }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -53,9 +54,16 @@ export default function SetupScreen({ onDone }) {
 
   return (
     <KeyboardAvoidingView
-      style={[s.root, { paddingTop: insets.top + S.x8 }]}
+      style={[s.root, { paddingTop: insets.top + (onBack ? S.x2 : S.x8) }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {onBack ? (
+        <Pressable onPress={onBack} hitSlop={12} style={s.backRow}>
+          <Text style={s.back} allowFontScaling={false}>
+            ‹ 返回
+          </Text>
+        </Pressable>
+      ) : null}
       <ScrollView contentContainerStyle={{ paddingBottom: S.x6 }} keyboardShouldPersistTaps="handled">
         <Text style={s.title} allowFontScaling={false}>
           连上你的电脑
@@ -121,6 +129,8 @@ export default function SetupScreen({ onDone }) {
 const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page },
+    backRow: { paddingVertical: S.x2 },
+    back: { color: C.ink2, ...T.body },
     title: { color: C.ink, ...T.display },
     hint: { color: C.ink2, ...T.body, marginTop: S.x2, marginBottom: S.x6 },
     label: { color: C.ink2, ...T.meta, marginBottom: S.x2, marginTop: S.x3 },
