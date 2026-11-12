@@ -63,7 +63,7 @@ export default function MainTabs({ navigation }) {
       <View style={{ flex: 1, paddingBottom: 64 + dockBottom }}>
         {tab === 'advisors' ? (
           <BotListScreen
-            onOpen={(bot) => navigation.navigate('Chat', { bot })}
+            onOpen={(bot) => navigation.navigate(bot && bot.isGroup ? 'GroupChat' : 'Chat', { bot })}
             onSettings={() => setTab('mine')}
           />
         ) : tab === 'mine' ? (

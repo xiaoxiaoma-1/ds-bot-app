@@ -115,14 +115,9 @@ function SetupRoute({ navigation }) {
 }
 
 function BotListRoute({ navigation }) {
-  return (
-    <BotListScreen
-      onOpen={(bot) => {
-        navigation.navigate(bot && bot.isGroup ? 'GroupChat' : 'Chat', { bot });
-      }}
-      onSettings={() => navigation.navigate('Setup')}
-    />
-  );
+  // MainTabs 自己持有 BotListScreen，并负责底部 dock 与四屏切换。
+  // 不要再在这里直接写 <BotListScreen /> —— 少一行 import 就是运行时闪退（Babel/Metro 不查未定义标识符）。
+  return <MainTabs navigation={navigation} />;
 }
 
 function ChatRoute({ route, navigation }) {
