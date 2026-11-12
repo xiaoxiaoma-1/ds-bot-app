@@ -1,44 +1,62 @@
 # CHANGELOG
 
+## 0.2.1 — 2026-11-12（真机三处 bug 修复）
+
+### 1. 顶栏钻到状态栏下面
+
+**成因**：第一版三个页面都是裸 `View` + 写死的 `paddingTop`（10/12/14），没有任何安全区处理。Expo 58 / RN 0.88 默认整屏铺满（不自动避让），页面从 y=0 开始画，标题就压在状态栏和灵动岛区域上，右侧内容撞到信号/电池。
+
+**修法**：引入 `react-native-safe-area-context`，`App.js` 最外层包 `SafeAreaProvider`，每个页面用 `useSafeAreaInsets()` 取 `insets.top` 当头部 `paddingTop`，输入区用 `insets.bottom`。
+
+### 2. 字号失控
+
+**成因**：iOS 的 Dynamic Type 默认开启，RN 的 `<Text>` 默认 `allowFontScaling = true`，系统字号一放大，标题会被乘到两三倍；而四周 padding、行高是固定值，不跟着放大，于是文字压住下面那一行。这是「字号被放大 + 间距固定」两个因素叠加，不是某个 Text 漏设 `fontSize`（代码里每一处都设了，我逐行核过）。
+
+**修法**：所有文本显式 `allowFontScaling={false}`，并逐处补 `lineHeight`；标题从 26pt 降到 22pt。
+
+### 3. 列表空 + 一直「未登录」
+
+**成因两个，叠在一起**：
+
+- **认证没真成**：第一版登录用 `fetch`，靠 `res.headers.get('set-cookie')` 取 `pocket_sess`。RN 在 iOS 上不把这个头暴露给 JS，会话凭证根本没存下来；后面每个请求都没 cookie，服务端一律回 401，界面就停在「未登录」。
+- **错误被吞进空列表**：列表页只有一个 `err` 字符串，且渲染时先看 `rows.length === 0` 就画「一个顾问都没有」，错误提示和空态挤在一起，看上去像「列表就是空的」。
+
+**修法**：
+
+- 登录改走 `XMLHttpRequest`，用 `getAllResponseHeaders()` 取 `Set-Cookie`；拿到 `pocket_sess` 存 SecureStore，之后每个请求显式带 `Cookie` 头；401 时用存下的口令自动重登一次。
+- 新增 `ApiError`，带 `step` 字段（`login` / `auth` / `list` / `chat` / `send` / `feed`）。
+- 列表页拆四态：**加载中 / 失败（写明哪一步 + 原始错误 + 重试 + 去改地址）/ 空列表（明说「拉取成功但返回空数组」）/ 有数据**。空态与未登录不再混淆。
+- 对话页同样显示分步错误，「更早历史」保持为明说的禁用提示。
+
+### 依赖变更
+
+- 新增 `react-native-safe-area-context@~5.11.1`（用 `npx expo install` 装的、Expo 为 SDK 58 钉的版本）。**必要**：安全区 inset 只能由它提供，RN 自带 `SafeAreaView` 在新架构下已弃用且拿不到 inset 数值。
+
+### 待验证
+
+1. XHR 的 `getAllResponseHeaders()` 在 iOS 27.2 上是否真带 `Set-Cookie`（本轮修复的核心假设，需真机确认）。
+2. XHR 的 `onprogress` 对 `text/event-stream` 是否逐块触发。
+3. `state` 返回里 bot 的状态字段名尚未逐字核对。
+
+---
+
 ## 0.2.0 — 2026-11-12
 
 界面骨架：三个功能全部写进代码，用 Expo + React Native 原生组件渲染（不是 WebView）。
 
 ### 新增文件
 
-- `src/store.js` — 服务地址、口令、会话凭证一律走 SecureStore；代码里没有它们的任何字面量。
-- `src/api.js` — 网络层。`POST /login {p}` 换 `pocket_sess`；401 时用存下的口令自动重登一次（2 小时过期对用户无感）；已实现通用透传 `botCall(endpoint, payload)` 与 SSE `openFeed()`。
+- `src/store.js` — 服务地址、口令、会话凭证一律走 SecureStore。
+- `src/api.js` — 网络层。
 - `src/theme.js` — 深色配色常量。
-- `src/screens/SetupScreen.js` — 首屏：填服务地址 + 口令，校验后登录。
-- `src/screens/BotListScreen.js` — 功能一：顾问列表，下拉刷新，点进去开会话。
-- `src/screens/ChatScreen.js` — 功能二 + 三：历史消息、发送、流式回复（SSE，失败自动降级轮询）。
-- `App.js` — 三个页面用状态切换，不引入导航库。
+- `src/screens/SetupScreen.js` — 首屏：填服务地址 + 口令。
+- `src/screens/BotListScreen.js` — 功能一：顾问列表。
+- `src/screens/ChatScreen.js` — 功能二 + 三：历史、发送、流式回复。
+- `App.js` — 三页状态切换，不引入导航库。
 
-### 依赖变更
+### 缺口（需电脑侧补，属别人那一摊）
 
-- 新增 `expo-secure-store`。**必要**：红线要求凭据存 SecureStore，这是 Expo 官方的钥匙串封装，无法用零依赖方式等价替代。
-
-### 用到的接口（与电脑侧现有实现对照）
-
-| 用途 | 现在真的能调 | 备注 |
-|---|---|---|
-| 登录 | `POST /login {p}` → `Set-Cookie: pocket_sess`（2h, HttpOnly） | `mobile_server.py:2441-2477` |
-| Bot 列表 | `GET /api/dsbot/advisors` → `{id,name,role}` | `mobile_server.py:2724` |
-| 会话历史 | `GET /api/dsbot/chat?bot=<id>` → `{messages:[{who,text,at}]}` | `mobile_server.py:2768` |
-| 发消息 | `POST /api/dsbot/send {bot,text}` | `mobile_server.py:2537` |
-| 流式 | 目标是 `GET /api/bot/feed`（SSE） | **代理层还没有这条路由** |
-
-### 缺口（需要电脑侧补，属于别人那一摊，我不自己造后端）
-
-1. **通用透传**：`POST /api/bot`（body `{endpoint,payload}`，先过 `pocket_sess` 再调本机 `_dsbot_call`）。现在 `_dsbot_call` 只是内部函数，HTTP 层没有暴露，所以 APP 只能调上面三条包装路由。
-2. **状态字段**：`/api/dsbot/advisors` 只吐 `id/name/role`，把 `state` 里的状态丢了。APP 首屏要显示「在忙/空闲」，需要它把 `status` 一起带出来。
-3. **分页游标**：`/api/dsbot/chat` 丢掉了 `chat` 端点返回的 `cursor`，所以「往上翻更早」现在做不了，界面上先挂着一条禁用提示。
-4. **SSE 透传**：`GET /api/bot/feed` 需要代理层做流式转发（不能先缓冲再返回），否则流式只能靠轮询降级。
-
-在上面 1 和 4 补上之前，功能一、二、三都能跑，只是：没有状态点、不能翻更早、回复不是逐字而是一段一段。
-
-### 待验证
-
-1. RN 里 `Set-Cookie` 能否读到 —— 读到就手动带 `Cookie` 头；读不到就靠系统 cookie jar（`credentials: 'include'`）。两条路都写了，实际走哪条要真机看。
-2. XHR 的 `onprogress` 在 iOS 上对 `text/event-stream` 是否逐块触发。
-3. `state` 返回里 bot 的状态字段名（`status`？）尚未逐字核对。
+1. `POST /api/bot` 通用透传未暴露
+2. `/api/dsbot/advisors` 丢 `status`
+3. `/api/dsbot/chat` 丢 `cursor`
+4. `GET /api/bot/feed` 未做 SSE 透传
