@@ -1,49 +1,49 @@
 # diagnostics
-generated: 2026-11-12T04:16:57Z
-run: 43151829756 attempt: 1
-ref: refs/heads/main sha: 0aa4de5bff7c23e63688e47618ff0bc70c2bfdcd
+generated: 2026-11-12T05:25:27Z
+run: 43160893961 attempt: 1
+ref: refs/heads/main sha: 6a023d07e580ec08997498e5beb33a1038b79528
 job status: failure
 $GITHUB_WORKSPACE: /Users/runner/work/ds-bot-app/ds-bot-app
 WORKSPACE=DSBot.xcworkspace SCHEME=DSBot
 TARGET_BUILD_DIR=<empty> WRAPPER_NAME=<empty>
-uname: Darwin sat12-bq153-0b18d4ad-e799-4f67-81f7-ba79129f0b0f-FE2BC3A2F90E.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
+uname: Darwin sat12-bq161-74317b97-fa89-4d8e-8285-f6d9fe0ac041-2E87350621BE.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
 xcodebuild: Xcode 26.3 Build version 17C529 
 pod: 1.17.0
 
 === ls -la $GITHUB_WORKSPACE ===
-total 3000
-drwxr-xr-x   21 runner  staff     672 Nov 12 04:15 .
-drwxr-xr-x    3 runner  staff      96 Nov 12 04:12 ..
-drwxr-xr-x   13 runner  staff     416 Nov 12 04:16 .git
-drwxr-xr-x    3 runner  staff      96 Nov 12 04:13 .github
--rw-r--r--    1 runner  staff      73 Nov 12 04:13 .gitignore
--rw-r--r--    1 runner  staff    1595 Nov 12 04:13 App.js
--rw-r--r--    1 runner  staff     279 Nov 12 04:13 app.json
-drwxr-xr-x@   8 runner  staff     256 Nov 12 04:16 build
--rw-r--r--    1 runner  staff  271954 Nov 12 04:13 build-log-tail.txt
--rw-r--r--    1 runner  staff  942380 Nov 12 04:16 build.log
--rw-r--r--    1 runner  staff    3050 Nov 12 04:13 CHANGELOG.md
--rw-r--r--    1 runner  staff     607 Nov 12 04:17 diagnostics.txt
--rw-r--r--    1 runner  staff     101 Nov 12 04:13 index.js
-drwxr-xr-x   13 runner  staff     416 Nov 12 04:15 ios
-drwxr-xr-x  275 runner  staff    8800 Nov 12 04:13 node_modules
--rw-r--r--    1 runner  staff  226932 Nov 12 04:13 package-lock.json
--rw-r--r--    1 runner  staff     333 Nov 12 04:13 package.json
--rw-r--r--    1 runner  staff     107 Nov 12 04:13 README.md
-drwxr-xr-x    6 runner  staff     192 Nov 12 04:13 src
--rw-r--r--    1 runner  staff    2981 Nov 12 04:15 xcodebuild-list.json
--rw-r--r--    1 runner  staff    2987 Nov 12 04:15 xcodebuild-list.txt
+total 3168
+drwxr-xr-x   21 runner  staff     672 Nov 12 05:24 .
+drwxr-xr-x    3 runner  staff      96 Nov 12 05:21 ..
+drwxr-xr-x   13 runner  staff     416 Nov 12 05:25 .git
+drwxr-xr-x    3 runner  staff      96 Nov 12 05:22 .github
+-rw-r--r--    1 runner  staff      73 Nov 12 05:22 .gitignore
+-rw-r--r--    1 runner  staff    1595 Nov 12 05:22 App.js
+-rw-r--r--    1 runner  staff     279 Nov 12 05:22 app.json
+drwxr-xr-x@   8 runner  staff     256 Nov 12 05:24 build
+-rw-r--r--    1 runner  staff  359088 Nov 12 05:22 build-log-tail.txt
+-rw-r--r--    1 runner  staff  942812 Nov 12 05:25 build.log
+-rw-r--r--    1 runner  staff    3050 Nov 12 05:22 CHANGELOG.md
+-rw-r--r--    1 runner  staff     607 Nov 12 05:25 diagnostics.txt
+-rw-r--r--    1 runner  staff     101 Nov 12 05:22 index.js
+drwxr-xr-x   13 runner  staff     416 Nov 12 05:24 ios
+drwxr-xr-x  275 runner  staff    8800 Nov 12 05:22 node_modules
+-rw-r--r--    1 runner  staff  226932 Nov 12 05:22 package-lock.json
+-rw-r--r--    1 runner  staff     333 Nov 12 05:22 package.json
+-rw-r--r--    1 runner  staff     107 Nov 12 05:22 README.md
+drwxr-xr-x    6 runner  staff     192 Nov 12 05:22 src
+-rw-r--r--    1 runner  staff    2981 Nov 12 05:24 xcodebuild-list.json
+-rw-r--r--    1 runner  staff    2987 Nov 12 05:24 xcodebuild-list.txt
 
 === ls -la build ===
 total 8
-drwxr-xr-x@  8 runner  staff   256 Nov 12 04:16 .
-drwxr-xr-x  21 runner  staff   672 Nov 12 04:15 ..
-drwxr-xr-x   4 runner  staff   128 Nov 12 04:16 Build
-drwxr-x---   3 runner  staff    96 Nov 12 04:16 CompilationCache.noindex
--rw-r--r--   1 runner  staff   359 Nov 12 04:15 info.plist
-drwxr-xr-x   7 runner  staff   224 Nov 12 04:15 Logs
-drwxr-xr-x  58 runner  staff  1856 Nov 12 04:16 ModuleCache.noindex
-drwxr-xr-x   3 runner  staff    96 Nov 12 04:16 SDKStatCaches.noindex
+drwxr-xr-x@  8 runner  staff   256 Nov 12 05:24 .
+drwxr-xr-x  21 runner  staff   672 Nov 12 05:24 ..
+drwxr-xr-x   4 runner  staff   128 Nov 12 05:24 Build
+drwxr-x---   3 runner  staff    96 Nov 12 05:24 CompilationCache.noindex
+-rw-r--r--   1 runner  staff   359 Nov 12 05:24 info.plist
+drwxr-xr-x   7 runner  staff   224 Nov 12 05:24 Logs
+drwxr-xr-x  58 runner  staff  1856 Nov 12 05:25 ModuleCache.noindex
+drwxr-xr-x   3 runner  staff    96 Nov 12 05:24 SDKStatCaches.noindex
 
 === ls -R build/Build/Products ===
 Release-iphoneos
@@ -969,109 +969,109 @@ build/Build/Products/Release-iphoneos/Yoga:
 
 === ls -la build/Build/Products/Release-iphoneos ===
 total 0
-drwxr-xr-x@ 103 runner  staff  3296 Nov 12 04:16 .
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ..
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 boost
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 DoubleConversion
-drwxr-xr-x    3 runner  staff    96 Nov 12 04:16 DSBot.app
-drwxr-xr-x@   4 runner  staff   128 Nov 12 04:16 EXConstants
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 Expo
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoAsset
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoDomWebView
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ExpoFileSystem
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoFont
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoKeepAwake
-drwxr-xr-x@   7 runner  staff   224 Nov 12 04:16 ExpoLogBox
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesCore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesJSI
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesWorklets
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoSecureStore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoStatusBar
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 fast_float
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 FBLazyVector
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 fmt
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 glog
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 hermes-engine
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCT-Folly
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTDeprecation
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTRequired
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTSwiftUI
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTSwiftUIWrapper
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTTypeSafety
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-bridging
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-callinvoker
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Core
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Core-prebuilt
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-CoreModules
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 React-cxxreact
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-cxxstableapi
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-debug
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-defaultsnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-domnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Fabric
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-FabricComponents
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-FabricImage
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-featureflags
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-featureflagsnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-graphics
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-hermes
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-idlecallbacksnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-ImageManager
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-intersectionobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jserrorhandler
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsi
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsiexecutor
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspector
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectorcdp
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectornetwork
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectortracing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsitooling
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsitracing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-logger
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Mapbuffer
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-microtasksnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-mutationobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-NativeModulesApple
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-networking
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-oscompat
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-perflogger
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-performancecdpmetrics
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-performancetimeline
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTActionSheet
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAnimatedModuleProvider
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAnimation
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAppDelegate
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTBlob
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTFabric
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTFBReactNativeSpec
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTImage
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTLinking
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTNetwork
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTRuntime
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTSettings
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTText
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTVibration
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-rendererconsistency
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-renderercss
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-rendererdebug
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-resizeobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeApple
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeCore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-runtimeexecutor
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeHermes
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-runtimescheduler
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 React-timing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-utils
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-viewtransitionnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-webperformancenativemodule
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ReactAppDependencyProvider
-drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ReactCodegen
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ReactCommon
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ReactNativeDependencies
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 SocketRocket
-drwxr-xr-x    5 runner  staff   160 Nov 12 04:16 XCFrameworkIntermediates
-drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 Yoga
+drwxr-xr-x@ 103 runner  staff  3296 Nov 12 05:24 .
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:24 ..
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 boost
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 DoubleConversion
+drwxr-xr-x    3 runner  staff    96 Nov 12 05:24 DSBot.app
+drwxr-xr-x@   4 runner  staff   128 Nov 12 05:24 EXConstants
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 Expo
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoAsset
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoDomWebView
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:24 ExpoFileSystem
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoFont
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoKeepAwake
+drwxr-xr-x@   7 runner  staff   224 Nov 12 05:25 ExpoLogBox
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoModulesCore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoModulesJSI
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoModulesWorklets
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoSecureStore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ExpoStatusBar
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 fast_float
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 FBLazyVector
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 fmt
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 glog
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 hermes-engine
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCT-Folly
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCTDeprecation
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCTRequired
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCTSwiftUI
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCTSwiftUIWrapper
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 RCTTypeSafety
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-bridging
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-callinvoker
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-Core
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-Core-prebuilt
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-CoreModules
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:24 React-cxxreact
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-cxxstableapi
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-debug
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-defaultsnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-domnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-Fabric
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-FabricComponents
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-FabricImage
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-featureflags
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-featureflagsnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-graphics
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-hermes
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-idlecallbacksnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-ImageManager
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-intersectionobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jserrorhandler
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsi
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsiexecutor
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsinspector
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsinspectorcdp
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsinspectornetwork
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsinspectortracing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsitooling
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-jsitracing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-logger
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-Mapbuffer
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-microtasksnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-mutationobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-NativeModulesApple
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-networking
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-oscompat
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-perflogger
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-performancecdpmetrics
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-performancetimeline
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTActionSheet
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTAnimatedModuleProvider
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTAnimation
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTAppDelegate
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTBlob
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTFabric
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTFBReactNativeSpec
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTImage
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTLinking
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTNetwork
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTRuntime
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTSettings
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTText
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RCTVibration
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-rendererconsistency
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-renderercss
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-rendererdebug
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-resizeobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RuntimeApple
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RuntimeCore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-runtimeexecutor
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-RuntimeHermes
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-runtimescheduler
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:24 React-timing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-utils
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-viewtransitionnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 React-webperformancenativemodule
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:25 ReactAppDependencyProvider
+drwxr-xr-x@   3 runner  staff    96 Nov 12 05:25 ReactCodegen
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ReactCommon
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 ReactNativeDependencies
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 SocketRocket
+drwxr-xr-x    5 runner  staff   160 Nov 12 05:24 XCFrameworkIntermediates
+drwxr-xr-x@   2 runner  staff    64 Nov 12 05:24 Yoga
 
 === find . -maxdepth 6 -name '*.app' ===
 ./build/Build/Products/Release-iphoneos/DSBot.app
@@ -1081,19 +1081,19 @@ build/Build/Products/Release-iphoneos/DSBot.app
 
 === ls -la ios ===
 total 184
-drwxr-xr-x  13 runner  staff    416 Nov 12 04:15 .
-drwxr-xr-x  21 runner  staff    672 Nov 12 04:15 ..
--rw-r--r--   1 runner  staff    321 Nov 12 04:13 .gitignore
--rw-r--r--   1 runner  staff    482 Nov 12 04:13 .xcode.env
--rw-r--r--   1 runner  staff     77 Nov 12 04:13 .xcode.env.local
-drwxr-xr-x   5 runner  staff    160 Nov 12 04:13 build
-drwxr-xr-x  11 runner  staff    352 Nov 12 04:15 DSBot
-drwxr-xr-x   5 runner  staff    160 Nov 12 04:15 DSBot.xcodeproj
-drwxr-xr-x   4 runner  staff    128 Nov 12 04:15 DSBot.xcworkspace
--rw-r--r--   1 runner  staff   2778 Nov 12 04:13 Podfile
--rw-r--r--   1 runner  staff  70232 Nov 12 04:15 Podfile.lock
--rw-r--r--   1 runner  staff    215 Nov 12 04:13 Podfile.properties.json
-drwxr-xr-x  17 runner  staff    544 Nov 12 04:16 Pods
+drwxr-xr-x  13 runner  staff    416 Nov 12 05:24 .
+drwxr-xr-x  21 runner  staff    672 Nov 12 05:24 ..
+-rw-r--r--   1 runner  staff    321 Nov 12 05:22 .gitignore
+-rw-r--r--   1 runner  staff    482 Nov 12 05:22 .xcode.env
+-rw-r--r--   1 runner  staff     77 Nov 12 05:22 .xcode.env.local
+drwxr-xr-x   5 runner  staff    160 Nov 12 05:22 build
+drwxr-xr-x  11 runner  staff    352 Nov 12 05:24 DSBot
+drwxr-xr-x   5 runner  staff    160 Nov 12 05:24 DSBot.xcodeproj
+drwxr-xr-x   4 runner  staff    128 Nov 12 05:24 DSBot.xcworkspace
+-rw-r--r--   1 runner  staff   2778 Nov 12 05:22 Podfile
+-rw-r--r--   1 runner  staff  70232 Nov 12 05:24 Podfile.lock
+-rw-r--r--   1 runner  staff    215 Nov 12 05:22 Podfile.properties.json
+drwxr-xr-x  17 runner  staff    544 Nov 12 05:24 Pods
 
 === xcodebuild -list -workspace ios/*.xcworkspace ===
 --- ios/DSBot.xcworkspace
@@ -1443,7 +1443,6 @@ Information about workspace "DSBot":
 grep: build-settings.txt: No such file or directory
 
 === build.log tail 300 ===
-    export KASAN_DEFAULT_CFLAGS\=-DKASAN\=1\ -DKASAN_CLASSIC\=1\ -fsanitize\=address\ -mllvm\ -asan-globals-live-support\ -mllvm\ -asan-force-dynamic-shadow
     export KEEP_PRIVATE_EXTERNS\=NO
     export LD_DEPENDENCY_INFO_FILE\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch/ExpoLogBox_dependency_info.dat
     export LD_EXPORT_SYMBOLS\=YES
@@ -1509,7 +1508,7 @@ grep: build-settings.txt: No such file or directory
     export OTHER_SWIFT_FLAGS\=\ -D\ COCOAPODS\ -import-underlying-module\ -Xcc\ -fmodule-map-file\=\"/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ExpoLogBox/ExpoLogBox.modulemap\"\ -Xcc\ -Wno-incomplete-umbrella\ -Xcc\ \"-fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap\"
     export PACKAGE_TYPE\=com.apple.package-type.static-library
     export PASCAL_STRINGS\=YES
-    export PATH\=/Applications/Xcode_26.3.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/local/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/local/bin:/Users/runner/hostedtoolcache/node/22.23.4/arm64/bin:/opt/homebrew/opt/rustup/bin:/opt/homebrew/lib/ruby/gems/3.3.0/bin:/opt/homebrew/opt/ruby@3.3/bin:/Users/runner/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/runner/.cargo/bin:/usr/local/opt/curl/bin:/usr/local/bin:/usr/local/sbin:/Users/runner/bin:/Users/runner/.yarn/bin:/Users/runner/Library/Android/sdk/tools:/Users/runner/Library/Android/sdk/platform-tools:/Library/Frameworks/Python.framework/Versions/Current/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/bin:/bin:/usr/sbin:/sbin:/Users/runner/.dotnet/tools
+    export PATH\=/Applications/Xcode_26.3.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.tex7e7/Metal.xctoolchain/usr/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.tex7e7/Metal.xctoolchain/usr/local/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.tex7e7/Metal.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/local/bin:/Users/runner/hostedtoolcache/node/22.23.4/arm64/bin:/opt/homebrew/opt/rustup/bin:/opt/homebrew/lib/ruby/gems/3.3.0/bin:/opt/homebrew/opt/ruby@3.3/bin:/Users/runner/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/runner/.cargo/bin:/usr/local/opt/curl/bin:/usr/local/bin:/usr/local/sbin:/Users/runner/bin:/Users/runner/.yarn/bin:/Users/runner/Library/Android/sdk/tools:/Users/runner/Library/Android/sdk/platform-tools:/Library/Frameworks/Python.framework/Versions/Current/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/bin:/bin:/usr/sbin:/sbin:/Users/runner/.dotnet/tools
     export PATH_PREFIXES_EXCLUDED_FROM_HEADER_DEPENDENCIES\=/usr/include\ /usr/local/include\ /System/Library/Frameworks\ /System/Library/PrivateFrameworks\ /Applications/Xcode_26.3.app/Contents/Developer/Headers\ /Applications/Xcode_26.3.app/Contents/Developer/SDKs\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms
     export PER_ARCH_MODULE_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch
     export PER_ARCH_OBJECT_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch
@@ -1636,6 +1635,7 @@ grep: build-settings.txt: No such file or directory
     export SWIFT_OPTIMIZATION_LEVEL\=-O
     export SWIFT_PLATFORM_TARGET_PREFIX\=ios
     export SWIFT_RESPONSE_FILE_PATH_normal_arm64\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList
+    export SWIFT_STRICT_CONCURRENCY\=minimal
     export SWIFT_VERSION\=5.0
     export SYMROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products
     export SYSTEM_ADMIN_APPS_DIR\=/Applications/Utilities
@@ -1679,7 +1679,7 @@ grep: build-settings.txt: No such file or directory
     export TEST_FRAMEWORK_SEARCH_PATHS\=\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/Frameworks\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/Developer/Library/Frameworks
     export TEST_LIBRARY_SEARCH_PATHS\=\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib
     export TOOLCHAINS\=com.apple.dt.toolchain.Metal.32023.864\ com.apple.dt.toolchain.XcodeDefault
-    export TOOLCHAIN_DIR\=/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain
+    export TOOLCHAIN_DIR\=/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.tex7e7/Metal.xctoolchain
     export TOOLCHAIN_VERSION\=32023.864
     export TREAT_MISSING_BASELINES_AS_TEST_FAILURES\=NO
     export TREAT_MISSING_SCRIPT_PHASE_OUTPUTS_AS_ERRORS\=NO
@@ -1720,9 +1720,9 @@ grep: build-settings.txt: No such file or directory
 
 ExtractAppIntentsMetadata (in target 'ExpoLogBox' from project 'Pods')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain --module-name ExpoLogBox --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier org.cocoapods.ExpoLogBox --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.appintents --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/libExpoLogBox.a --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox_libtool_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-11-12 04:16:34.081 appintentsmetadataprocessor[5934:20484] Starting appintentsmetadataprocessor export
-2026-11-12 04:16:34.307 appintentsmetadataprocessor[5934:20484] Extracted no relevant App Intents symbols, skipping writing output
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.tex7e7/Metal.xctoolchain --module-name ExpoLogBox --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier org.cocoapods.ExpoLogBox --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.appintents --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/libExpoLogBox.a --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox_libtool_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-11-12 05:25:10.507 appintentsmetadataprocessor[5757:19646] Starting appintentsmetadataprocessor export
+2026-11-12 05:25:10.673 appintentsmetadataprocessor[5757:19646] Extracted no relevant App Intents symbols, skipping writing output
 
 note: Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'hermes-engine' from project 'Pods')
 note: Run script build phase '[CP-User] [RNDeps] Replace React Native Dependencies for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ReactNativeDependencies' from project 'Pods')
@@ -1733,9 +1733,9 @@ note: Run script build phase '[CP-User] Build ExpoModulesJSI xcframework' will b
 note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesCore XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesCore' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFont XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFont' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFileSystem XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFileSystem' from project 'Pods')
-note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
 note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
 note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
+note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
 ** BUILD FAILED **
 
 
@@ -1745,17 +1745,17 @@ The following build commands failed:
 (2 failures)
 
 === build.log 关键行 ===
-1848:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-2374:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-3925:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-4907:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-5430:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-5877:/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races
-5893:** BUILD FAILED **
-5988:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-6551:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-7623:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-8098:** BUILD FAILED **
+1337:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+1864:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+3928:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+4911:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+5359:/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races
+5375:** BUILD FAILED **
+5467:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+5994:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+6558:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+7631:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+8107:** BUILD FAILED **
 
 === out/ 与 ipa ===
 ls: out: No such file or directory
