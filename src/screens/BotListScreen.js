@@ -16,6 +16,8 @@ import { avatarInk, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import { advisors } from '../api';
+import BotMenu from './botMenu';
+import { botApi } from '../botApi';
 
 // Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按弹菜单（移动/编辑/隐藏/删除）。
 // 拖动入口只在菜单里选「移动」之后开启：此时每行右侧出现把手，拖完点右上「完成」退出。
@@ -97,7 +99,7 @@ const AdvisorRow = memo(function AdvisorRow({
         {unread > 0 && !dragMode ? (
           <View style={[s.badge, { backgroundColor: C.accentCoral }]}>
             <Text style={s.badgeText} allowFontScaling={false}>
-              {unread > 99 ? '99+' : String(unread)}
+              {unread > 9 ? '9+' : String(unread)}
             </Text>
           </View>
         ) : null}
@@ -127,6 +129,14 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const [menuFor, setMenuFor] = useState(null);
   const [dragMode, setDragMode] = useState(false);
   const [dragId, setDragId] = useState(null);
+  const [flash, setFlash] = useState(null);
+  const [menuPrev, setMenuPrev] = useState({});
+
+  useEffect(() => {
+    if (!flash) return undefined;
+    const t = setTimeout(() => setFlash(null), 2500);
+    return () => clearTimeout(t);
+  }, [flash]);
   const dragY = useRef(new Animated.Value(0)).current;
   const rowH = useRef(ROW_H); // onLayout 实测后覆盖
   const gapRef = useRef(S.x3);
@@ -143,9 +153,11 @@ export default function BotListScreen({ onOpen, onSettings }) {
       setErr(null);
       const m = {};
       list.forEach((it) => {
-        m[String(it.id)] = mockUnread(String(it.id));
+        m[String(it.id)] = Number(it.unread) || 0;
       });
       setUnread(m);
+      // 服务端已隐藏 / 已标记删除的，进列表就不显示（恢复入口在「已隐藏」）
+      setHidden(new Set(list.filter((it) => it.hidden || it.deleted).map((it) => String(it.id))));
     } catch (e) {
       setRows([]);
       setErr({ step: e.step || 'list', message: e.message || '未知错误' });
@@ -183,12 +195,14 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const openBot = useCallback(
     (bot) => {
       setUnread((prev) => ({ ...prev, [String(bot.id)]: 0 }));
+      botApi.read(String(bot.id)).catch(() => {}); // 失败不打断，下次 load 会拉回真值
       onOpen(bot);
     },
     [onOpen],
   );
 
   const clearAll = useCallback(() => {
+    botApi.readAll().catch(() => {});
     setUnread((prev) => {
       const next = {};
       Object.keys(prev).forEach((k) => (next[k] = 0));
@@ -199,7 +213,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const makePan = useCallback(
     (item, index) =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponder: () => true, // 只有把手挂着这个响应器
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: () => setDragId(String(item.id)),
         onPanResponderMove: (_, g) => dragY.setValue(g.dy),
@@ -240,25 +254,74 @@ export default function BotListScreen({ onOpen, onSettings }) {
   );
 
   const keyExtractor = useCallback((it) => String(it.id), []);
-  const getItemLayout = useCallback((_, index) => {
-    const stride = rowH.current + gapRef.current;
-    return { length: stride, offset: stride * index, index };
-  }, []);
+  const getItemLayout = useCallback(
+    (_, index) => {
+      const stride = rowH.current + gapRef.current;
+      return { length: stride, offset: stride * index, index };
+    },
+    [],
+  );
 
-  const menuAction = (kind) => {
-    const target = menuFor;
-    setMenuFor(null);
-    if (!target) return;
-    const id = String(target.id);
-    if (kind === 'move') setDragMode(true);
-    if (kind === 'hide') setHidden((prev) => new Set(prev).add(id));
-    if (kind === 'delete') setHidden((prev) => new Set(prev).add(id)); // 本地移除；真删等后端
+  // 菜单：先改本地那一行，再发请求；失败回滚，错误原文交给顶部横幅（行内看不见）
+  const patchRow = (id, patch) =>
+    setRows((prev) => prev.map((r) => (String(r.id) === id ? { ...r, ...patch } : r)));
+
+  const menuPatch = (patch) => {
+    if (!menuFor) return;
+    const id = String(menuFor.id);
+    const prev = {};
+    Object.keys(patch).forEach((k) => {
+      prev[k] = menuFor[k];
+    });
+    setMenuPrev(prev);
+    patchRow(id, patch);
+    if (patch.hasUnread) setUnread((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    // 隐藏 / 标记删除都要从主列表移走：真正过滤用的是 hidden 这个 Set
+    if (patch.hidden || patch.deleted) {
+      setHidden((s0) => {
+        const n = new Set(s0);
+        n.add(id);
+        return n;
+      });
+    }
+  };
+
+  const menuFail = (message) => {
+    if (menuFor) {
+      const id = String(menuFor.id);
+      patchRow(id, menuPrev);
+      setHidden((s0) => {
+        const n = new Set(s0);
+        if ("hidden" in menuPrev) {
+          if (menuPrev.hidden) n.add(id);
+          else n.delete(id);
+        }
+        if ("deleted" in menuPrev) {
+          if (menuPrev.deleted) n.add(id);
+          else n.delete(id);
+        }
+        return n;
+      });
+    }
+    setFlash(message);
+  };
+
+  const menuMove = (target) => {
+    if (target) setDragId(String(target.id));
+    setDragMode(true);
   };
 
   const stepLabel = { login: '登录失败', auth: '认证失败', list: '取顾问列表失败' };
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
+      {flash ? (
+        <Pressable style={[s.flash, { top: insets.top + 8 }]} onPress={() => setFlash(null)}>
+          <Text style={s.flashText} allowFontScaling={false}>
+            {flash}
+          </Text>
+        </Pressable>
+      ) : null}
       <View style={s.head}>
         <Text style={s.title} allowFontScaling={false}>
           顾问
@@ -341,40 +404,13 @@ export default function BotListScreen({ onOpen, onSettings }) {
       )}
 
       {/* 长按菜单：RN 内置 Modal，不加依赖 */}
-      <Modal visible={menuFor !== null} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
-        <Pressable style={s.backdrop} onPress={() => setMenuFor(null)}>
-          <View style={s.sheet}>
-            <Text style={s.sheetTitle} numberOfLines={1} allowFontScaling={false}>
-              {menuFor ? menuFor.name : ''}
-            </Text>
-            <Pressable style={s.sheetItem} onPress={() => menuAction('move')}>
-              <Text style={s.sheetText} allowFontScaling={false}>
-                移动
-              </Text>
-            </Pressable>
-            <Pressable style={s.sheetItem} onPress={() => setMenuFor(null)}>
-              <Text style={[s.sheetText, { color: C.ink3 }]} allowFontScaling={false}>
-                编辑（等后端）
-              </Text>
-            </Pressable>
-            <Pressable style={s.sheetItem} onPress={() => menuAction('hide')}>
-              <Text style={s.sheetText} allowFontScaling={false}>
-                隐藏
-              </Text>
-            </Pressable>
-            <Pressable style={s.sheetItem} onPress={() => menuAction('delete')}>
-              <Text style={[s.sheetText, { color: C.accentCoral }]} allowFontScaling={false}>
-                删除
-              </Text>
-            </Pressable>
-            <Pressable style={[s.sheetItem, s.sheetCancel]} onPress={() => setMenuFor(null)}>
-              <Text style={[s.sheetText, { color: C.ink2 }]} allowFontScaling={false}>
-                取消
-              </Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      <BotMenu
+        bot={menuFor}
+        onClose={() => setMenuFor(null)}
+        onPatch={menuPatch}
+        onFail={menuFail}
+        onMove={menuMove}
+      />
     </View>
   );
 }
@@ -382,6 +418,17 @@ export default function BotListScreen({ onOpen, onSettings }) {
 const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
+    flash: {
+      position: 'absolute',
+      left: S.page,
+      right: S.page,
+      backgroundColor: C.bad,
+      borderRadius: R.capsule,
+      paddingVertical: S.x3,
+      paddingHorizontal: S.x4,
+      zIndex: 20,
+    },
+    flashText: { color: C.onHero, ...T.meta },
     head: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -439,15 +486,9 @@ const makeStyles = (C, T, S, R) =>
     handle: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
     handleText: { color: C.ink3, fontSize: 20, lineHeight: 24 },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-    sheet: {
-      backgroundColor: C.card,
-      borderTopLeftRadius: R.big,
-      borderTopRightRadius: R.big,
-      padding: S.x4,
-      gap: S.x1,
-    },
+    sheet: { backgroundColor: C.card, borderTopLeftRadius: R.big, borderTopRightRadius: R.big, padding: S.x4, gap: S.x1 },
     sheetTitle: { color: C.ink2, ...T.meta, marginBottom: S.x2 },
     sheetItem: { paddingVertical: S.x3 },
     sheetText: { color: C.ink, ...T.title },
-    sheetCancel: { marginTop: S.x2 },
+    sheetCancel: { marginTop: S.x2, borderTopWidth: 0 },
   });
