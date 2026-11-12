@@ -1,7 +1,8 @@
 import { getBase, getPass, getSess, setSess } from './store';
 
-// 现状（2026-11-12 实测，mobile_server.py）：
-//   POST /login        {p: 口令} -> Set-Cookie: pocket_sess（2 小时，HttpOnly）
+// 现状（2026-11-12，mobile_server.py，后端已实测）：
+//   POST /login  {p: 口令} -> { ok, ttl: 7200, session: "<43 位>" }
+//        之后每个请求带 Authorization: Bearer <session>；cookie 那条路后端保留做兼容。
 //   GET  /api/dsbot/advisors          -> { ok, advisors:[{id,name,role}] }
 //   GET  /api/dsbot/chat?bot=<id>     -> { ok, messages:[{who,text,at}] }（无 cursor）
 //   POST /api/dsbot/send {bot,text}   -> 发一条后立刻把整段对话读回来（非流式）
@@ -16,12 +17,48 @@ export class ApiError extends Error {
   }
 }
 
+export const SESSION_COOKIE = 'pocket_sess';
+const COOKIE_HEADER = 'cookie';
+
+// 2026-11-12 后端已定：登录成功时响应体带 `session`（43 位不透明随机串）。
+// 其余键名只为兼容旧服务端，正常不会命中。
+const TOKEN_KEYS = [
+  'session',
+  'sess',
+  'sessionToken',
+  'session_token',
+  'token',
+  'authToken',
+  'auth_token',
+  'pocket_sess',
+];
+
 function join(base, path) {
   return String(base).replace(/\/+$/, '') + path;
 }
 
-// 登录走 XHR 而不是 fetch：RN 的 fetch 在 iOS 上拿不到 Set-Cookie，
-// XHR 的 getAllResponseHeaders() 能拿到。这是第一版「填了口令却一直未登录」的根因。
+function pickTokenFromBody(body) {
+  if (!body || typeof body !== 'object') return { token: '', field: '' };
+  const pools = [body, body.data, body.result, body.payload];
+  for (const pool of pools) {
+    if (!pool || typeof pool !== 'object') continue;
+    for (const key of TOKEN_KEYS) {
+      const v = pool[key];
+      if (typeof v === 'string' && v.trim().length >= 8) {
+        return { token: v.trim(), field: key };
+      }
+    }
+  }
+  return { token: '', field: '' };
+}
+
+function pickTokenFromHeaders(raw) {
+  const re = new RegExp(SESSION_COOKIE + '=([^;\\s]+)', 'i');
+  const hit = re.exec(raw || '');
+  return hit ? hit[1] : '';
+}
+
+// 登录用 XHR：要读全部响应头（旧版 Set-Cookie 兜底）。主路是响应体里的 session。
 function xhrLogin(url, payload) {
   return new Promise((resolve, reject) => {
     const x = new XMLHttpRequest();
@@ -35,9 +72,7 @@ function xhrLogin(url, payload) {
       } catch {
         body = {};
       }
-      const raw = x.getAllResponseHeaders() || '';
-      const hit = /pocket_sess=([^;\s]+)/i.exec(raw);
-      resolve({ status: x.status, body, cookie: hit ? hit[1] : '' });
+      resolve({ status: x.status, body, headers: x.getAllResponseHeaders() || '' });
     };
     x.onerror = () => reject(new ApiError('网络不通，连不上那个地址', 'login'));
     x.ontimeout = () => reject(new ApiError('连接超时（15 秒）', 'login'));
@@ -45,6 +80,7 @@ function xhrLogin(url, payload) {
   });
 }
 
+// 认证优先级：响应体里的 `session` > 兼容回退（Set-Cookie）。
 export async function login(base, pass) {
   let out;
   try {
@@ -52,23 +88,29 @@ export async function login(base, pass) {
   } catch (e) {
     throw e instanceof ApiError ? e : new ApiError(e.message || '登录请求失败', 'login');
   }
+
   if (!out.body || !out.body.ok) {
-    const msg = (out.body && out.body.error) || `登录被拒（HTTP ${out.status}）`;
+    const msg = (out.body && out.body.error) || '登录被拒（HTTP ' + out.status + '）';
     throw new ApiError(msg, 'login', {
       locked: Boolean(out.body && out.body.locked),
       left: out.body && out.body.left,
     });
   }
-  if (!out.cookie) {
-    throw new ApiError('登录成功但没拿到会话凭证（Set-Cookie 为空）', 'login');
-  }
-  await setSess(out.cookie);
-  return { ttl: out.body.ttl || 0 };
-}
 
-async function authHeaders() {
-  const sess = await getSess();
-  return sess ? { cookie: `pocket_sess=${sess}` } : {};
+  const fromBody = pickTokenFromBody(out.body);
+  const fromCookie = pickTokenFromHeaders(out.headers);
+  const token = fromBody.token || fromCookie;
+
+  if (!token) {
+    throw new ApiError('登录返回成功，但响应体和 Set-Cookie 里都找不到会话凭证', 'login');
+  }
+
+  await setSess(token);
+  return {
+    ttl: out.body.ttl || 0,
+    source: fromBody.token ? 'body' : 'cookie',
+    field: fromBody.token ? fromBody.field : SESSION_COOKIE,
+  };
 }
 
 async function request(path, { method = 'GET', body, step = 'list', retry = true } = {}) {
@@ -78,7 +120,12 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
   const sess = await getSess();
   if (!sess) throw new ApiError('没有会话凭证，需要先登录', 'auth');
 
-  const headers = { cookie: `pocket_sess=${sess}` };
+  // 主路：Authorization: Bearer（后端已实测：只带它、不带 cookie 也 200）。
+  // 同时带上 cookie，为旧版服务端留兼容，两个都在不会互相干扰。
+  const headers = {
+    authorization: 'Bearer ' + sess,
+    [COOKIE_HEADER]: SESSION_COOKIE + '=' + sess,
+  };
   if (body !== undefined) headers['content-type'] = 'application/json';
 
   let res;
@@ -95,7 +142,7 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
 
   if (res.status === 401) {
     if (retry) {
-      // 会话过期（2 小时）：用存下的口令自动换新的，用户无感。
+      // 会话过期（ttl 7200 秒）：用存下的口令自动重登一次，用户无感。
       const pass = await getPass();
       if (!pass) throw new ApiError('会话过期，而且没存口令，请回设置重新填', 'auth');
       await login(base, pass);
@@ -115,7 +162,7 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
     data = null;
   }
   if (!res.ok) {
-    throw new ApiError((data && data.error) || `HTTP ${res.status}`, step);
+    throw new ApiError((data && data.error) || 'HTTP ' + res.status, step);
   }
   return data;
 }
@@ -163,7 +210,8 @@ export function openFeed({ onEvent, onError }) {
     xhr = new XMLHttpRequest();
     let seen = 0;
     xhr.open('GET', join(base, '/api/bot/feed'));
-    xhr.setRequestHeader('cookie', `pocket_sess=${sess}`);
+    xhr.setRequestHeader('authorization', 'Bearer ' + sess);
+    xhr.setRequestHeader(COOKIE_HEADER, SESSION_COOKIE + '=' + sess);
     xhr.setRequestHeader('accept', 'text/event-stream');
     xhr.timeout = 0;
 
