@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -79,6 +79,33 @@ function capSegs(segs) {
   }
   return { segs: out, cut };
 }
+
+// 标注版整段：segs 不变就不重渲染。父组件每次流式 flush 都会重渲染，
+// 这一层 memo 挡住的正是「约 2000 个 span 子节点被反复走一遍」——那才是 1600 个 delta 卡死的来源。
+const DocText = memo(function DocText({ segs, style }) {
+  return (
+    <Text style={style} allowFontScaling={false}>
+      {segs.map((g, i) =>
+        g.cls ? (
+          <Text key={i} style={SPAN[g.cls]}>
+            {g.text}
+          </Text>
+        ) : (
+          g.text
+        ),
+      )}
+    </Text>
+  );
+});
+
+// 点评流式块：只有正在增长的最后一块重渲染，前面已闭合的块 props 不变、直接跳过
+const Chunk = memo(function Chunk({ text, style }) {
+  return (
+    <Text style={style} allowFontScaling={false}>
+      {text}
+    </Text>
+  );
+});
 
 export default function ExpressionScreen({ onBack }) {
   const { C, T, S, R } = useTheme();
@@ -210,9 +237,11 @@ export default function ExpressionScreen({ onBack }) {
       body: { fullText: draft.trim(), stats },
       signal: ctrl.signal,
       onDelta: pushDelta,
-      onDone: () => {
+      onDone: (d) => {
         flush(true);
-        setReport((p) => ({ ...p, streaming: false }));
+        // 字数以服务端 done.chars 为准：报告里有 5 个非 BMP 字符，UTF-16 的 length 会多算 5 个
+        const served = d && typeof d.chars === 'number' ? d.chars : null;
+        setReport((p) => ({ ...p, streaming: false, chars: served === null ? p.chars : served }));
       },
       onError: (m) => {
         flush(true);
@@ -338,17 +367,7 @@ export default function ExpressionScreen({ onBack }) {
                     超过 {MARK_CAP} 字，之后的内容按纯文本显示（不再标色）
                   </Text>
                 ) : null}
-                <Text style={s.doc} allowFontScaling={false}>
-                  {segs.map((g, i) =>
-                    g.cls ? (
-                      <Text key={i} style={SPAN[g.cls]}>
-                        {g.text}
-                      </Text>
-                    ) : (
-                      g.text
-                    ),
-                  )}
-                </Text>
+                <DocText segs={segs} style={s.doc} />
 
                 {/* 句级（金句 / 可删）：数据源目前没有，sentMarks 为空时一个字都不渲染 */}
                 {sentMarks.length > 0 ? (
@@ -419,7 +438,7 @@ export default function ExpressionScreen({ onBack }) {
                   <Text style={s.panelTitle} allowFontScaling={false}>
                     点评
                   </Text>
-                  {report.streaming ? (
+                  {report.chars > 0 || report.streaming ? (
                     <Text style={s.panelMeta} allowFontScaling={false}>
                       已生成 {report.chars} 字
                     </Text>
@@ -431,9 +450,7 @@ export default function ExpressionScreen({ onBack }) {
                   </Text>
                 ) : null}
                 {report.chunks.map((c, i) => (
-                  <Text key={i} style={s.panelText} allowFontScaling={false}>
-                    {c}
-                  </Text>
+                  <Chunk key={i} text={c} style={s.panelText} />
                 ))}
                 {report.streaming && report.chars === 0 ? (
                   <View style={s.center}>
