@@ -1,25 +1,57 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { C } from './src/theme';
+import { isConfigured } from './src/store';
+import SetupScreen from './src/screens/SetupScreen';
+import BotListScreen from './src/screens/BotListScreen';
+import ChatScreen from './src/screens/ChatScreen';
 
-// 第一步只证明「云端能出免签名 ipa」。界面留到第二步。
-// 红线二：服务地址不进代码，改为运行时设置项。
+// 三个页面用状态切换，不引入导航库（红线：非必要不加依赖）。
 export default function App() {
+  const [ready, setReady] = useState(false);
+  const [route, setRoute] = useState('setup');
+  const [bot, setBot] = useState(null);
+
+  const boot = useCallback(async () => {
+    const ok = await isConfigured();
+    setRoute(ok ? 'list' : 'setup');
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    boot();
+  }, [boot]);
+
+  if (!ready) {
+    return (
+      <View style={s.boot}>
+        <ActivityIndicator color={C.accent} />
+        <StatusBar style="light" />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.root}>
-      <Text style={styles.title}>DS Bot</Text>
-      <Text style={styles.note}>构建链路验证包</Text>
+    <>
+      {route === 'setup' ? (
+        <SetupScreen onDone={() => setRoute('list')} />
+      ) : route === 'chat' ? (
+        <ChatScreen bot={bot} onBack={() => setRoute('list')} />
+      ) : (
+        <BotListScreen
+          onOpen={(b) => {
+            setBot(b);
+            setRoute('chat');
+          }}
+          onSettings={() => setRoute('setup')}
+        />
+      )}
       <StatusBar style="light" />
-    </View>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0b0e12',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { color: '#e6e9ee', fontSize: 28, fontWeight: '600' },
-  note: { color: '#8b93a1', fontSize: 15, marginTop: 8 },
+const s = StyleSheet.create({
+  boot: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
 });
