@@ -1,9 +1,8 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,11 +12,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { chat, openFeed, send } from '../api';
+import { useKeyboardShift } from '../keyboard';
 
 // 功能二 + 三：会话历史 + 发消息 + 流式回复。
-// 结构上两条硬约束（对应两个真机 bug）：
-//   1. 消息区永远是 flex:1 的容器，加载指示画在它内部 —— 输入栏因此始终贴底，不会被顶到半空。
-//   2. 流式增量不碰父组件 state，走 LiveBubble 的 ref 局部更新 + rAF 合并 —— 不带动整个列表重渲染。
+// 结构约束（对应已修的真机 bug）：
+//   1. 消息区永远是 flex:1 容器，加载指示画在它内部 —— 输入栏始终贴底。
+//   2. 流式增量不碰父组件 state，走 LiveBubble 的 ref 局部更新 + rAF 合并。
+//   3. 键盘位移不用 KeyboardAvoidingView，走 useKeyboardShift（同帧同曲线）。
+// 令牌 v4：无分割线无描边；气泡圆角 24、内边距 16、最大宽 279。
+
+const BUBBLE_MAX = 279;
 
 const BubbleRow = memo(function BubbleRow({ item, s }) {
   const mine = item.who === '我';
@@ -32,8 +36,8 @@ const BubbleRow = memo(function BubbleRow({ item, s }) {
   );
 });
 
-const MessageList = memo(function MessageList({ items, C }) {
-  const s = useMemo(() => makeStyles(C), [C]);
+const MessageList = memo(function MessageList({ items, C, T, S, R }) {
+  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const renderItem = useCallback(({ item }) => <BubbleRow item={item} s={s} />, [s]);
   const keyExtractor = useCallback((it, i) => {
     if (it.seq !== undefined && it.seq !== null) return 's' + it.seq;
@@ -52,7 +56,7 @@ const MessageList = memo(function MessageList({ items, C }) {
       maxToRenderPerBatch={10}
       windowSize={9}
       removeClippedSubviews
-      contentContainerStyle={{ paddingVertical: 10 }}
+      contentContainerStyle={{ paddingVertical: S.x3 }}
       ListHeaderComponent={
         <View style={s.older}>
           <Text style={s.olderText} allowFontScaling={false}>
@@ -71,10 +75,9 @@ const MessageList = memo(function MessageList({ items, C }) {
   );
 });
 
-// 正在吐的那条气泡：自己管自己的文本，父组件不参与
 const LiveBubble = memo(
-  forwardRef(function LiveBubble({ C }, ref) {
-    const s = useMemo(() => makeStyles(C), [C]);
+  forwardRef(function LiveBubble({ C, T, S, R }, ref) {
+    const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
     const [text, setText] = useState('');
     const buf = useRef('');
     const raf = useRef(null);
@@ -89,7 +92,6 @@ const LiveBubble = memo(
       () => ({
         append(chunk) {
           buf.current += chunk;
-          // 一帧最多刷一次：SSE 每片都 setState 会打出 30+ 次/秒的重渲染
           if (raf.current === null) raf.current = requestAnimationFrame(flush);
         },
         clear() {
@@ -133,9 +135,14 @@ const LiveBubble = memo(
 );
 
 export default function ChatScreen({ bot, onBack }) {
-  const { C } = useTheme();
-  const s = useMemo(() => makeStyles(C), [C]);
+  const { C, T, S, R } = useTheme();
+  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+  const keyboardShift = useKeyboardShift();
+  const keyboardMove = useMemo(
+    () => ({ transform: [{ translateY: Animated.multiply(keyboardShift, -1) }] }),
+    [keyboardShift],
+  );
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
@@ -254,12 +261,8 @@ export default function ChatScreen({ bot, onBack }) {
   const stepLabel = { chat: '读会话失败', send: '发送失败', auth: '需要重新登录', feed: '流式断开' };
 
   return (
-    <KeyboardAvoidingView
-      style={s.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
-    >
-      <View style={[s.head, { paddingTop: insets.top + 8 }]}>
+    <View style={s.root}>
+      <View style={[s.head, { paddingTop: insets.top + S.x2 }]}>
         <Pressable onPress={onBack} hitSlop={12}>
           <Text style={s.back} allowFontScaling={false}>
             ‹ 返回
@@ -284,97 +287,99 @@ export default function ChatScreen({ bot, onBack }) {
         </View>
       ) : null}
 
-      {/* 关键：消息区永远是 flex:1，加载/空/列表都画在里面，输入栏因此固定贴底 */}
-      <View style={s.body}>
-        {loading ? (
-          <View style={s.center}>
-            <ActivityIndicator color={C.accent} />
-            <Text style={s.centerText} allowFontScaling={false}>
-              正在读会话
-            </Text>
-          </View>
-        ) : (
-          <MessageList items={items} C={C} />
-        )}
-        <LiveBubble ref={liveRef} C={C} />
-      </View>
+      {/* 消息区 + 输入栏整体跟随键盘：transform 走原生驱动，与键盘同帧起步 */}
+      <Animated.View style={[s.body, keyboardMove]}>
+        <View style={s.body}>
+          {loading ? (
+            <View style={s.center}>
+              <ActivityIndicator color={C.accent} />
+              <Text style={s.centerText} allowFontScaling={false}>
+                正在读会话
+              </Text>
+            </View>
+          ) : (
+            <MessageList items={items} C={C} T={T} S={S} R={R} />
+          )}
+          <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
+        </View>
 
-      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        <TextInput
-          style={s.input}
-          value={draft}
-          onChangeText={setDraft}
-          placeholder="说点什么"
-          placeholderTextColor={C.ink3}
-          multiline
-        />
-        <Pressable style={s.sendBtn} onPress={onSend} disabled={!draft.trim()}>
-          <Text style={s.sendText} allowFontScaling={false}>
-            发送
-          </Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) }]}>
+          <TextInput
+            style={s.input}
+            value={draft}
+            onChangeText={setDraft}
+            placeholder="说点什么"
+            placeholderTextColor={C.ink3}
+            multiline
+          />
+          <Pressable style={s.sendBtn} onPress={onSend} disabled={!draft.trim()}>
+            <Text style={s.sendText} allowFontScaling={false}>
+              发送
+            </Text>
+          </Pressable>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 
-const makeStyles = (C) =>
+const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     body: { flex: 1 },
-    center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
-    centerText: { color: C.ink3, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+    center: { alignItems: 'center', justifyContent: 'center', paddingVertical: S.x8, gap: S.x3 },
+    centerText: { color: C.ink3, ...T.meta, textAlign: 'center' },
     head: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 14,
-      paddingBottom: 10,
-      borderBottomColor: C.line,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      gap: 10,
+      paddingHorizontal: S.page,
+      paddingBottom: S.x3,
+      gap: S.x3,
     },
-    back: { color: C.accent, fontSize: 15, lineHeight: 20 },
-    title: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22, flex: 1, textAlign: 'center' },
-    mode: { color: C.ink3, fontSize: 11, lineHeight: 16, width: 34, textAlign: 'right' },
+    back: { color: C.ink2, ...T.body },
+    title: { color: C.ink, ...T.title, flex: 1, textAlign: 'center' },
+    mode: { color: C.ink3, ...T.meta, width: 32, textAlign: 'right' },
     errBox: {
-      margin: 14,
-      padding: 12,
+      margin: S.page,
+      marginTop: 0,
+      padding: S.x4,
       backgroundColor: C.card,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: C.line,
-      gap: 4,
+      borderRadius: R.small,
+      gap: S.x1,
     },
-    errTitle: { color: C.bad, fontSize: 13, fontWeight: '700', lineHeight: 18 },
-    errMsg: { color: C.ink, fontSize: 13, lineHeight: 19 },
-    older: { alignItems: 'center', paddingVertical: 12 },
-    olderText: { color: C.ink3, fontSize: 11, lineHeight: 16 },
-    bubbleRow: { paddingHorizontal: 14, marginVertical: 4 },
+    errTitle: { color: C.bad, ...T.title },
+    errMsg: { color: C.ink2, ...T.body },
+    older: { alignItems: 'center', paddingVertical: S.x3 },
+    olderText: { color: C.ink3, ...T.meta },
+    bubbleRow: { paddingHorizontal: S.page, marginVertical: S.x1 },
     left: { alignItems: 'flex-start' },
     right: { alignItems: 'flex-end' },
-    bubble: { maxWidth: '82%', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9 },
+    bubble: { maxWidth: BUBBLE_MAX, borderRadius: R.small, paddingHorizontal: S.x4, paddingVertical: S.x4 },
     bubbleMine: { backgroundColor: C.me },
     bubbleTheirs: { backgroundColor: C.card },
-    bubbleText: { color: C.ink, fontSize: 15, lineHeight: 21 },
+    bubbleText: { color: C.ink, ...T.body },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
-      gap: 8,
-      paddingHorizontal: 10,
-      paddingTop: 10,
-      borderTopColor: C.line,
-      borderTopWidth: StyleSheet.hairlineWidth,
+      gap: S.x2,
+      paddingHorizontal: S.page,
+      paddingTop: S.x3,
     },
     input: {
       flex: 1,
       maxHeight: 120,
       backgroundColor: C.card,
-      borderRadius: 12,
+      borderRadius: R.capsule,
       color: C.ink,
-      fontSize: 15,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      ...T.body,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x3,
     },
-    sendBtn: { backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11 },
-    sendText: { color: '#ffffff', fontSize: 15, fontWeight: '600', lineHeight: 20 },
+    sendBtn: {
+      backgroundColor: C.hero,
+      borderRadius: R.capsule,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x3,
+    },
+    sendText: { color: C.onHero, ...T.body },
   });
