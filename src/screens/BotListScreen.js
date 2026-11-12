@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
+  Modal,
   PanResponder,
   Pressable,
   RefreshControl,
@@ -16,15 +17,15 @@ import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import { advisors } from '../api';
 
-// Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按拖动排序（纯 JS PanResponder，无原生模块）。
-// 未读数据源后端还没给，先用 mockUnread 造假数据；接口就位后把 setUnread 换成服务端字段即可。
+// Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按弹菜单（移动/编辑/隐藏/删除）。
+// 拖动入口只在菜单里选「移动」之后开启：此时每行右侧出现把手，拖完点右上「完成」退出。
+// 行高不写魔数：ROW_H 与 ROW_GAP 只在样式常量里定义一次，拖动步长优先用 onLayout 实测值。
 
-const ROW_HEIGHT = 84;
+const ROW_H = 84;
 const ROW_GAP = 12;
-const STRIDE = ROW_HEIGHT + ROW_GAP;
-const LONG_PRESS_MS = 300; // 长按 300ms 才进拖动，短按照旧进会话
+const LONG_PRESS_MS = 300;
 
-// TODO(后端): unread 字段就位后删掉这个函数
+// TODO(后端): unread 就位后删掉
 function mockUnread(id) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 997;
@@ -55,9 +56,11 @@ const AdvisorRow = memo(function AdvisorRow({
   s,
   C,
   scheme,
+  dragMode,
   dragging,
   onOpen,
   onLongPress,
+  onMeasured,
   panHandlers,
   translateY,
 }) {
@@ -66,13 +69,13 @@ const AdvisorRow = memo(function AdvisorRow({
   const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
   return (
     <Animated.View
-      style={[s.rowWrap, dragging ? { zIndex: 10, transform: [{ translateY }] } : null]}
-      {...panHandlers}
+      onLayout={onMeasured}
+      style={[s.rowWrap, dragging ? { zIndex: 20, transform: [{ translateY }] } : null]}
     >
       <Pressable
         style={s.row}
-        onPress={() => onOpen(item)}
-        onLongPress={onLongPress}
+        onPress={dragMode ? undefined : () => onOpen(item)}
+        onLongPress={dragMode ? undefined : onLongPress}
         delayLongPress={LONG_PRESS_MS}
       >
         <Animated.Image
@@ -91,10 +94,17 @@ const AdvisorRow = memo(function AdvisorRow({
             </Text>
           </View>
         </View>
-        {unread > 0 ? (
+        {unread > 0 && !dragMode ? (
           <View style={[s.badge, { backgroundColor: C.accentCoral }]}>
             <Text style={s.badgeText} allowFontScaling={false}>
               {unread > 99 ? '99+' : String(unread)}
+            </Text>
+          </View>
+        ) : null}
+        {dragMode ? (
+          <View {...panHandlers} style={s.handle} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Text style={s.handleText} allowFontScaling={false}>
+              ≡
             </Text>
           </View>
         ) : null}
@@ -110,11 +120,16 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const [rows, setRows] = useState([]);
   const [order, setOrder] = useState([]);
   const [unread, setUnread] = useState({});
+  const [hidden, setHidden] = useState(() => new Set());
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [menuFor, setMenuFor] = useState(null);
+  const [dragMode, setDragMode] = useState(false);
   const [dragId, setDragId] = useState(null);
   const dragY = useRef(new Animated.Value(0)).current;
+  const rowH = useRef(ROW_H); // onLayout 实测后覆盖
+  const gapRef = useRef(S.x3);
 
   useEffect(() => {
     loadOrder().then(setOrder);
@@ -126,7 +141,6 @@ export default function BotListScreen({ onOpen, onSettings }) {
       const list = await advisors();
       setRows(list);
       setErr(null);
-      // TODO(后端): 换成服务端 unread
       const m = {};
       list.forEach((it) => {
         m[String(it.id)] = mockUnread(String(it.id));
@@ -145,7 +159,8 @@ export default function BotListScreen({ onOpen, onSettings }) {
     load(false);
   }, [load]);
 
-  const sorted = useMemo(() => applyOrder(rows, order), [rows, order]);
+  const visible = useMemo(() => rows.filter((it) => !hidden.has(String(it.id))), [rows, hidden]);
+  const sorted = useMemo(() => applyOrder(visible, order), [visible, order]);
   const unreadTotal = useMemo(
     () => sorted.reduce((sum, it) => sum + (unread[String(it.id)] || 0), 0),
     [sorted, unread],
@@ -153,8 +168,8 @@ export default function BotListScreen({ onOpen, onSettings }) {
 
   const reorder = useCallback(
     (fromIndex, dy) => {
-      const shift = Math.round(dy / STRIDE);
-      const to = Math.max(0, Math.min(sorted.length - 1, fromIndex + shift));
+      const stride = rowH.current + gapRef.current;
+      const to = Math.max(0, Math.min(sorted.length - 1, fromIndex + Math.round(dy / stride)));
       if (to === fromIndex) return;
       const ids = sorted.map((it) => String(it.id));
       const [moved] = ids.splice(fromIndex, 1);
@@ -181,12 +196,12 @@ export default function BotListScreen({ onOpen, onSettings }) {
     });
   }, []);
 
-  // 每行一个响应器：只有长按把 dragId 设成它之后，移动才被接管；短按完全不碰
   const makePan = useCallback(
     (item, index) =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponder: () => dragId === String(item.id),
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: () => setDragId(String(item.id)),
         onPanResponderMove: (_, g) => dragY.setValue(g.dy),
         onPanResponderRelease: (_, g) => {
           setDragId(null);
@@ -198,7 +213,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
           dragY.setValue(0);
         },
       }),
-    [dragId, dragY, reorder],
+    [dragY, reorder],
   );
 
   const renderItem = useCallback(
@@ -209,21 +224,36 @@ export default function BotListScreen({ onOpen, onSettings }) {
         s={s}
         C={C}
         scheme={scheme}
+        dragMode={dragMode}
         dragging={dragId === String(item.id)}
         onOpen={openBot}
-        onLongPress={() => setDragId(String(item.id))}
+        onLongPress={() => setMenuFor(item)}
+        onMeasured={(e) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0) rowH.current = h;
+        }}
         panHandlers={makePan(item, index).panHandlers}
         translateY={dragY}
       />
     ),
-    [s, C, scheme, unread, dragId, openBot, makePan, dragY],
+    [s, C, scheme, unread, dragMode, dragId, openBot, makePan, dragY],
   );
 
   const keyExtractor = useCallback((it) => String(it.id), []);
-  const getItemLayout = useCallback(
-    (_, index) => ({ length: STRIDE, offset: STRIDE * index, index }),
-    [],
-  );
+  const getItemLayout = useCallback((_, index) => {
+    const stride = rowH.current + gapRef.current;
+    return { length: stride, offset: stride * index, index };
+  }, []);
+
+  const menuAction = (kind) => {
+    const target = menuFor;
+    setMenuFor(null);
+    if (!target) return;
+    const id = String(target.id);
+    if (kind === 'move') setDragMode(true);
+    if (kind === 'hide') setHidden((prev) => new Set(prev).add(id));
+    if (kind === 'delete') setHidden((prev) => new Set(prev).add(id)); // 本地移除；真删等后端
+  };
 
   const stepLabel = { login: '登录失败', auth: '认证失败', list: '取顾问列表失败' };
 
@@ -234,18 +264,26 @@ export default function BotListScreen({ onOpen, onSettings }) {
           顾问
         </Text>
         <View style={s.headRight}>
-          {unreadTotal > 0 ? (
+          {dragMode ? (
+            <Pressable onPress={() => setDragMode(false)} hitSlop={10} style={s.clearBtn}>
+              <Text style={s.clearText} allowFontScaling={false}>
+                完成
+              </Text>
+            </Pressable>
+          ) : unreadTotal > 0 ? (
             <Pressable onPress={clearAll} hitSlop={10} style={s.clearBtn}>
               <Text style={s.clearText} allowFontScaling={false}>
                 全部已读
               </Text>
             </Pressable>
           ) : null}
-          <Pressable onPress={onSettings} hitSlop={10}>
-            <Text style={s.gear} allowFontScaling={false}>
-              设置
-            </Text>
-          </Pressable>
+          {!dragMode ? (
+            <Pressable onPress={onSettings} hitSlop={10}>
+              <Text style={s.gear} allowFontScaling={false}>
+                设置
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -297,13 +335,46 @@ export default function BotListScreen({ onOpen, onSettings }) {
               <Text style={s.emptyTitle} allowFontScaling={false}>
                 一个顾问都没有
               </Text>
-              <Text style={s.centerText} allowFontScaling={false}>
-                列表拉取成功，但电脑那边返回的是空数组
-              </Text>
             </View>
           }
         />
       )}
+
+      {/* 长按菜单：RN 内置 Modal，不加依赖 */}
+      <Modal visible={menuFor !== null} transparent animationType="fade" onRequestClose={() => setMenuFor(null)}>
+        <Pressable style={s.backdrop} onPress={() => setMenuFor(null)}>
+          <View style={s.sheet}>
+            <Text style={s.sheetTitle} numberOfLines={1} allowFontScaling={false}>
+              {menuFor ? menuFor.name : ''}
+            </Text>
+            <Pressable style={s.sheetItem} onPress={() => menuAction('move')}>
+              <Text style={s.sheetText} allowFontScaling={false}>
+                移动
+              </Text>
+            </Pressable>
+            <Pressable style={s.sheetItem} onPress={() => setMenuFor(null)}>
+              <Text style={[s.sheetText, { color: C.ink3 }]} allowFontScaling={false}>
+                编辑（等后端）
+              </Text>
+            </Pressable>
+            <Pressable style={s.sheetItem} onPress={() => menuAction('hide')}>
+              <Text style={s.sheetText} allowFontScaling={false}>
+                隐藏
+              </Text>
+            </Pressable>
+            <Pressable style={s.sheetItem} onPress={() => menuAction('delete')}>
+              <Text style={[s.sheetText, { color: C.accentCoral }]} allowFontScaling={false}>
+                删除
+              </Text>
+            </Pressable>
+            <Pressable style={[s.sheetItem, s.sheetCancel]} onPress={() => setMenuFor(null)}>
+              <Text style={[s.sheetText, { color: C.ink2 }]} allowFontScaling={false}>
+                取消
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -327,13 +398,7 @@ const makeStyles = (C, T, S, R) =>
     center: { alignItems: 'center', justifyContent: 'center', paddingVertical: S.x8, gap: S.x3 },
     centerText: { color: C.ink3, ...T.meta, textAlign: 'center' },
     emptyTitle: { color: C.ink2, ...T.body },
-    errBox: {
-      margin: S.page,
-      padding: S.card,
-      backgroundColor: C.card,
-      borderRadius: R.big,
-      gap: S.x2,
-    },
+    errBox: { margin: S.page, padding: S.card, backgroundColor: C.card, borderRadius: R.big, gap: S.x2 },
     errTitle: { color: C.bad, ...T.title },
     errMsg: { color: C.ink2, ...T.body },
     errActions: { flexDirection: 'row', gap: S.x3, marginTop: S.x1 },
@@ -346,9 +411,9 @@ const makeStyles = (C, T, S, R) =>
     errBtnText: { color: C.onAccent, ...T.meta },
     errBtnGhost: { borderRadius: R.capsule, paddingHorizontal: S.x4, paddingVertical: S.x2 },
     errBtnGhostText: { color: C.ink2, ...T.meta },
-    rowWrap: { marginHorizontal: S.page, marginBottom: S.x3 },
+    rowWrap: { marginHorizontal: S.page, marginBottom: ROW_GAP },
     row: {
-      height: ROW_HEIGHT,
+      height: ROW_H,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: S.x4,
@@ -371,4 +436,18 @@ const makeStyles = (C, T, S, R) =>
       justifyContent: 'center',
     },
     badgeText: { color: C.onAccent, fontSize: 11, lineHeight: 15, fontWeight: '600' },
+    handle: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
+    handleText: { color: C.ink3, fontSize: 20, lineHeight: 24 },
+    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    sheet: {
+      backgroundColor: C.card,
+      borderTopLeftRadius: R.big,
+      borderTopRightRadius: R.big,
+      padding: S.x4,
+      gap: S.x1,
+    },
+    sheetTitle: { color: C.ink2, ...T.meta, marginBottom: S.x2 },
+    sheetItem: { paddingVertical: S.x3 },
+    sheetText: { color: C.ink, ...T.title },
+    sheetCancel: { marginTop: S.x2 },
   });
