@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -9,14 +10,15 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme, avatarInk, inkOn } from '../theme';
+import { useTheme, avatarInk } from '../theme';
+import { maskFor } from '../avatarMasks';
 import { advisors } from '../api';
 
 // 功能一：Bot 列表。四态：loading / failed / empty / list。
-// 令牌 v4：无分割线、无投影、无描边；行靠 12 纵距 + 卡片色块分层。
-// 头像：底色用电脑端给每只 bot 的语义色（avatar.color），字色按对比度自动选白/深。
+// 令牌 v4：无分割线、无投影、无描边。
+// 头像：白 mask PNG + tintColor 染色（图里没有烧死的颜色）；形状/颜色都来自电脑端 avatar 字段。
 
-const ROW_HEIGHT = 84; // 定高给 getItemLayout：头像 44 + 上下各 20
+const ROW_HEIGHT = 84;
 
 function statusText(item) {
   const st = String(item.status || 'unknown');
@@ -36,16 +38,16 @@ function dotColor(status, C) {
 }
 
 const AdvisorRow = memo(function AdvisorRow({ item, onOpen, C, s, scheme }) {
-  // 头像底色 = 电脑端给这个 bot 的语义色（avatar.color）；没给就退回卡片色
-  const inkBg = item.avatar && item.avatar.color ? avatarInk(item.avatar.color, scheme) : C.card2;
-  const inkFg = inkOn(inkBg);
+  const avatar = item.avatar || {};
+  const shape = avatar.shape || 'gumdrop'; // 与电脑端 FALLBACK_SHAPE 一致
+  const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
   return (
     <Pressable style={s.row} onPress={() => onOpen(item)}>
-      <View style={[s.avatar, { backgroundColor: inkBg }]}>
-        <Text style={[s.avatarText, { color: inkFg }]} allowFontScaling={false}>
-          {String(item.name || '?').slice(0, 1)}
-        </Text>
-      </View>
+      <Image
+        source={{ uri: maskFor(shape, 40) }}
+        style={[s.mark, { tintColor: tint }]}
+        resizeMode="contain"
+      />
       <View style={s.rowBody}>
         <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
           {item.name}
@@ -218,14 +220,8 @@ const makeStyles = (C, T, S, R) =>
       borderRadius: R.small,
       gap: S.x4,
     },
-    avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: R.capsule,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatarText: { ...T.title },
+    // 头像：40px 白 mask，颜色靠 tintColor 染（图里没有烧死的颜色）
+    mark: { width: 40, height: 40 },
     rowBody: { flex: 1 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
     dot: { width: 6, height: 6, borderRadius: 3 },
