@@ -1,12 +1,13 @@
 import { getBase, getPass, getSess, setSess } from './store';
+import { createFeed } from './sse';
 
 // 现状（2026-11-12，mobile_server.py，后端已实测）：
 //   POST /login  {p: 口令} -> { ok, ttl: 7200, session: "<43 位>" }
 //        之后每个请求带 Authorization: Bearer <session>；cookie 那条路后端保留做兼容。
-//   GET  /api/dsbot/advisors          -> { ok, advisors:[{id,name,role}] }
-//   GET  /api/dsbot/chat?bot=<id>     -> { ok, messages:[{who,text,at}] }（无 cursor）
+//   GET  /api/dsbot/advisors          -> { ok, advisors:[{id,name,role,status,activity?,tool?,since?}] }
+//   GET  /api/dsbot/chat?bot=<id>     -> { ok, messages:[{who,text,at,seq?}] }（无 cursor）
 //   POST /api/dsbot/send {bot,text}   -> 发一条后立刻把整段对话读回来（非流式）
-// 通用透传 POST /api/bot 与 SSE GET /api/bot/feed 在代理层还不存在（见 CHANGELOG 缺口）。
+//   GET  /api/dsbot/feed              -> SSE 长连接（解析/重连在 src/sse.js）
 
 export class ApiError extends Error {
   constructor(message, step, extra = {}) {
@@ -195,52 +196,38 @@ export async function send(botId, text) {
   return d.messages || [];
 }
 
-// ---- 流式：优先 SSE；代理层没这条路由就降级轮询 ----
-export function openFeed({ onEvent, onError }) {
-  let xhr = null;
-  let closed = false;
+// ---- 流式：SSE 长连接（解析与重连在 src/sse.js，那部分是纯 JS，可在 Node 里自测）----
+// 断开后 2 秒退避重连（最长 10 秒）；401/403 不重连，直接报「请重新登录」。
+export function openFeed({ onEvent, onError, onAuthFail }) {
+  let handle = null;
+  let cancelled = false;
 
   (async () => {
     const base = await getBase();
     const sess = await getSess();
+    if (cancelled) return;
     if (!base || !sess) {
       onError && onError(new ApiError('没登录，开不了流', 'feed'));
       return;
     }
-    xhr = new XMLHttpRequest();
-    let seen = 0;
-    xhr.open('GET', join(base, '/api/bot/feed'));
-    xhr.setRequestHeader('authorization', 'Bearer ' + sess);
-    xhr.setRequestHeader(COOKIE_HEADER, SESSION_COOKIE + '=' + sess);
-    xhr.setRequestHeader('accept', 'text/event-stream');
-    xhr.timeout = 0;
-
-    xhr.onprogress = () => {
-      const buf = xhr.responseText || '';
-      const fresh = buf.slice(seen);
-      seen = buf.length;
-      fresh.split('\n\n').forEach((chunk) => {
-        const ev = /^event:\s*(.+)$/m.exec(chunk);
-        const data = /^data:\s*(.+)$/m.exec(chunk);
-        if (!ev || !data) return;
-        let parsed = null;
-        try {
-          parsed = JSON.parse(data[1]);
-        } catch {
-          return;
-        }
-        onEvent && onEvent(ev[1].trim(), parsed);
-      });
-    };
-    xhr.onerror = () => !closed && onError && onError(new ApiError('流断了', 'feed'));
-    xhr.onloadend = () => !closed && onError && onError(new ApiError('流结束', 'feed'));
-    xhr.send();
+    handle = createFeed({
+      url: join(base, '/api/dsbot/feed'),
+      token: sess,
+      xhrFactory: () => new XMLHttpRequest(),
+      onEvent,
+      onError: (e) => onError && onError(new ApiError(e.message || '流断了', 'feed')),
+      onAuthFail: (status) => {
+        const err = new ApiError(`会话过期（HTTP ${status}），请重新登录`, 'auth');
+        onAuthFail ? onAuthFail(err) : onError && onError(err);
+      },
+    });
   })();
 
   return () => {
-    closed = true;
+    cancelled = true;
     try {
-      xhr && xhr.abort();
+      handle && handle.close();
     } catch {}
+    handle = null;
   };
 }
