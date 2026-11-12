@@ -16,8 +16,8 @@ import { login } from '../api';
 import { setBase, setPass } from '../store';
 
 export default function SetupScreen({ onDone }) {
-  const { C } = useTheme();
-  const s = useMemo(() => makeStyles(C), [C]);
+  const { C, T, S, R } = useTheme();
+  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
   const [base, setBaseText] = useState('');
   const [pass, setPassText] = useState('');
@@ -53,10 +53,10 @@ export default function SetupScreen({ onDone }) {
 
   return (
     <KeyboardAvoidingView
-      style={[s.root, { paddingTop: insets.top + 24 }]}
+      style={[s.root, { paddingTop: insets.top + S.x8 }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ paddingBottom: S.x6 }} keyboardShouldPersistTaps="handled">
         <Text style={s.title} allowFontScaling={false}>
           连上你的电脑
         </Text>
@@ -106,7 +106,7 @@ export default function SetupScreen({ onDone }) {
 
         <Pressable style={[s.btn, busy && s.btnBusy]} onPress={submit} disabled={busy}>
           {busy ? (
-            <ActivityIndicator color={C.accent} />
+            <ActivityIndicator color={C.onHero} />
           ) : (
             <Text style={s.btnText} allowFontScaling={false}>
               连接
@@ -118,40 +118,36 @@ export default function SetupScreen({ onDone }) {
   );
 }
 
-const makeStyles = (C) =>
+const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
-    root: { flex: 1, backgroundColor: C.bg, paddingHorizontal: 24 },
-    title: { color: C.ink, fontSize: 24, fontWeight: '700', lineHeight: 31 },
-    hint: { color: C.ink2, fontSize: 13, lineHeight: 19, marginTop: 6, marginBottom: 20 },
-    label: { color: C.ink2, fontSize: 13, lineHeight: 18, marginBottom: 6, marginTop: 10 },
+    root: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page },
+    title: { color: C.ink, ...T.display },
+    hint: { color: C.ink2, ...T.body, marginTop: S.x2, marginBottom: S.x6 },
+    label: { color: C.ink2, ...T.meta, marginBottom: S.x2, marginTop: S.x3 },
     input: {
       backgroundColor: C.card,
-      borderColor: C.line,
-      borderWidth: 1,
-      borderRadius: 10,
+      borderRadius: R.small,
       color: C.ink,
-      fontSize: 16,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
+      ...T.title,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x3,
     },
     errBox: {
-      marginTop: 14,
-      padding: 12,
+      marginTop: S.x4,
+      padding: S.x4,
       backgroundColor: C.card,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: C.line,
-      gap: 4,
+      borderRadius: R.small,
+      gap: S.x1,
     },
-    errTitle: { color: C.bad, fontSize: 13, fontWeight: '700', lineHeight: 18 },
-    errMsg: { color: C.ink, fontSize: 13, lineHeight: 19 },
+    errTitle: { color: C.bad, ...T.title },
+    errMsg: { color: C.ink2, ...T.body },
     btn: {
-      backgroundColor: C.accent,
-      borderRadius: 10,
-      marginTop: 22,
-      paddingVertical: 14,
+      backgroundColor: C.hero,
+      borderRadius: R.capsule,
+      marginTop: S.x6,
+      paddingVertical: S.x4,
       alignItems: 'center',
     },
     btnBusy: { opacity: 0.7 },
-    btnText: { color: '#ffffff', fontSize: 16, fontWeight: '600', lineHeight: 22 },
+    btnText: { color: C.onHero, ...T.title },
   });
