@@ -1,0 +1,53 @@
+name: iOS unsigned ipa
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+      - name: Prebuild iOS project
+        run: npx expo prebuild -p ios --no-install
+      - name: Pod install
+        working-directory: ios
+        run: pod install
+      - name: Build without signing
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME=$(xcodebuild -list -json -workspace "$WORKSPACE" | python3 -c "import json,sys; print(json.load(sys.stdin)['workspace']['schemes'][0])")
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -derivedDataPath "$GITHUB_WORKSPACE/build" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Package unsigned ipa
+        run: |
+          set -euo pipefail
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -1)
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          cd out && zip -qry "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa" Payload
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-bot-unsigned-ipa
+          path: ds-bot-unsigned.ipa
+          if-no-files-found: error
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: unsigned-latest
+          name: Unsigned IPA (latest)
+          prerelease: true
+          files: ds-bot-unsigned.ipa
