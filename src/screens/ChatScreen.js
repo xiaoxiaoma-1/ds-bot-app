@@ -1,7 +1,7 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
+  Easing,
   FlatList,
   Pressable,
   StyleSheet,
@@ -13,37 +13,93 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { chat, openFeed, send } from '../api';
 import { useKeyboardShift } from '../keyboard';
+import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
 
-// 功能二 + 三：会话历史 + 发消息 + 流式回复。
-// 1) 消息区永远 flex:1，加载指示画在里面 —— 输入栏贴底。
-// 2) 流式增量不碰父 state，走 LiveBubble 的 ref 局部更新 + rAF 合并。
-// 3) 键盘位移走 useKeyboardShift（同帧同曲线）。
-// 4) 消息列表开 keyboardDismissMode="interactive"：拖消息区时键盘跟手收起（iOS 原生）。
+// 会话页（定案稿第二屏）：顶栏 44 高无分割线；消息区 flex:1；输入栏贴底；
+// 气泡 最大宽 279 / 圆角 24 / 内边距 16 / 同人 4 / 换人 12；加载态 11pt + 三点；发送键 brand 底。
+// 动效：气泡采纳 S3 弹一次、新消息轻跳一次，全部 native driver。
 
 const BUBBLE_MAX = 279;
 
-const BubbleRow = memo(function BubbleRow({ item, s }) {
-  const mine = item.who === '我';
+function useDots() {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(v, {
+        toValue: 3,
+        duration: 900,
+        easing: Easing.linear, // 循环动画不用弹簧
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [v]);
+  return v;
+}
+
+function LoadingDots({ s }) {
+  const v = useDots();
+  const dot = (i) => {
+    const opacity = v.interpolate({
+      inputRange: [i, i + 0.5, i + 1, 3],
+      outputRange: [0.25, 1, 0.25, 0.25],
+    });
+    return <Animated.View key={i} style={[s.dot, { opacity }]} />;
+  };
   return (
-    <View style={[s.bubbleRow, mine ? s.right : s.left]}>
+    <View style={s.center}>
+      <View style={s.dotsRow}>{[0, 1, 2].map(dot)}</View>
+      <Text style={s.centerText} allowFontScaling={false}>
+        正在读会话
+      </Text>
+    </View>
+  );
+}
+
+const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s }) {
+  const appear = useAppearOnce(0);
+  const bounce = useBounceOnce();
+  const mine = item.who === '我';
+  const sameSpeaker = prevWho === item.who;
+  return (
+    <Animated.View
+      style={[
+        s.bubbleRow,
+        mine ? s.right : s.left,
+        { marginTop: sameSpeaker ? 4 : 12 },
+        appear.style,
+        isLast ? bounce : null,
+      ]}
+    >
       <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
         <Text style={s.bubbleText} allowFontScaling={false}>
           {item.text}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 });
 
 const MessageList = memo(function MessageList({ items, C, T, S, R }) {
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
-  const renderItem = useCallback(({ item }) => <BubbleRow item={item} s={s} />, [s]);
+  const data = useMemo(() => [...items].reverse(), [items]);
+  const renderItem = useCallback(
+    ({ item, index }) => (
+      <BubbleRow
+        item={item}
+        prevWho={data[index + 1] ? data[index + 1].who : undefined}
+        isLast={index === 0}
+        s={s}
+      />
+    ),
+    [data, s],
+  );
   const keyExtractor = useCallback((it, i) => {
     if (it.seq !== undefined && it.seq !== null) return 's' + it.seq;
     if (it.at !== undefined && it.at !== null) return 't' + it.at + '|' + String(it.text).slice(0, 8);
     return 'i' + i;
   }, []);
-  const data = useMemo(() => [...items].reverse(), [items]);
 
   return (
     <FlatList
@@ -58,13 +114,6 @@ const MessageList = memo(function MessageList({ items, C, T, S, R }) {
       keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={{ paddingVertical: S.x3 }}
-      ListHeaderComponent={
-        <View style={s.older}>
-          <Text style={s.olderText} allowFontScaling={false}>
-            更早的历史：代理层补上 cursor 后开放
-          </Text>
-        </View>
-      }
       ListEmptyComponent={
         <View style={s.center}>
           <Text style={s.centerText} allowFontScaling={false}>
@@ -124,7 +173,7 @@ const LiveBubble = memo(
 
     if (!text) return null;
     return (
-      <View style={[s.bubbleRow, s.left]}>
+      <View style={[s.bubbleRow, s.left, { marginTop: 12 }]}>
         <View style={[s.bubble, s.bubbleTheirs]}>
           <Text style={s.bubbleText} allowFontScaling={false}>
             {text}
@@ -144,6 +193,9 @@ export default function ChatScreen({ bot, onBack }) {
     () => ({ transform: [{ translateY: Animated.multiply(keyboardShift, -1) }] }),
     [keyboardShift],
   );
+  const sendPress = usePressScale(0.94);
+  const backPress = usePressScale(0.94);
+
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
@@ -182,13 +234,9 @@ export default function ChatScreen({ bot, onBack }) {
       if (data.botId && String(data.botId) !== targetBot.current) return;
 
       if (name === 'stream') {
-        if (data.phase === 'start') {
-          liveRef.current && liveRef.current.clear();
-        } else if (data.phase === 'end') {
-          liveRef.current && liveRef.current.finish();
-        } else if (typeof data.text === 'string' && data.text) {
-          liveRef.current && liveRef.current.append(data.text);
-        }
+        if (data.phase === 'start') liveRef.current && liveRef.current.clear();
+        else if (data.phase === 'end') liveRef.current && liveRef.current.finish();
+        else if (typeof data.text === 'string' && data.text) liveRef.current && liveRef.current.append(data.text);
         return;
       }
 
@@ -263,12 +311,19 @@ export default function ChatScreen({ bot, onBack }) {
 
   return (
     <View style={s.root}>
-      <View style={[s.head, { paddingTop: insets.top + S.x2 }]}>
-        <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={s.back} allowFontScaling={false}>
-            ‹ 返回
-          </Text>
-        </Pressable>
+      <View style={[s.head, { paddingTop: insets.top }]}>
+        <Animated.View style={backPress.scale}>
+          <Pressable
+            onPress={onBack}
+            onPressIn={backPress.onPressIn}
+            onPressOut={backPress.onPressOut}
+            hitSlop={12}
+          >
+            <Text style={s.back} allowFontScaling={false}>
+              ‹ 返回
+            </Text>
+          </Pressable>
+        </Animated.View>
         <Text style={s.title} numberOfLines={1} allowFontScaling={false}>
           {bot.name}
         </Text>
@@ -288,19 +343,9 @@ export default function ChatScreen({ bot, onBack }) {
         </View>
       ) : null}
 
-      {/* 消息区 + 输入栏整体跟随键盘：transform 走原生驱动，与键盘同帧起步 */}
       <Animated.View style={[s.body, keyboardMove]}>
         <View style={s.body}>
-          {loading ? (
-            <View style={s.center}>
-              <ActivityIndicator color={C.accent} />
-              <Text style={s.centerText} allowFontScaling={false}>
-                正在读会话
-              </Text>
-            </View>
-          ) : (
-            <MessageList items={items} C={C} T={T} S={S} R={R} />
-          )}
+          {loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
         </View>
 
@@ -313,11 +358,19 @@ export default function ChatScreen({ bot, onBack }) {
             placeholderTextColor={C.ink3}
             multiline
           />
-          <Pressable style={s.sendBtn} onPress={onSend} disabled={!draft.trim()}>
-            <Text style={s.sendText} allowFontScaling={false}>
-              发送
-            </Text>
-          </Pressable>
+          <Animated.View style={sendPress.scale}>
+            <Pressable
+              style={s.sendBtn}
+              onPress={onSend}
+              onPressIn={sendPress.onPressIn}
+              onPressOut={sendPress.onPressOut}
+              disabled={!draft.trim()}
+            >
+              <Text style={s.sendText} allowFontScaling={false}>
+                发送
+              </Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </Animated.View>
     </View>
@@ -328,13 +381,15 @@ const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     body: { flex: 1 },
-    center: { alignItems: 'center', justifyContent: 'center', paddingVertical: S.x8, gap: S.x3 },
+    center: { alignItems: 'center', justifyContent: 'center', paddingVertical: S.x8, gap: S.x2 },
     centerText: { color: C.ink3, ...T.meta, textAlign: 'center' },
+    dotsRow: { flexDirection: 'row', gap: 6 },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.ink3 },
     head: {
+      height: 44,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: S.page,
-      paddingBottom: S.x3,
       gap: S.x3,
     },
     back: { color: C.ink2, ...T.body },
@@ -350,12 +405,15 @@ const makeStyles = (C, T, S, R) =>
     },
     errTitle: { color: C.bad, ...T.title },
     errMsg: { color: C.ink2, ...T.body },
-    older: { alignItems: 'center', paddingVertical: S.x3 },
-    olderText: { color: C.ink3, ...T.meta },
-    bubbleRow: { paddingHorizontal: S.page, marginVertical: S.x1 },
+    bubbleRow: { paddingHorizontal: S.page },
     left: { alignItems: 'flex-start' },
     right: { alignItems: 'flex-end' },
-    bubble: { maxWidth: BUBBLE_MAX, borderRadius: R.small, paddingHorizontal: S.x4, paddingVertical: S.x4 },
+    bubble: {
+      maxWidth: BUBBLE_MAX,
+      borderRadius: R.small,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x4,
+    },
     bubbleMine: { backgroundColor: C.me },
     bubbleTheirs: { backgroundColor: C.card },
     bubbleText: { color: C.ink, ...T.body },
@@ -377,10 +435,10 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x3,
     },
     sendBtn: {
-      backgroundColor: C.hero,
+      backgroundColor: C.accent,
       borderRadius: R.capsule,
       paddingHorizontal: S.x4,
       paddingVertical: S.x3,
     },
-    sendText: { color: C.onHero, ...T.body },
+    sendText: { color: C.onAccent, ...T.body },
   });

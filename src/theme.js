@@ -17,6 +17,8 @@ export const darkPalette = {
   ink2: '#8B8B94',
   ink3: '#6E6E78',
   accent: '#F0EDF4',
+  accentCoral: '#D99478',
+  brandHi: '#D4B0DE',
   good: '#67D3A0',
   bad: '#FF7A70',
   onHero: '#FFFFFF',
@@ -34,6 +36,8 @@ export const lightPalette = {
   ink2: '#9A8C9E',
   ink3: '#B6A9BA',
   accent: '#CE9EDB',
+  accentCoral: '#FFAB96',
+  brandHi: '#EAD2EE',
   good: '#3A9B6E',
   bad: '#C4483B',
   onHero: '#FFFFFF',
@@ -73,7 +77,7 @@ export const radius = {
 };
 
 // 头像语义色。来源：ds-bot 客户端 src/client/inks.js 的 INKS 表（打包在 client.js:1763-1784），
-// 每项是 [浅色值, 深色值]，与电脑端逐个对上，不许自己调色。
+// 每项是 [浅色值, 深色值]，与电脑端逐个对上。
 export const AVATAR_INKS = {
   deepseek: ['#4D6BFE', '#6A84FF'],
   charcoal: ['#141416', '#F1F2F4'],
