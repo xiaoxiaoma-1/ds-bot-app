@@ -1,0 +1,9 @@
+node_modules/
+ios/
+android/
+.expo/
+build/
+*.ipa
+Payload/
+.DS_Store
+*.log
