@@ -8,46 +8,331 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ios-unsigned-${{ github.ref }}
+  # 不取消进行中的 run：诊断回写跑到一半被砍，就等于白跑一次
+  cancel-in-progress: false
+
 jobs:
   build:
+    # 诊断回写提交带 [skip ci]；且 GITHUB_TOKEN 触发的 push 本身不会再起 run，双保险
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message || '', '[skip ci]') }}
     runs-on: macos-15
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          # 取全量历史，诊断回写那次 push 才不会因为浅克隆被拒
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
           node-version: 22
+
+      - name: Print toolchain versions
+        run: |
+          set -uo pipefail
+          sw_vers || true
+          uname -m || true
+          node -v || true
+          npm -v || true
+          xcodebuild -version || true
+          pod --version || true
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "RUNNER_OS=$RUNNER_OS RUNNER_ARCH=$RUNNER_ARCH"
+
       - name: Install deps
         run: npm install --no-audit --no-fund
+
       - name: Prebuild iOS project
         run: npx expo prebuild -p ios --no-install
+
       - name: Pod install
         working-directory: ios
         run: pod install
-      - name: Build without signing
+
+      - name: Pick scheme and build without signing
         working-directory: ios
         run: |
           set -euo pipefail
-          WORKSPACE=$(ls -d *.xcworkspace | head -1)
-          SCHEME=$(xcodebuild -list -json -workspace "$WORKSPACE" | python3 -c "import json,sys; print(json.load(sys.stdin)['workspace']['schemes'][0])")
-          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -derivedDataPath "$GITHUB_WORKSPACE/build" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+          # 不盲取 schemes[0]：Pods- 之类非 app scheme 可能排在前面
+          set +o pipefail
+          WORKSPACE=$(ls -d *.xcworkspace 2>/dev/null | head -1)
+          set -o pipefail
+          if [ -z "${WORKSPACE:-}" ]; then
+            echo "NO XCWORKSPACE FOUND"
+            exit 4
+          fi
+          echo "WORKSPACE=$WORKSPACE" >> "$GITHUB_ENV"
+          echo "== workspace: $WORKSPACE"
+
+          xcodebuild -list -workspace "$WORKSPACE" > "$GITHUB_WORKSPACE/xcodebuild-list.txt" 2>&1 || true
+          xcodebuild -list -json -workspace "$WORKSPACE" > "$GITHUB_WORKSPACE/xcodebuild-list.json" 2>&1 || true
+
+          # 主路：从 -list -json 里取 schemes
+          SCHEMES=$(python3 - "$GITHUB_WORKSPACE/xcodebuild-list.json" <<'PY' || true
+          import json, sys
+          try:
+              raw = open(sys.argv[1], encoding='utf-8', errors='replace').read()
+          except OSError:
+              raise SystemExit(0)
+          i = raw.find('{')
+          if i < 0:
+              raise SystemExit(0)
+          try:
+              d = json.loads(raw[i:])
+          except Exception:
+              raise SystemExit(0)
+          node = d.get('workspace') or d.get('project') or {}
+          for s in (node.get('schemes') or []):
+              print(s)
+          PY
+          )
+
+          # 备路：json 挂了就解析纯文本 -list 输出的 Schemes 段
+          if [ -z "${SCHEMES:-}" ]; then
+            SCHEMES=$(awk '/^[[:space:]]*Schemes:/{f=1;next} f&&/^[[:space:]]*$/{exit} f{gsub(/^[[:space:]]+/,"");print}' "$GITHUB_WORKSPACE/xcodebuild-list.txt" 2>/dev/null || true)
+          fi
+          echo "== schemes: $(printf '%s ' $SCHEMES)"
+
+          if [ -z "${SCHEMES:-}" ]; then
+            echo "NO SCHEME LIST (see xcodebuild-list.txt)"
+            exit 4
+          fi
+
+          # 选真正的 app target：问 PRODUCT_TYPE
+          SCHEME=""
+          for s in $SCHEMES; do
+            PT=$(xcodebuild -workspace "$WORKSPACE" -scheme "$s" -configuration Release -sdk iphoneos -showBuildSettings 2>/dev/null \
+                 | sed -n 's/^[[:space:]]*PRODUCT_TYPE = //p' | tr -d '"' | tail -1)
+            echo "   scheme=$s PRODUCT_TYPE=${PT:-<none>}"
+            if [ "${PT:-}" = "com.apple.product-type.application" ]; then
+              SCHEME="$s"
+              break
+            fi
+          done
+          if [ -z "$SCHEME" ]; then
+            for s in $SCHEMES; do
+              case "$s" in
+                Pods-*) : ;;
+                *) SCHEME="$s"; break ;;
+              esac
+            done
+          fi
+          if [ -z "$SCHEME" ]; then
+            echo "NO APP SCHEME FOUND"
+            exit 4
+          fi
+          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
+          echo "== scheme: $SCHEME"
+
+          set +e
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos \
+            -derivedDataPath "$GITHUB_WORKSPACE/build" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          BUILD_RC=${PIPESTATUS[0]}
+          set -e
+          echo "== xcodebuild exit: $BUILD_RC"
+          if [ "$BUILD_RC" -ne 0 ]; then
+            echo "XCODEBUILD FAILED rc=$BUILD_RC"
+            exit "$BUILD_RC"
+          fi
+
+          # 用 build settings 算出产物绝对路径，交给打包步，不再靠猜目录名
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos \
+            -derivedDataPath "$GITHUB_WORKSPACE/build" -showBuildSettings \
+            > "$GITHUB_WORKSPACE/build-settings.txt" 2>&1 || true
+          TBD=$(sed -n 's/^[[:space:]]*TARGET_BUILD_DIR = //p' "$GITHUB_WORKSPACE/build-settings.txt" | tail -1)
+          [ -n "${TBD:-}" ] || TBD=$(sed -n 's/^[[:space:]]*BUILT_PRODUCTS_DIR = //p' "$GITHUB_WORKSPACE/build-settings.txt" | tail -1)
+          WN=$(sed -n 's/^[[:space:]]*WRAPPER_NAME = //p' "$GITHUB_WORKSPACE/build-settings.txt" | tail -1)
+          [ -n "${WN:-}" ] || WN=$(sed -n 's/^[[:space:]]*FULL_PRODUCT_NAME = //p' "$GITHUB_WORKSPACE/build-settings.txt" | tail -1)
+          echo "TARGET_BUILD_DIR=$TBD" >> "$GITHUB_ENV"
+          echo "WRAPPER_NAME=$WN" >> "$GITHUB_ENV"
+          echo "== TARGET_BUILD_DIR=${TBD:-<empty>} WRAPPER_NAME=${WN:-<empty>}"
+          ls -la "${TBD:-/nonexistent}" 2>/dev/null || echo "TARGET_BUILD_DIR not listable"
+
       - name: Package unsigned ipa
         run: |
-          set -euo pipefail
-          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -1)
+          set -uo pipefail
+          echo "== locate .app"
+          echo "TARGET_BUILD_DIR=${TARGET_BUILD_DIR:-<empty>} WRAPPER_NAME=${WRAPPER_NAME:-<empty>}"
+
+          APP=""
+          # 1) build settings 算出的精确路径（最可靠）
+          if [ -n "${TARGET_BUILD_DIR:-}" ] && [ -n "${WRAPPER_NAME:-}" ] && [ -d "${TARGET_BUILD_DIR}/${WRAPPER_NAME}" ]; then
+            APP="${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+            echo "hit: build settings"
+          fi
+          # 2) build 整棵树往下找（旧版只看 Release-iphoneos 一层，目录名一变就空）
+          if [ -z "$APP" ]; then
+            APP=$(find "$GITHUB_WORKSPACE/build" -maxdepth 6 -type d -name '*.app' -print 2>/dev/null | head -1)
+            [ -n "$APP" ] && echo "hit: build tree"
+          fi
+          # 3) 全工作区兜底（排除本轮自己生成的 out/Payload）
+          if [ -z "$APP" ]; then
+            APP=$(find "$GITHUB_WORKSPACE" -maxdepth 8 -type d -name '*.app' -print 2>/dev/null | grep -v '/out/' | head -1)
+            [ -n "$APP" ] && echo "hit: workspace-wide"
+          fi
+
+          if [ -z "${APP:-}" ] || [ ! -d "${APP:-}" ]; then
+            echo "NO APP FOUND"
+            exit 2
+          fi
+
+          echo "APP=$APP"
+          ls -la "$APP" || true
+
+          rm -rf out
           mkdir -p out/Payload
-          cp -R "$APP" out/Payload/
-          cd out && zip -qry "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa" Payload
+          ditto "$APP" "out/Payload/$(basename "$APP")" || { echo "IPA PACKAGE FAILED (ditto)"; exit 3; }
+          ( cd out && zip -qry "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa" Payload ) || { echo "IPA PACKAGE FAILED (zip)"; exit 3; }
+          [ -f "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa" ] || { echo "IPA PACKAGE FAILED (no ipa file)"; exit 3; }
+
+          SIZE=$(wc -c < "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa" | tr -d ' ')
+          echo "== ipa size: $SIZE bytes"
+          if [ "$SIZE" -lt 100000 ]; then
+            echo "IPA PACKAGE FAILED (too small: $SIZE)"
+            exit 3
+          fi
+          ls -la "$GITHUB_WORKSPACE/ds-bot-unsigned.ipa"
+          echo "IPA OK"
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ds-bot-unsigned-ipa
           path: ds-bot-unsigned.ipa
           if-no-files-found: error
+          retention-days: 14
+
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: unsigned-latest
           name: Unsigned IPA (latest)
           prerelease: true
           files: ds-bot-unsigned.ipa
+
+      - name: Diagnostics (always)
+        if: always()
+        run: |
+          set +e
+          D="$GITHUB_WORKSPACE/diagnostics.txt"
+          {
+            echo "# diagnostics"
+            echo "generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "run: ${GITHUB_RUN_ID:-?} attempt: ${GITHUB_RUN_ATTEMPT:-?}"
+            echo "ref: ${GITHUB_REF:-?} sha: ${GITHUB_SHA:-?}"
+            printf 'job status: %s\n' '${{ job.status }}'
+            echo "\$GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+            echo "WORKSPACE=${WORKSPACE:-<empty>} SCHEME=${SCHEME:-<empty>}"
+            echo "TARGET_BUILD_DIR=${TARGET_BUILD_DIR:-<empty>} WRAPPER_NAME=${WRAPPER_NAME:-<empty>}"
+            echo "uname: $(uname -a)"
+            echo "xcodebuild: $(xcodebuild -version 2>&1 | tr '\n' ' ')"
+            echo "pod: $(pod --version 2>&1 | head -1)"
+            echo
+
+            echo "=== ls -la \$GITHUB_WORKSPACE ==="
+            ls -la "$GITHUB_WORKSPACE"
+            echo
+
+            echo "=== ls -la build ==="
+            ls -la build
+            echo
+
+            echo "=== ls -R build/Build/Products ==="
+            ls -R build/Build/Products
+            echo
+
+            echo "=== ls -la build/Build/Products/Release-iphoneos ==="
+            ls -la build/Build/Products/Release-iphoneos
+            echo
+
+            echo "=== find . -maxdepth 6 -name '*.app' ==="
+            find . -maxdepth 6 -name '*.app'
+            echo
+
+            echo "=== find build -maxdepth 8 -type d -name '*.app' ==="
+            find build -maxdepth 8 -type d -name '*.app'
+            echo
+
+            echo "=== ls -la ios ==="
+            ls -la ios
+            echo
+
+            echo "=== xcodebuild -list -workspace ios/*.xcworkspace ==="
+            for ws in ios/*.xcworkspace; do
+              echo "--- $ws"
+              xcodebuild -list -workspace "$ws"
+            done
+            echo
+
+            echo "=== xcodebuild -list (json) ==="
+            cat xcodebuild-list.json
+            echo
+            echo "=== xcodebuild -list (txt) ==="
+            cat xcodebuild-list.txt
+            echo
+
+            echo "=== build-settings 关键项 ==="
+            grep -E '^[[:space:]]*(TARGET_BUILD_DIR|BUILT_PRODUCTS_DIR|CONFIGURATION_BUILD_DIR|FULL_PRODUCT_NAME|WRAPPER_NAME|PRODUCT_NAME|PRODUCT_TYPE|DEPLOYMENT_LOCATION|SYMROOT|CONFIGURATION|SDKROOT|ARCHS) =' build-settings.txt
+            echo
+
+            echo "=== build.log tail 300 ==="
+            tail -300 build.log
+            echo
+
+            echo "=== build.log 关键行 ==="
+            grep -nE 'error:|\*\* BUILD|Code ?Sign|unable to|No such file|fatal error' build.log | tail -150
+            echo
+
+            echo "=== out/ 与 ipa ==="
+            ls -laR out
+            ls -la ds-bot-unsigned.ipa
+            echo
+
+            echo "=== END ==="
+          } > "$D" 2>&1
+
+          echo "---- diagnostics head ----"
+          head -60 "$D"
+          echo "---- diagnostics size: $(wc -c < "$D") bytes ----"
+
+          # 构建日志只留尾部，避免几 MB 塞进仓库
+          tail -3000 build.log > build-log-tail.txt 2>/dev/null
+
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$BRANCH" = "HEAD" ] || [ -z "$BRANCH" ]; then
+            echo "detached HEAD: skip commit"
+            exit 0
+          fi
+          git add -f diagnostics.txt
+          [ -f build-log-tail.txt ] && git add -f build-log-tail.txt
+          if git diff --cached --quiet; then
+            echo "diagnostics unchanged, nothing to commit"
+            exit 0
+          fi
+          git commit -m "chore(ci): diagnostics for run ${GITHUB_RUN_ID} [skip ci]"
+          git push origin "HEAD:${BRANCH}" || { git pull --rebase --autostash origin "$BRANCH" && git push origin "HEAD:${BRANCH}"; } || echo "push failed (non-fatal, check artifact)"
+
+      - name: Upload diagnostics (always)
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-build-diagnostics
+          path: |
+            diagnostics.txt
+            build-log-tail.txt
+            build-settings.txt
+            xcodebuild-list.json
+            xcodebuild-list.txt
+            build.log
+          if-no-files-found: warn
+          retention-days: 14
