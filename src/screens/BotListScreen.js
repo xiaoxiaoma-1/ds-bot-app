@@ -15,9 +15,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { avatarInk, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
-import { advisors } from '../api';
 import BotMenu from './botMenu';
 import { botApi } from '../botApi';
+import { advisorsFull } from '../api';
+import { groupsUnreadCount, normalizeGroups } from '../groups';
+import GroupSection from './GroupSection';
 
 // Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按弹菜单（移动/编辑/隐藏/删除）。
 // 拖动入口只在菜单里选「移动」之后开启：此时每行右侧出现把手，拖完点右上「完成」退出。
@@ -27,13 +29,6 @@ const ROW_H = 84;
 const ROW_GAP = 12;
 const LONG_PRESS_MS = 300;
 
-// TODO(后端): unread 就位后删掉
-function mockUnread(id) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 997;
-  if (h % 3 === 0) return 0;
-  return (h % 15) + 1;
-}
 
 function statusText(item) {
   const st = String(item.status || 'unknown');
@@ -131,6 +126,8 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const [dragId, setDragId] = useState(null);
   const [flash, setFlash] = useState(null);
   const [menuPrev, setMenuPrev] = useState({});
+  const [groups, setGroups] = useState([]);
+  const [unreadNote, setUnreadNote] = useState('');
 
   useEffect(() => {
     if (!flash) return undefined;
@@ -148,7 +145,10 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const load = useCallback(async (isRefresh) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
-      const list = await advisors();
+      const full = await advisorsFull();
+      const list = full.advisors;
+      setGroups(normalizeGroups(full.groups));
+      setUnreadNote(full.unreadNote || '');
       setRows(list);
       setErr(null);
       const m = {};
@@ -177,6 +177,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
     () => sorted.reduce((sum, it) => sum + (unread[String(it.id)] || 0), 0),
     [sorted, unread],
   );
+  const groupsUnread = useMemo(() => groupsUnreadCount(groups), [groups]);
 
   const reorder = useCallback(
     (fromIndex, dy) => {
@@ -201,8 +202,19 @@ export default function BotListScreen({ onOpen, onSettings }) {
     [onOpen],
   );
 
+  // 点进群：本地先清这个群的未读，再通知后端；消息内容走会话页（接口待后端确认）
+  const openGroup = useCallback(
+    (g) => {
+      setGroups((prev) => prev.map((it) => (it.id === g.id ? { ...it, unread: 0, hasUnread: false } : it)));
+      botApi.read(String(g.id)).catch(() => {});
+      onOpen({ id: g.id, name: g.name, isGroup: true, peerCount: g.memberCount });
+    },
+    [onOpen],
+  );
+
   const clearAll = useCallback(() => {
     botApi.readAll().catch(() => {});
+    setGroups((prev) => prev.map((g) => ({ ...g, unread: 0, hasUnread: false })));
     setUnread((prev) => {
       const next = {};
       Object.keys(prev).forEach((k) => (next[k] = 0));
@@ -333,7 +345,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
                 完成
               </Text>
             </Pressable>
-          ) : unreadTotal > 0 ? (
+          ) : unreadTotal + groupsUnread > 0 ? (
             <Pressable onPress={clearAll} hitSlop={10} style={s.clearBtn}>
               <Text style={s.clearText} allowFontScaling={false}>
                 全部已读
@@ -349,6 +361,11 @@ export default function BotListScreen({ onOpen, onSettings }) {
           ) : null}
         </View>
       </View>
+      {unreadNote ? (
+        <Text style={s.noteLine} allowFontScaling={false}>
+          {unreadNote}
+        </Text>
+      ) : null}
 
       {loading ? (
         <View style={s.center}>
@@ -389,6 +406,9 @@ export default function BotListScreen({ onOpen, onSettings }) {
           windowSize={9}
           removeClippedSubviews={false}
           scrollEnabled={dragId === null}
+          ListHeaderComponent={
+            dragMode ? null : <GroupSection groups={groups} onOpen={openGroup} />
+          }
           contentContainerStyle={{ paddingBottom: insets.bottom + S.x5 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={C.ink2} />
@@ -418,6 +438,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
 const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
+    noteLine: { color: C.ink3, ...T.meta, paddingHorizontal: S.page, paddingBottom: S.x2 },
     flash: {
       position: 'absolute',
       left: S.page,

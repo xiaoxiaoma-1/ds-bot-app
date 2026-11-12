@@ -1,0 +1,106 @@
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme';
+import { groupUnreadLabel } from '../groups';
+
+// 顾问列表底部的「群组」区：与 bot 分成两个区，不混在一条列表里。
+// 未读按群计，一个群 N 个成员说话也只算这个群 1 条（数字来自后端 groups[].unread，>9 写 9+）。
+export default function GroupSection({ groups, note, onOpen }) {
+  const { C, T, S, R } = useTheme();
+  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
+  if (!groups || groups.length === 0) return null;
+
+  return (
+    <View style={s.wrap}>
+      <View style={s.head}>
+        <Text style={s.title} allowFontScaling={false}>
+          群组
+        </Text>
+        <Text style={s.count} allowFontScaling={false}>
+          {groups.length} 个
+        </Text>
+      </View>
+      {note ? (
+        <Text style={s.note} allowFontScaling={false}>
+          {note}
+        </Text>
+      ) : null}
+      {groups.map((g) => {
+        const badge = groupUnreadLabel(g);
+        const meta = [`${g.memberCount} 人`];
+        if (g.admin) meta.push(`牵头 ${g.admin}`);
+        return (
+          <Pressable key={g.id} style={s.row} onPress={() => onOpen(g)} disabled={!onOpen}>
+            <View style={s.mark}>
+              <Text style={s.markText} allowFontScaling={false}>
+                群
+              </Text>
+            </View>
+            <View style={s.body}>
+              <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
+                {g.name}
+              </Text>
+              <Text style={s.preview} numberOfLines={1} allowFontScaling={false}>
+                {g.preview || meta.join(' · ')}
+              </Text>
+            </View>
+            {badge ? (
+              <View style={s.badge}>
+                <Text style={s.badgeText} allowFontScaling={false}>
+                  {badge}
+                </Text>
+              </View>
+            ) : (
+              <Text style={s.meta} allowFontScaling={false}>
+                {g.memberCount} 人
+              </Text>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const makeStyles = (C, T, S, R) =>
+  StyleSheet.create({
+    wrap: { paddingHorizontal: S.page, paddingTop: S.section },
+    head: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      marginBottom: S.x2,
+    },
+    title: { color: C.ink, ...T.section },
+    count: { color: C.ink3, ...T.meta },
+    note: { color: C.ink3, ...T.meta, marginBottom: S.x3 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: 76,
+      gap: S.x3,
+    },
+    mark: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: C.brandHi,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    markText: { color: C.ink, ...T.body, fontWeight: '600' },
+    body: { flex: 1, gap: S.x1 },
+    name: { color: C.ink, ...T.title },
+    preview: { color: C.ink2, ...T.meta },
+    meta: { color: C.ink3, ...T.meta },
+    badge: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: C.accentCoral,
+    },
+    badgeText: { color: C.onAccent, ...T.meta, fontWeight: '600' },
+  });
