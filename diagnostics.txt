@@ -1,48 +1,49 @@
 # diagnostics
-generated: 2026-11-12T03:52:27Z
-run: 43150689212 attempt: 1
-ref: refs/heads/main sha: 8f47eef3fa387d1b23ede8f9a005d7a641113b4c
+generated: 2026-11-12T04:16:57Z
+run: 43151829756 attempt: 1
+ref: refs/heads/main sha: 0aa4de5bff7c23e63688e47618ff0bc70c2bfdcd
 job status: failure
 $GITHUB_WORKSPACE: /Users/runner/work/ds-bot-app/ds-bot-app
 WORKSPACE=DSBot.xcworkspace SCHEME=DSBot
 TARGET_BUILD_DIR=<empty> WRAPPER_NAME=<empty>
-uname: Darwin sjc22-bt143-d1da7a9c-f80a-4d0f-a8a9-e01f692e6662-D6CE5B760276.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
-xcodebuild: Xcode 16.4 Build version 16F6 
+uname: Darwin sat12-bq153-0b18d4ad-e799-4f67-81f7-ba79129f0b0f-FE2BC3A2F90E.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
+xcodebuild: Xcode 26.3 Build version 17C529 
 pod: 1.17.0
 
 === ls -la $GITHUB_WORKSPACE ===
-total 2080
-drwxr-xr-x   20 runner  staff     640 Nov 12 03:52 .
-drwxr-xr-x    3 runner  staff      96 Nov 12 03:49 ..
-drwxr-xr-x   13 runner  staff     416 Nov 12 03:49 .git
-drwxr-xr-x    3 runner  staff      96 Nov 12 03:49 .github
--rw-r--r--    1 runner  staff      73 Nov 12 03:49 .gitignore
--rw-r--r--    1 runner  staff    1595 Nov 12 03:49 App.js
--rw-r--r--    1 runner  staff     279 Nov 12 03:49 app.json
-drwxr-xr-x@   8 runner  staff     256 Nov 12 03:52 build
--rw-r--r--    1 runner  staff  778911 Nov 12 03:52 build.log
--rw-r--r--    1 runner  staff    3050 Nov 12 03:49 CHANGELOG.md
--rw-r--r--    1 runner  staff     605 Nov 12 03:52 diagnostics.txt
--rw-r--r--    1 runner  staff     101 Nov 12 03:49 index.js
-drwxr-xr-x   13 runner  staff     416 Nov 12 03:51 ios
-drwxr-xr-x  275 runner  staff    8800 Nov 12 03:49 node_modules
--rw-r--r--    1 runner  staff  226932 Nov 12 03:49 package-lock.json
--rw-r--r--    1 runner  staff     333 Nov 12 03:49 package.json
--rw-r--r--    1 runner  staff     107 Nov 12 03:49 README.md
-drwxr-xr-x    6 runner  staff     192 Nov 12 03:49 src
--rw-r--r--    1 runner  staff    2981 Nov 12 03:51 xcodebuild-list.json
--rw-r--r--    1 runner  staff    2987 Nov 12 03:51 xcodebuild-list.txt
+total 3000
+drwxr-xr-x   21 runner  staff     672 Nov 12 04:15 .
+drwxr-xr-x    3 runner  staff      96 Nov 12 04:12 ..
+drwxr-xr-x   13 runner  staff     416 Nov 12 04:16 .git
+drwxr-xr-x    3 runner  staff      96 Nov 12 04:13 .github
+-rw-r--r--    1 runner  staff      73 Nov 12 04:13 .gitignore
+-rw-r--r--    1 runner  staff    1595 Nov 12 04:13 App.js
+-rw-r--r--    1 runner  staff     279 Nov 12 04:13 app.json
+drwxr-xr-x@   8 runner  staff     256 Nov 12 04:16 build
+-rw-r--r--    1 runner  staff  271954 Nov 12 04:13 build-log-tail.txt
+-rw-r--r--    1 runner  staff  942380 Nov 12 04:16 build.log
+-rw-r--r--    1 runner  staff    3050 Nov 12 04:13 CHANGELOG.md
+-rw-r--r--    1 runner  staff     607 Nov 12 04:17 diagnostics.txt
+-rw-r--r--    1 runner  staff     101 Nov 12 04:13 index.js
+drwxr-xr-x   13 runner  staff     416 Nov 12 04:15 ios
+drwxr-xr-x  275 runner  staff    8800 Nov 12 04:13 node_modules
+-rw-r--r--    1 runner  staff  226932 Nov 12 04:13 package-lock.json
+-rw-r--r--    1 runner  staff     333 Nov 12 04:13 package.json
+-rw-r--r--    1 runner  staff     107 Nov 12 04:13 README.md
+drwxr-xr-x    6 runner  staff     192 Nov 12 04:13 src
+-rw-r--r--    1 runner  staff    2981 Nov 12 04:15 xcodebuild-list.json
+-rw-r--r--    1 runner  staff    2987 Nov 12 04:15 xcodebuild-list.txt
 
 === ls -la build ===
 total 8
-drwxr-xr-x@  8 runner  staff   256 Nov 12 03:52 .
-drwxr-xr-x  20 runner  staff   640 Nov 12 03:52 ..
-drwxr-xr-x   4 runner  staff   128 Nov 12 03:52 Build
-drwxr-x---   3 runner  staff    96 Nov 12 03:52 CompilationCache.noindex
--rw-r--r--   1 runner  staff   359 Nov 12 03:52 info.plist
-drwxr-xr-x   7 runner  staff   224 Nov 12 03:51 Logs
-drwxr-xr-x  37 runner  staff  1184 Nov 12 03:52 ModuleCache.noindex
-drwxr-xr-x   3 runner  staff    96 Nov 12 03:52 SDKStatCaches.noindex
+drwxr-xr-x@  8 runner  staff   256 Nov 12 04:16 .
+drwxr-xr-x  21 runner  staff   672 Nov 12 04:15 ..
+drwxr-xr-x   4 runner  staff   128 Nov 12 04:16 Build
+drwxr-x---   3 runner  staff    96 Nov 12 04:16 CompilationCache.noindex
+-rw-r--r--   1 runner  staff   359 Nov 12 04:15 info.plist
+drwxr-xr-x   7 runner  staff   224 Nov 12 04:15 Logs
+drwxr-xr-x  58 runner  staff  1856 Nov 12 04:16 ModuleCache.noindex
+drwxr-xr-x   3 runner  staff    96 Nov 12 04:16 SDKStatCaches.noindex
 
 === ls -R build/Build/Products ===
 Release-iphoneos
@@ -187,6 +188,23 @@ build/Build/Products/Release-iphoneos/ExpoFont:
 build/Build/Products/Release-iphoneos/ExpoKeepAwake:
 
 build/Build/Products/Release-iphoneos/ExpoLogBox:
+ExpoLogBox-umbrella.h
+ExpoLogBox.modulemap
+ExpoLogBox.swiftmodule
+libExpoLogBox.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/Swift Compatibility Header:
+ExpoLogBox-Swift.h
 
 build/Build/Products/Release-iphoneos/ExpoModulesCore:
 
@@ -365,8 +383,10 @@ build/Build/Products/Release-iphoneos/React-viewtransitionnativemodule:
 build/Build/Products/Release-iphoneos/React-webperformancenativemodule:
 
 build/Build/Products/Release-iphoneos/ReactAppDependencyProvider:
+libReactAppDependencyProvider.a
 
 build/Build/Products/Release-iphoneos/ReactCodegen:
+libReactCodegen.a
 
 build/Build/Products/Release-iphoneos/ReactCommon:
 
@@ -949,109 +969,109 @@ build/Build/Products/Release-iphoneos/Yoga:
 
 === ls -la build/Build/Products/Release-iphoneos ===
 total 0
-drwxr-xr-x@ 103 runner  staff  3296 Nov 12 03:52 .
-drwxr-xr-x@   3 runner  staff    96 Nov 12 03:52 ..
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 boost
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 DoubleConversion
-drwxr-xr-x    3 runner  staff    96 Nov 12 03:52 DSBot.app
-drwxr-xr-x@   4 runner  staff   128 Nov 12 03:52 EXConstants
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 Expo
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoAsset
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoDomWebView
-drwxr-xr-x@   3 runner  staff    96 Nov 12 03:52 ExpoFileSystem
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoFont
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoKeepAwake
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoLogBox
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoModulesCore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoModulesJSI
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoModulesWorklets
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoSecureStore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ExpoStatusBar
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 fast_float
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 FBLazyVector
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 fmt
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 glog
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 hermes-engine
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCT-Folly
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCTDeprecation
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCTRequired
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCTSwiftUI
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCTSwiftUIWrapper
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 RCTTypeSafety
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-bridging
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-callinvoker
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-Core
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-Core-prebuilt
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-CoreModules
-drwxr-xr-x@   3 runner  staff    96 Nov 12 03:52 React-cxxreact
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-cxxstableapi
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-debug
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-defaultsnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-domnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-Fabric
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-FabricComponents
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-FabricImage
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-featureflags
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-featureflagsnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-graphics
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-hermes
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-idlecallbacksnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-ImageManager
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-intersectionobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jserrorhandler
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsi
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsiexecutor
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsinspector
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsinspectorcdp
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsinspectornetwork
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsinspectortracing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsitooling
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-jsitracing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-logger
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-Mapbuffer
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-microtasksnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-mutationobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-NativeModulesApple
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-networking
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-oscompat
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-perflogger
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-performancecdpmetrics
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-performancetimeline
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTActionSheet
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTAnimatedModuleProvider
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTAnimation
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTAppDelegate
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTBlob
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTFabric
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTFBReactNativeSpec
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTImage
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTLinking
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTNetwork
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTRuntime
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTSettings
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTText
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RCTVibration
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-rendererconsistency
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-renderercss
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-rendererdebug
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-resizeobservernativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RuntimeApple
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RuntimeCore
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-runtimeexecutor
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-RuntimeHermes
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-runtimescheduler
-drwxr-xr-x@   3 runner  staff    96 Nov 12 03:52 React-timing
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-utils
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-viewtransitionnativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 React-webperformancenativemodule
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ReactAppDependencyProvider
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ReactCodegen
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ReactCommon
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 ReactNativeDependencies
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 SocketRocket
-drwxr-xr-x    5 runner  staff   160 Nov 12 03:52 XCFrameworkIntermediates
-drwxr-xr-x@   2 runner  staff    64 Nov 12 03:52 Yoga
+drwxr-xr-x@ 103 runner  staff  3296 Nov 12 04:16 .
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ..
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 boost
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 DoubleConversion
+drwxr-xr-x    3 runner  staff    96 Nov 12 04:16 DSBot.app
+drwxr-xr-x@   4 runner  staff   128 Nov 12 04:16 EXConstants
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 Expo
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoAsset
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoDomWebView
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ExpoFileSystem
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoFont
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoKeepAwake
+drwxr-xr-x@   7 runner  staff   224 Nov 12 04:16 ExpoLogBox
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesCore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesJSI
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoModulesWorklets
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoSecureStore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ExpoStatusBar
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 fast_float
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 FBLazyVector
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 fmt
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 glog
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 hermes-engine
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCT-Folly
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTDeprecation
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTRequired
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTSwiftUI
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTSwiftUIWrapper
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 RCTTypeSafety
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-bridging
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-callinvoker
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Core
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Core-prebuilt
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-CoreModules
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 React-cxxreact
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-cxxstableapi
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-debug
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-defaultsnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-domnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Fabric
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-FabricComponents
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-FabricImage
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-featureflags
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-featureflagsnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-graphics
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-hermes
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-idlecallbacksnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-ImageManager
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-intersectionobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jserrorhandler
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsi
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsiexecutor
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspector
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectorcdp
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectornetwork
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsinspectortracing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsitooling
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-jsitracing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-logger
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-Mapbuffer
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-microtasksnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-mutationobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-NativeModulesApple
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-networking
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-oscompat
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-perflogger
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-performancecdpmetrics
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-performancetimeline
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTActionSheet
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAnimatedModuleProvider
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAnimation
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTAppDelegate
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTBlob
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTFabric
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTFBReactNativeSpec
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTImage
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTLinking
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTNetwork
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTRuntime
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTSettings
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTText
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RCTVibration
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-rendererconsistency
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-renderercss
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-rendererdebug
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-resizeobservernativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeApple
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeCore
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-runtimeexecutor
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-RuntimeHermes
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-runtimescheduler
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 React-timing
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-utils
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-viewtransitionnativemodule
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 React-webperformancenativemodule
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ReactAppDependencyProvider
+drwxr-xr-x@   3 runner  staff    96 Nov 12 04:16 ReactCodegen
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ReactCommon
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 ReactNativeDependencies
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 SocketRocket
+drwxr-xr-x    5 runner  staff   160 Nov 12 04:16 XCFrameworkIntermediates
+drwxr-xr-x@   2 runner  staff    64 Nov 12 04:16 Yoga
 
 === find . -maxdepth 6 -name '*.app' ===
 ./build/Build/Products/Release-iphoneos/DSBot.app
@@ -1061,24 +1081,24 @@ build/Build/Products/Release-iphoneos/DSBot.app
 
 === ls -la ios ===
 total 184
-drwxr-xr-x  13 runner  staff    416 Nov 12 03:51 .
-drwxr-xr-x  20 runner  staff    640 Nov 12 03:52 ..
--rw-r--r--   1 runner  staff    321 Nov 12 03:49 .gitignore
--rw-r--r--   1 runner  staff    482 Nov 12 03:49 .xcode.env
--rw-r--r--   1 runner  staff     77 Nov 12 03:49 .xcode.env.local
-drwxr-xr-x   5 runner  staff    160 Nov 12 03:49 build
-drwxr-xr-x  11 runner  staff    352 Nov 12 03:51 DSBot
-drwxr-xr-x   5 runner  staff    160 Nov 12 03:51 DSBot.xcodeproj
-drwxr-xr-x   4 runner  staff    128 Nov 12 03:51 DSBot.xcworkspace
--rw-r--r--   1 runner  staff   2778 Nov 12 03:49 Podfile
--rw-r--r--   1 runner  staff  70232 Nov 12 03:51 Podfile.lock
--rw-r--r--   1 runner  staff    215 Nov 12 03:49 Podfile.properties.json
-drwxr-xr-x  17 runner  staff    544 Nov 12 03:52 Pods
+drwxr-xr-x  13 runner  staff    416 Nov 12 04:15 .
+drwxr-xr-x  21 runner  staff    672 Nov 12 04:15 ..
+-rw-r--r--   1 runner  staff    321 Nov 12 04:13 .gitignore
+-rw-r--r--   1 runner  staff    482 Nov 12 04:13 .xcode.env
+-rw-r--r--   1 runner  staff     77 Nov 12 04:13 .xcode.env.local
+drwxr-xr-x   5 runner  staff    160 Nov 12 04:13 build
+drwxr-xr-x  11 runner  staff    352 Nov 12 04:15 DSBot
+drwxr-xr-x   5 runner  staff    160 Nov 12 04:15 DSBot.xcodeproj
+drwxr-xr-x   4 runner  staff    128 Nov 12 04:15 DSBot.xcworkspace
+-rw-r--r--   1 runner  staff   2778 Nov 12 04:13 Podfile
+-rw-r--r--   1 runner  staff  70232 Nov 12 04:15 Podfile.lock
+-rw-r--r--   1 runner  staff    215 Nov 12 04:13 Podfile.properties.json
+drwxr-xr-x  17 runner  staff    544 Nov 12 04:16 Pods
 
 === xcodebuild -list -workspace ios/*.xcworkspace ===
 --- ios/DSBot.xcworkspace
 Command line invocation:
-    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -list -workspace ios/DSBot.xcworkspace
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -list -workspace ios/DSBot.xcworkspace
 
 Information about workspace "DSBot":
     Schemes:
@@ -1307,7 +1327,7 @@ Information about workspace "DSBot":
 
 === xcodebuild -list (txt) ===
 Command line invocation:
-    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -list -workspace DSBot.xcworkspace
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -list -workspace DSBot.xcworkspace
 
 Information about workspace "DSBot":
     Schemes:
@@ -1423,6 +1443,118 @@ Information about workspace "DSBot":
 grep: build-settings.txt: No such file or directory
 
 === build.log tail 300 ===
+    export KASAN_DEFAULT_CFLAGS\=-DKASAN\=1\ -DKASAN_CLASSIC\=1\ -fsanitize\=address\ -mllvm\ -asan-globals-live-support\ -mllvm\ -asan-force-dynamic-shadow
+    export KEEP_PRIVATE_EXTERNS\=NO
+    export LD_DEPENDENCY_INFO_FILE\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch/ExpoLogBox_dependency_info.dat
+    export LD_EXPORT_SYMBOLS\=YES
+    export LD_GENERATE_MAP_FILE\=NO
+    export LD_MAP_FILE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox-LinkMap-normal-undefined_arch.txt
+    export LD_NO_PIE\=NO
+    export LD_QUOTE_LINKER_ARGUMENTS_FOR_COMPILER_DRIVER\=YES
+    export LD_SHARED_CACHE_ELIGIBLE\=Automatic
+    export LD_WARN_DUPLICATE_LIBRARIES\=NO
+    export LD_WARN_UNUSED_DYLIBS\=NO
+    export LEGACY_DEVELOPER_DIR\=/Applications/Xcode_26.3.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer
+    export LEX\=lex
+    export LIBRARY_DEXT_INSTALL_PATH\=/Library/DriverExtensions
+    export LIBRARY_FLAG_NOSPACE\=YES
+    export LIBRARY_FLAG_PREFIX\=-l
+    export LIBRARY_KEXT_INSTALL_PATH\=/Library/Extensions
+    export LIBRARY_SEARCH_PATHS\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox\ 
+    export LINKER_DISPLAYS_MANGLED_NAMES\=NO
+    export LINK_FILE_LIST_normal_arm64\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.LinkFileList
+    export LINK_OBJC_RUNTIME\=YES
+    export LINK_WITH_STANDARD_LIBRARIES\=YES
+    export LLVM_TARGET_TRIPLE_OS_VERSION\=ios16.4
+    export LLVM_TARGET_TRIPLE_VENDOR\=apple
+    export LM_AUX_CONST_METADATA_LIST_PATH_normal_arm64\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftConstValuesFileList
+    export LOCALIZATION_EXPORT_SUPPORTED\=YES
+    export LOCALIZATION_PREFERS_STRING_CATALOGS\=NO
+    export LOCALIZED_STRING_MACRO_NAMES\=NSLocalizedString\ CFCopyLocalizedString
+    export LOCALIZED_STRING_SWIFTUI_SUPPORT\=YES
+    export LOCAL_ADMIN_APPS_DIR\=/Applications/Utilities
+    export LOCAL_APPS_DIR\=/Applications
+    export LOCAL_DEVELOPER_DIR\=/Library/Developer
+    export LOCAL_LIBRARY_DIR\=/Library
+    export LOCROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
+    export LOCSYMROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
+    export MACH_O_TYPE\=staticlib
+    export MAC_OS_X_PRODUCT_BUILD_VERSION\=24H232
+    export MAC_OS_X_VERSION_ACTUAL\=150802
+    export MAC_OS_X_VERSION_MAJOR\=150000
+    export MAC_OS_X_VERSION_MINOR\=150800
+    export MAKE_MERGEABLE\=NO
+    export MERGEABLE_LIBRARY\=NO
+    export MERGED_BINARY_TYPE\=none
+    export MERGE_LINKED_LIBRARIES\=NO
+    export METAL_LIBRARY_FILE_BASE\=default
+    export METAL_LIBRARY_OUTPUT_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/
+    export MODULEMAP_FILE\=Headers/Public/ExpoLogBox/ExpoLogBox.modulemap
+    export MODULE_CACHE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex
+    export MTL_ENABLE_DEBUG_INFO\=NO
+    export MTL_FAST_MATH\=YES
+    export NATIVE_ARCH\=arm64
+    export NATIVE_ARCH_32_BIT\=arm
+    export NATIVE_ARCH_64_BIT\=arm64
+    export NATIVE_ARCH_ACTUAL\=arm64
+    export NO_COMMON\=YES
+    export OBJECT_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects
+    export OBJECT_FILE_DIR_normal\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal
+    export OBJROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex
+    export ONLY_ACTIVE_ARCH\=NO
+    export OS\=MACOS
+    export OSAC\=/usr/bin/osacompile
+    export OTHER_CFLAGS\=\ -DRCT_REMOVE_LEGACY_ARCH\=1\ \"-fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap\"\ -DNDEBUG
+    export OTHER_CPLUSPLUSFLAGS\=\ -DRCT_REMOVE_LEGACY_ARCH\=1\ \"-fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap\"\ -DNDEBUG\ -DRCT_REMOVE_LEGACY_ARCH\=1\ \"-fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap\"\ -DNDEBUG
+    export OTHER_SWIFT_FLAGS\=\ -D\ COCOAPODS\ -import-underlying-module\ -Xcc\ -fmodule-map-file\=\"/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ExpoLogBox/ExpoLogBox.modulemap\"\ -Xcc\ -Wno-incomplete-umbrella\ -Xcc\ \"-fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap\"
+    export PACKAGE_TYPE\=com.apple.package-type.static-library
+    export PASCAL_STRINGS\=YES
+    export PATH\=/Applications/Xcode_26.3.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/local/bin:/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/bin:/Applications/Xcode_26.3.app/Contents/Developer/usr/local/bin:/Users/runner/hostedtoolcache/node/22.23.4/arm64/bin:/opt/homebrew/opt/rustup/bin:/opt/homebrew/lib/ruby/gems/3.3.0/bin:/opt/homebrew/opt/ruby@3.3/bin:/Users/runner/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/runner/.cargo/bin:/usr/local/opt/curl/bin:/usr/local/bin:/usr/local/sbin:/Users/runner/bin:/Users/runner/.yarn/bin:/Users/runner/Library/Android/sdk/tools:/Users/runner/Library/Android/sdk/platform-tools:/Library/Frameworks/Python.framework/Versions/Current/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/bin:/bin:/usr/sbin:/sbin:/Users/runner/.dotnet/tools
+    export PATH_PREFIXES_EXCLUDED_FROM_HEADER_DEPENDENCIES\=/usr/include\ /usr/local/include\ /System/Library/Frameworks\ /System/Library/PrivateFrameworks\ /Applications/Xcode_26.3.app/Contents/Developer/Headers\ /Applications/Xcode_26.3.app/Contents/Developer/SDKs\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms
+    export PER_ARCH_MODULE_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch
+    export PER_ARCH_OBJECT_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch
+    export PER_VARIANT_OBJECT_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal
+    export PKGINFO_FILE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/PkgInfo
+    export PLATFORM_DEVELOPER_APPLICATIONS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Applications
+    export PLATFORM_DEVELOPER_BIN_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin
+    export PLATFORM_DEVELOPER_LIBRARY_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library
+    export PLATFORM_DEVELOPER_SDK_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs
+    export PLATFORM_DEVELOPER_TOOLS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Tools
+    export PLATFORM_DEVELOPER_USR_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr
+    export PLATFORM_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform
+    export PLATFORM_DISPLAY_NAME\=iOS
+    export PLATFORM_FAMILY_NAME\=iOS
+    export PLATFORM_NAME\=iphoneos
+    export PLATFORM_PREFERRED_ARCH\=arm64
+    export PLATFORM_PRODUCT_BUILD_VERSION\=23C57
+    export PLATFORM_REQUIRES_SWIFT_AUTOLINK_EXTRACT\=NO
+    export PLATFORM_REQUIRES_SWIFT_MODULEWRAP\=NO
+    export PLIST_FILE_OUTPUT_FORMAT\=binary
+    export PODFILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/..
+    export PODS_BUILD_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products
+    export PODS_CONFIGURATION_BUILD_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos
+    export PODS_DEVELOPMENT_LANGUAGE\=en
+    export PODS_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
+    export PODS_TARGET_SRCROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/../../node_modules/expo/node_modules/@expo/log-box
+    export PODS_XCFRAMEWORKS_BUILD_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates
+    export PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR\=YES
+    export PRECOMP_DESTINATION_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/PrefixHeaders
+    export PROCESSED_INFOPLIST_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch/Processed-Info.plist
+    export PRODUCT_BUNDLE_IDENTIFIER\=org.cocoapods.ExpoLogBox
+    export PRODUCT_MODULE_NAME\=ExpoLogBox
+    export PRODUCT_NAME\=ExpoLogBox
+    export PRODUCT_SETTINGS_PATH\=
+    export PRODUCT_TYPE\=com.apple.product-type.library.static
+    export PROFILING_CODE\=NO
+    export PROJECT\=Pods
+    export PROJECT_DERIVED_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/DerivedSources
+    export PROJECT_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
+    export PROJECT_FILE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Pods.xcodeproj
+    export PROJECT_GUID\=8699adb1dd336b26511df848a716bd42
+    export PROJECT_NAME\=Pods
+    export PROJECT_TEMP_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build
+    export PROJECT_TEMP_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex
+    export REACT_NATIVE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/../../node_modules/react-native
     export RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET\=15.0
     export RECURSIVE_SEARCH_PATHS_FOLLOW_SYMLINKS\=YES
     export REMOVE_CVS_FROM_RESOURCES\=YES
@@ -1432,46 +1564,57 @@ grep: build-settings.txt: No such file or directory
     export REMOVE_STATIC_EXECUTABLES_FROM_EMBEDDED_BUNDLES\=YES
     export REMOVE_SVN_FROM_RESOURCES\=YES
     export RESCHEDULE_INDEPENDENT_HEADERS_PHASES\=YES
-    export REZ_COLLECTOR_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/ResourceManagerResources
+    export REZ_COLLECTOR_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ResourceManagerResources
     export REZ_EXECUTABLE\=YES
-    export REZ_OBJECTS_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/ResourceManagerResources/Objects
-    export REZ_SEARCH_PATHS\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ReactCodegen\ 
+    export REZ_OBJECTS_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ResourceManagerResources/Objects
+    export REZ_SEARCH_PATHS\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox\ 
+    export RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES\=NO
+    export RUNTIME_EXCEPTION_ALLOW_JIT\=NO
+    export RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY\=NO
+    export RUNTIME_EXCEPTION_DEBUGGING_TOOL\=NO
+    export RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION\=NO
+    export RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION\=NO
     export SCAN_ALL_SOURCE_FILES_FOR_INCLUDES\=NO
-    export SCRIPT_INPUT_FILE_0\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/autolinking/autolinking.json
-    export SCRIPT_INPUT_FILE_COUNT\=1
+    export SCRIPT_INPUT_FILE_0\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/DerivedSources/ExpoLogBox-Swift.h
+    export SCRIPT_INPUT_FILE_1\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ExpoLogBox/ExpoLogBox.modulemap
+    export SCRIPT_INPUT_FILE_2\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ExpoLogBox/ExpoLogBox-umbrella.h
+    export SCRIPT_INPUT_FILE_COUNT\=3
     export SCRIPT_INPUT_FILE_LIST_COUNT\=0
-    export SCRIPT_OUTPUT_FILE_0\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/DerivedSources/expo-codegen-cleanup.stamp
-    export SCRIPT_OUTPUT_FILE_COUNT\=1
+    export SCRIPT_OUTPUT_FILE_0\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.modulemap
+    export SCRIPT_OUTPUT_FILE_1\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox-umbrella.h
+    export SCRIPT_OUTPUT_FILE_2\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/Swift\ Compatibility\ Header/ExpoLogBox-Swift.h
+    export SCRIPT_OUTPUT_FILE_COUNT\=3
     export SCRIPT_OUTPUT_FILE_LIST_COUNT\=0
-    export SDKROOT\=/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk
-    export SDK_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk
-    export SDK_DIR_iphoneos\=/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk
-    export SDK_DIR_iphoneos18_5\=/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk
-    export SDK_NAME\=iphoneos18.5
-    export SDK_NAMES\=iphoneos18.5
-    export SDK_PRODUCT_BUILD_VERSION\=22F76
+    export SDKROOT\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk
+    export SDK_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk
+    export SDK_DIR_iphoneos\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk
+    export SDK_DIR_iphoneos26_2\=/Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk
+    export SDK_NAME\=iphoneos26.2
+    export SDK_NAMES\=iphoneos26.2
+    export SDK_PRODUCT_BUILD_VERSION\=23C57
     export SDK_STAT_CACHE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build
     export SDK_STAT_CACHE_ENABLE\=YES
-    export SDK_STAT_CACHE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
-    export SDK_VERSION\=18.5
-    export SDK_VERSION_ACTUAL\=180500
-    export SDK_VERSION_MAJOR\=180000
-    export SDK_VERSION_MINOR\=180500
+    export SDK_STAT_CACHE_PATH\=/Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos26.2-23C57-dc75598d0054f22ec865fa860f139d722dd23b4ebda140f7210d155ff1243552.sdkstatcache
+    export SDK_VERSION\=26.2
+    export SDK_VERSION_ACTUAL\=260200
+    export SDK_VERSION_MAJOR\=260000
+    export SDK_VERSION_MINOR\=260200
     export SED\=/usr/bin/sed
     export SEPARATE_STRIP\=NO
     export SEPARATE_SYMBOL_EDIT\=NO
     export SET_DIR_MODE_OWNER_GROUP\=YES
     export SET_FILE_MODE_OWNER_GROUP\=NO
     export SHALLOW_BUNDLE\=NO
-    export SHARED_DERIVED_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ReactCodegen/DerivedSources
+    export SHARED_DERIVED_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/DerivedSources
     export SHARED_PRECOMPS_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/PrecompiledHeaders
     export SKIP_INSTALL\=YES
     export SOURCE_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
     export SRCROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    export STRINGSDATA_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/undefined_arch
-    export STRINGSDATA_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build
+    export STRINGSDATA_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/undefined_arch
+    export STRINGSDATA_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build
     export STRINGS_FILE_INFOPLIST_RENAME\=YES
     export STRINGS_FILE_OUTPUT_ENCODING\=binary
+    export STRING_CATALOG_GENERATE_SYMBOLS\=NO
     export STRIP_BITCODE_FROM_COPIED_FILES\=YES
     export STRIP_INSTALLED_PRODUCT\=NO
     export STRIP_STYLE\=debugging
@@ -1485,32 +1628,34 @@ grep: build-settings.txt: No such file or directory
     export SUPPRESS_WARNINGS\=NO
     export SWIFT_ACTIVE_COMPILATION_CONDITIONS\=\ 
     export SWIFT_COMPILATION_MODE\=wholemodule
+    export SWIFT_EMIT_CONST_VALUE_PROTOCOLS\=AppIntent\ EntityQuery\ AppEntity\ TransientEntity\ AppEnum\ AppShortcutProviding\ AppShortcutsProvider\ AnyResolverProviding\ AppIntentsPackage\ DynamicOptionsProvider\ _IntentValueRepresentable\ _AssistantIntentsProvider\ _GenerativeFunctionExtractable\ IntentValueQuery\ Resolver\ AppExtension\ ExtensionPointDefining
     export SWIFT_EMIT_LOC_STRINGS\=NO
     export SWIFT_EMIT_MODULE_INTERFACE\=NO
+    export SWIFT_ENABLE_EXPLICIT_MODULES\=YES
     export SWIFT_INSTALL_OBJC_HEADER\=YES
     export SWIFT_OPTIMIZATION_LEVEL\=-O
     export SWIFT_PLATFORM_TARGET_PREFIX\=ios
-    export SWIFT_RESPONSE_FILE_PATH_normal_arm64\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/ReactCodegen.SwiftFileList
+    export SWIFT_RESPONSE_FILE_PATH_normal_arm64\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList
     export SWIFT_VERSION\=5.0
     export SYMROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products
     export SYSTEM_ADMIN_APPS_DIR\=/Applications/Utilities
     export SYSTEM_APPS_DIR\=/Applications
     export SYSTEM_CORE_SERVICES_DIR\=/System/Library/CoreServices
     export SYSTEM_DEMOS_DIR\=/Applications/Extras
-    export SYSTEM_DEVELOPER_APPS_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications
-    export SYSTEM_DEVELOPER_BIN_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/usr/bin
-    export SYSTEM_DEVELOPER_DEMOS_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications/Utilities/Built\ Examples
-    export SYSTEM_DEVELOPER_DIR\=/Applications/Xcode_16.4.app/Contents/Developer
-    export SYSTEM_DEVELOPER_DOC_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/ADC\ Reference\ Library
-    export SYSTEM_DEVELOPER_GRAPHICS_TOOLS_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications/Graphics\ Tools
-    export SYSTEM_DEVELOPER_JAVA_TOOLS_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications/Java\ Tools
-    export SYSTEM_DEVELOPER_PERFORMANCE_TOOLS_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications/Performance\ Tools
-    export SYSTEM_DEVELOPER_RELEASENOTES_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/ADC\ Reference\ Library/releasenotes
-    export SYSTEM_DEVELOPER_TOOLS\=/Applications/Xcode_16.4.app/Contents/Developer/Tools
-    export SYSTEM_DEVELOPER_TOOLS_DOC_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/ADC\ Reference\ Library/documentation/DeveloperTools
-    export SYSTEM_DEVELOPER_TOOLS_RELEASENOTES_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/ADC\ Reference\ Library/releasenotes/DeveloperTools
-    export SYSTEM_DEVELOPER_USR_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/usr
-    export SYSTEM_DEVELOPER_UTILITIES_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Applications/Utilities
+    export SYSTEM_DEVELOPER_APPS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications
+    export SYSTEM_DEVELOPER_BIN_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/usr/bin
+    export SYSTEM_DEVELOPER_DEMOS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications/Utilities/Built\ Examples
+    export SYSTEM_DEVELOPER_DIR\=/Applications/Xcode_26.3.app/Contents/Developer
+    export SYSTEM_DEVELOPER_DOC_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/ADC\ Reference\ Library
+    export SYSTEM_DEVELOPER_GRAPHICS_TOOLS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications/Graphics\ Tools
+    export SYSTEM_DEVELOPER_JAVA_TOOLS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications/Java\ Tools
+    export SYSTEM_DEVELOPER_PERFORMANCE_TOOLS_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications/Performance\ Tools
+    export SYSTEM_DEVELOPER_RELEASENOTES_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/ADC\ Reference\ Library/releasenotes
+    export SYSTEM_DEVELOPER_TOOLS\=/Applications/Xcode_26.3.app/Contents/Developer/Tools
+    export SYSTEM_DEVELOPER_TOOLS_DOC_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/ADC\ Reference\ Library/documentation/DeveloperTools
+    export SYSTEM_DEVELOPER_TOOLS_RELEASENOTES_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/ADC\ Reference\ Library/releasenotes/DeveloperTools
+    export SYSTEM_DEVELOPER_USR_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/usr
+    export SYSTEM_DEVELOPER_UTILITIES_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Applications/Utilities
     export SYSTEM_DEXT_INSTALL_PATH\=/System/Library/DriverExtensions
     export SYSTEM_DOCUMENTATION_DIR\=/Library/Documentation
     export SYSTEM_KEXT_INSTALL_PATH\=/System/Library/Extensions
@@ -1522,19 +1667,20 @@ grep: build-settings.txt: No such file or directory
     export TAPI_USE_SRCROOT\=YES
     export TAPI_VERIFY_MODE\=Pedantic
     export TARGETED_DEVICE_FAMILY\=1,2
-    export TARGETNAME\=ReactCodegen
-    export TARGET_BUILD_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ReactCodegen
-    export TARGET_NAME\=ReactCodegen
-    export TARGET_TEMP_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build
-    export TEMP_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build
-    export TEMP_FILES_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build
-    export TEMP_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build
+    export TARGETNAME\=ExpoLogBox
+    export TARGET_BUILD_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox
+    export TARGET_NAME\=ExpoLogBox
+    export TARGET_TEMP_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build
+    export TEMP_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build
+    export TEMP_FILES_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build
+    export TEMP_FILE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build
     export TEMP_ROOT\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex
     export TEMP_SANDBOX_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/TemporaryTaskSandboxes
-    export TEST_FRAMEWORK_SEARCH_PATHS\=\ /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/Frameworks\ /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/Developer/Library/Frameworks
-    export TEST_LIBRARY_SEARCH_PATHS\=\ /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib
-    export TOOLCHAINS\=com.apple.dt.toolchain.XcodeDefault
-    export TOOLCHAIN_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
+    export TEST_FRAMEWORK_SEARCH_PATHS\=\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/Frameworks\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/Developer/Library/Frameworks
+    export TEST_LIBRARY_SEARCH_PATHS\=\ /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib
+    export TOOLCHAINS\=com.apple.dt.toolchain.Metal.32023.864\ com.apple.dt.toolchain.XcodeDefault
+    export TOOLCHAIN_DIR\=/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain
+    export TOOLCHAIN_VERSION\=32023.864
     export TREAT_MISSING_BASELINES_AS_TEST_FAILURES\=NO
     export TREAT_MISSING_SCRIPT_PHASE_OUTPUTS_AS_ERRORS\=NO
     export UID\=501
@@ -1553,169 +1699,43 @@ grep: build-settings.txt: No such file or directory
     export VALID_ARCHS\=arm64\ arm64e\ armv7\ armv7s
     export VERBOSE_PBXCP\=NO
     export VERSION_INFO_BUILDER\=runner
-    export VERSION_INFO_FILE\=ReactCodegen_vers.c
-    export VERSION_INFO_STRING\=\"@\(\#\)PROGRAM:ReactCodegen\ \ PROJECT:Pods-\"
+    export VERSION_INFO_FILE\=ExpoLogBox_vers.c
+    export VERSION_INFO_STRING\=\"@\(\#\)PROGRAM:ExpoLogBox\ \ PROJECT:Pods-\"
     export WORKSPACE_DIR\=/Users/runner/work/ds-bot-app/ds-bot-app/ios
     export WRAP_ASSET_PACKS_IN_SEPARATE_DIRECTORIES\=NO
-    export XCODE_APP_SUPPORT_DIR\=/Applications/Xcode_16.4.app/Contents/Developer/Library/Xcode
-    export XCODE_PRODUCT_BUILD_VERSION\=16F6
-    export XCODE_VERSION_ACTUAL\=1640
-    export XCODE_VERSION_MAJOR\=1600
-    export XCODE_VERSION_MINOR\=1640
+    export XCODE_APP_SUPPORT_DIR\=/Applications/Xcode_26.3.app/Contents/Developer/Library/Xcode
+    export XCODE_PRODUCT_BUILD_VERSION\=17C529
+    export XCODE_VERSION_ACTUAL\=2630
+    export XCODE_VERSION_MAJOR\=2600
+    export XCODE_VERSION_MINOR\=2630
     export XPCSERVICES_FOLDER_PATH\=/XPCServices
     export YACC\=yacc
     export _DISCOVER_COMMAND_LINE_LINKER_INPUTS\=YES
     export _DISCOVER_COMMAND_LINE_LINKER_INPUTS_INCLUDE_WL\=YES
+    export _LD_MULTIARCH\=YES
     export __DIAGNOSE_DEPRECATED_ARCHS\=YES
     export arch\=undefined_arch
     export variant\=normal
-    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Script-46EB2E00019350.sh
+    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Script-46EB2E0000FDC0.sh
 
-CompileC /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTUnstableModulesRequiringMainQueueSetupProvider.o /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTUnstableModulesRequiringMainQueueSetupProvider.mm normal arm64 objective-c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
+ExtractAppIntentsMetadata (in target 'ExpoLogBox' from project 'Pods')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    
-    Using response file: /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp
-    
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c++ -ivfsstatcache /Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Wno-implicit-atomic-properties -Werror\=deprecated-objc-isa-usage -Wno-objc-interface-ivars -Werror\=objc-root-class -Wno-arc-repeated-use-of-weak -Wimplicit-retain-self -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wduplicate-method-match -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wundeclared-selector -Wdeprecated-implementations -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wprotocol -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation @/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp -DFOLLY_MOBILE\=1 -DFOLLY_USE_LIBCPP\=1 -DFOLLY_CFG_NO_COROUTINES\=1 -DFOLLY_HAVE_CLOCK_GETTIME\=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation -Wno-nullability-completeness -std\=c++20 -include /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Target\ Support\ Files/ReactCodegen/ReactCodegen-prefix.pch -MMD -MT dependencies -MF /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTUnstableModulesRequiringMainQueueSetupProvider.d --serialize-diagnostics /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTUnstableModulesRequiringMainQueueSetupProvider.dia -c /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTUnstableModulesRequiringMainQueueSetupProvider.mm -o /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTUnstableModulesRequiringMainQueueSetupProvider.o
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.R4gkAH/Metal.xctoolchain --module-name ExpoLogBox --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier org.cocoapods.ExpoLogBox --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.appintents --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/libExpoLogBox.a --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox_libtool_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-11-12 04:16:34.081 appintentsmetadataprocessor[5934:20484] Starting appintentsmetadataprocessor export
+2026-11-12 04:16:34.307 appintentsmetadataprocessor[5934:20484] Extracted no relevant App Intents symbols, skipping writing output
 
-CompileC /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTThirdPartyComponentsProvider.o /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.mm normal arm64 objective-c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
-    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    
-    Using response file: /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp
-    
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c++ -ivfsstatcache /Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Wno-implicit-atomic-properties -Werror\=deprecated-objc-isa-usage -Wno-objc-interface-ivars -Werror\=objc-root-class -Wno-arc-repeated-use-of-weak -Wimplicit-retain-self -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wduplicate-method-match -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wundeclared-selector -Wdeprecated-implementations -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wprotocol -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation @/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp -DFOLLY_MOBILE\=1 -DFOLLY_USE_LIBCPP\=1 -DFOLLY_CFG_NO_COROUTINES\=1 -DFOLLY_HAVE_CLOCK_GETTIME\=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation -Wno-nullability-completeness -std\=c++20 -include /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Target\ Support\ Files/ReactCodegen/ReactCodegen-prefix.pch -MMD -MT dependencies -MF /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTThirdPartyComponentsProvider.d --serialize-diagnostics /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTThirdPartyComponentsProvider.dia -c /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.mm -o /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTThirdPartyComponentsProvider.o
-
-CompileC /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTModulesConformingToProtocolsProvider.o /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTModulesConformingToProtocolsProvider.mm normal arm64 objective-c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'ReactCodegen' from project 'Pods')
-    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    
-    Using response file: /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp
-    
-    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c++ -ivfsstatcache /Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Wno-implicit-atomic-properties -Werror\=deprecated-objc-isa-usage -Wno-objc-interface-ivars -Werror\=objc-root-class -Wno-arc-repeated-use-of-weak -Wimplicit-retain-self -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wduplicate-method-match -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wundeclared-selector -Wdeprecated-implementations -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wprotocol -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation @/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp -DFOLLY_MOBILE\=1 -DFOLLY_USE_LIBCPP\=1 -DFOLLY_CFG_NO_COROUTINES\=1 -DFOLLY_HAVE_CLOCK_GETTIME\=1 -Wno-comma -Wno-shorten-64-to-32 -Wno-documentation -Wno-nullability-completeness -std\=c++20 -include /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Target\ Support\ Files/ReactCodegen/ReactCodegen-prefix.pch -MMD -MT dependencies -MF /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTModulesConformingToProtocolsProvider.d --serialize-diagnostics /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTModulesConformingToProtocolsProvider.dia -c /Users/runner/work/ds-bot-app/ds-bot-app/ios/build/generated/ios/ReactCodegen/RCTModulesConformingToProtocolsProvider.mm -o /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ReactCodegen.build/Objects-normal/arm64/RCTModulesConformingToProtocolsProvider.o
-
-SwiftDriverJobDiscovery normal arm64 Compiling ExpoLogBoxController.swift, ExpoLogBoxWebViewWrapper.swift (in target 'ExpoLogBox' from project 'Pods')
-
-SwiftDriver\ Compilation\ Requirements ExpoLogBox normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ExpoLogBox' from project 'Pods')
-    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods
-    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name ExpoLogBox -O -whole-module-optimization -enforce-exclusivity\=checked @/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.SwiftFileList -D COCOAPODS -import-underlying-module -Xcc -fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ExpoLogBox/ExpoLogBox.modulemap -Xcc -Wno-incomplete-umbrella -Xcc -fmodule-map-file\=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers/module.modulemap -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -target arm64-apple-ios16.4 -g -module-cache-path /Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox -F /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox -F /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt -F /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ReactNativeDependencies/framework/packages/react-native -F /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt -F /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/ds-bot-app/ds-bot-app/build/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -output-file-map /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/ds-bot-app/ds-bot-app/build/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox-generated-files.hmap -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox-own-target-headers.hmap -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/Pods-8699adb1dd336b26511df848a716bd42-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/ExpoLogBox-project-headers.hmap -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoLogBox/include -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/React-Core-prebuilt -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/Headers/Public/ReactNativeDependencies -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/React-Core-prebuilt/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ReactNativeDependencies/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ExpoModulesCore/ExpoModulesCore.xcframework/ios-arm64_x86_64-simulator/ExpoModulesCore.framework/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ExpoModulesCore/ExpoModulesCore.xcframework/ios-arm64/ExpoModulesCore.framework/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ExpoModulesCore/ExpoModulesCore.xcframework/ios-arm64_x86_64-simulator/ExpoModulesCore.framework/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/ExpoModulesCore/ExpoModulesCore.xcframework/ios-arm64/ExpoModulesCore.framework/Headers -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/DerivedSources -Xcc -DPOD_CONFIGURATION_RELEASE\=1 -Xcc -DCOCOAPODS\=1 -emit-objc-header -emit-objc-header-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/Pods.build/Release-iphoneos/ExpoLogBox.build/Objects-normal/arm64/ExpoLogBox-Swift.h -working-directory /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods -no-emit-module-separately-wmo
-
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'boost' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-Fabric' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-rendererconsistency' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTVibration' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-perflogger' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsinspectorcdp' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsinspector' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsi' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-FabricImage' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-NativeModulesApple' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-featureflagsnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-networking' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jserrorhandler' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTImage' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsiexecutor' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RuntimeApple' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-bridging' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsitooling' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTAppDelegate' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-performancecdpmetrics' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Yoga' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTActionSheet' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-microtasksnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-logger' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTRuntime' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-performancetimeline' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCTDeprecation' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-idlecallbacksnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'FBLazyVector' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-domnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'glog' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-oscompat' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCTSwiftUI' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'fast_float' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTSettings' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-cxxstableapi' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-rendererdebug' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTLinking' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTText' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-intersectionobservernativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCT-Folly' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCTSwiftUIWrapper' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-renderercss' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsinspectortracing' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-callinvoker' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'DoubleConversion' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTAnimatedModuleProvider' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-CoreModules' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCTTypeSafety' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-defaultsnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-runtimeexecutor' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-debug' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsitracing' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-FabricComponents' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-featureflags' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-Mapbuffer' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'RCTRequired' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RuntimeHermes' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-Core' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RuntimeCore' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-hermes' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-runtimescheduler' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-ImageManager' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-resizeobservernativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-mutationobservernativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-timing' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-utils' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'fmt' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTNetwork' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTBlob' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTAnimation' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ReactCommon' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'SocketRocket' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTFabric' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-cxxreact' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-jsinspectornetwork' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-webperformancenativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-graphics' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-viewtransitionnativemodule' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'hermes-engine' from project 'Pods')
 note: Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'hermes-engine' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ReactNativeDependencies' from project 'Pods')
 note: Run script build phase '[CP-User] [RNDeps] Replace React Native Dependencies for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ReactNativeDependencies' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-RCTFBReactNativeSpec' from project 'Pods')
 note: Run script build phase '[CP-User] [RN]Check FBReactNativeSpec' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-RCTFBReactNativeSpec' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-Core-prebuilt' from project 'Pods')
 note: Run script build phase '[CP-User] [RNCore] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoModulesWorklets' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesWorklets XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesWorklets' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoModulesJSI' from project 'Pods')
 note: Run script build phase '[CP-User] Build ExpoModulesJSI xcframework' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesJSI' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoModulesCore' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesCore XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesCore' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoFont' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFont XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFont' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoFileSystem' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFileSystem XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFileSystem' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Pods-DSBot' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'DSBot' from project 'DSBot')
-note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
-note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ReactCodegen' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ReactAppDependencyProvider' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-timing-React-timing_privacy' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'React-cxxreact-React-cxxreact_privacy' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoStatusBar' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoSecureStore' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoLogBox' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoKeepAwake' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoFileSystem-ExpoFileSystem_privacy' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoDomWebView' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'ExpoAsset' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Expo' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'EXConstants-ExpoConstants_privacy' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'EXConstants-EXConstants' from project 'Pods')
-note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'EXConstants' from project 'Pods')
 note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
+note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
+note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
 ** BUILD FAILED **
 
 
@@ -1725,15 +1745,17 @@ The following build commands failed:
 (2 failures)
 
 === build.log 关键行 ===
-1839:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-2349:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-3884:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-4854:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-5274:xcodebuild: error: Could not resolve package dependencies:
-5366:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-5872:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-6429:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-7013:** BUILD FAILED **
+1848:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+2374:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+3925:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+4907:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+5430:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+5877:/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/Values/JavaScriptObject.swift:946:36: error: sending 'slot' risks causing data races
+5893:** BUILD FAILED **
+5988:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+6551:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+7623:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+8098:** BUILD FAILED **
 
 === out/ 与 ipa ===
 ls: out: No such file or directory
