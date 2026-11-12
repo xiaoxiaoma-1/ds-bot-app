@@ -10,22 +10,24 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../theme';
 import { chat, openFeed, send } from '../api';
 
 // 功能二 + 三：会话历史 + 发消息 + 流式回复。
 // 历史：GET /api/dsbot/chat?bot=<id>，一次给全部（代理层还没透出 cursor，翻页先禁用）。
 // 发送：POST /api/dsbot/send {bot, text}。
-// 流式：优先 SSE GET /api/bot/feed（'stream' 事件）；该路由不存在时自动降级为轮询。
+// 流式：优先 SSE GET /api/bot/feed（'stream' 事件）；该路由不存在时自动降级轮询。
 
 const POLL_MS = 1500;
 const POLL_MAX = 30;
 
 export default function ChatScreen({ bot, onBack }) {
+  const insets = useSafeAreaInsets();
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState(null);
   const [live, setLive] = useState('');
   const [mode, setMode] = useState('');
   const stopFeed = useRef(null);
@@ -44,9 +46,9 @@ export default function ChatScreen({ bot, onBack }) {
       const msgs = await chat(bot.id);
       setItems(msgs);
       lastCount.current = msgs.length;
-      setErr('');
+      setErr(null);
     } catch (e) {
-      setErr(e.message || '读不到对话');
+      setErr({ step: e.step || 'chat', message: e.message || '读不到对话' });
     } finally {
       setLoading(false);
     }
@@ -87,14 +89,14 @@ export default function ChatScreen({ bot, onBack }) {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
-    setErr('');
+    setErr(null);
     const before = items;
     setItems([...before, { who: '我', text, local: true }]);
     setLive(' ');
     try {
       await send(bot.id, text);
     } catch (e) {
-      setErr(e.message || '发送失败');
+      setErr({ step: e.step || 'send', message: e.message || '发送失败' });
       setLive('');
       setItems(before);
       return;
@@ -126,15 +128,7 @@ export default function ChatScreen({ bot, onBack }) {
     });
   }
 
-  if (loading) {
-    return (
-      <View style={s.center}>
-        <ActivityIndicator color={C.accent} />
-      </View>
-    );
-  }
-
-  const view = [...items].reverse();
+  const stepLabel = { chat: '读会话失败', send: '发送失败', auth: '认证失败', feed: '流式断开' };
 
   return (
     <KeyboardAvoidingView
@@ -142,49 +136,84 @@ export default function ChatScreen({ bot, onBack }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}
     >
-      <View style={s.head}>
+      <View style={[s.head, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={onBack} hitSlop={12}>
-          <Text style={s.back}>‹ 返回</Text>
+          <Text style={s.back} allowFontScaling={false}>
+            ‹ 返回
+          </Text>
         </Pressable>
-        <Text style={s.title} numberOfLines={1}>
+        <Text style={s.title} numberOfLines={1} allowFontScaling={false}>
           {bot.name}
         </Text>
-        <Text style={s.mode}>{mode === 'sse' ? '流式' : mode === 'poll' ? '轮询' : ''}</Text>
+        <Text style={s.mode} allowFontScaling={false}>
+          {mode === 'sse' ? '流式' : mode === 'poll' ? '轮询' : ''}
+        </Text>
       </View>
 
-      {err ? <Text style={s.err}>{err}</Text> : null}
+      {err ? (
+        <View style={s.errBox}>
+          <Text style={s.errTitle} allowFontScaling={false}>
+            {stepLabel[err.step] || '出错了'}
+          </Text>
+          <Text style={s.errMsg} allowFontScaling={false}>
+            {err.message}
+          </Text>
+        </View>
+      ) : null}
 
-      <FlatList
-        data={view}
-        inverted
-        keyExtractor={(it, i) => String(it.at || '') + i}
-        contentContainerStyle={{ paddingVertical: 10 }}
-        ListHeaderComponent={
-          <Pressable disabled style={s.older}>
-            <Text style={s.olderText}>更早的历史：代理层补上 cursor 后开放</Text>
-          </Pressable>
-        }
-        renderItem={({ item }) => {
-          const mine = item.who === '我';
-          return (
-            <View style={[s.bubbleRow, mine ? s.right : s.left]}>
-              <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
-                <Text style={s.bubbleText}>{item.text}</Text>
-              </View>
+      {loading ? (
+        <View style={s.center}>
+          <ActivityIndicator color={C.accent} />
+          <Text style={s.centerText} allowFontScaling={false}>
+            正在读会话
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={[...items].reverse()}
+          inverted
+          keyExtractor={(it, i) => String(it.at || '') + i}
+          contentContainerStyle={{ paddingVertical: 10 }}
+          ListHeaderComponent={
+            <View style={s.older}>
+              <Text style={s.olderText} allowFontScaling={false}>
+                更早的历史：代理层补上 cursor 后开放
+              </Text>
             </View>
-          );
-        }}
-      />
+          }
+          ListEmptyComponent={
+            <View style={s.center}>
+              <Text style={s.centerText} allowFontScaling={false}>
+                这个会话还没有消息
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const mine = item.who === '我';
+            return (
+              <View style={[s.bubbleRow, mine ? s.right : s.left]}>
+                <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
+                  <Text style={s.bubbleText} allowFontScaling={false}>
+                    {item.text}
+                  </Text>
+                </View>
+              </View>
+            );
+          }}
+        />
+      )}
 
       {live ? (
         <View style={[s.bubbleRow, s.left]}>
           <View style={[s.bubble, s.bubbleTheirs]}>
-            <Text style={s.bubbleText}>{live}</Text>
+            <Text style={s.bubbleText} allowFontScaling={false}>
+              {live}
+            </Text>
           </View>
         </View>
       ) : null}
 
-      <View style={s.composer}>
+      <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TextInput
           style={s.input}
           value={draft}
@@ -194,7 +223,9 @@ export default function ChatScreen({ bot, onBack }) {
           multiline
         />
         <Pressable style={s.sendBtn} onPress={onSend} disabled={!draft.trim()}>
-          <Text style={s.sendText}>发送</Text>
+          <Text style={s.sendText} allowFontScaling={false}>
+            发送
+          </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -203,23 +234,33 @@ export default function ChatScreen({ bot, onBack }) {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  center: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 10 },
+  centerText: { color: C.ink3, fontSize: 13, lineHeight: 19, textAlign: 'center' },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingTop: 12,
     paddingBottom: 10,
     borderBottomColor: C.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
-  back: { color: C.accent, fontSize: 15 },
-  title: { color: C.ink, fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
-  mode: { color: C.ink3, fontSize: 11, width: 34, textAlign: 'right' },
-  err: { color: C.bad, fontSize: 13, paddingHorizontal: 14, paddingTop: 8 },
+  back: { color: C.accent, fontSize: 15, lineHeight: 20 },
+  title: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22, flex: 1, textAlign: 'center' },
+  mode: { color: C.ink3, fontSize: 11, lineHeight: 16, width: 34, textAlign: 'right' },
+  errBox: {
+    margin: 14,
+    padding: 12,
+    backgroundColor: C.card,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.line,
+    gap: 4,
+  },
+  errTitle: { color: C.bad, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  errMsg: { color: C.ink, fontSize: 13, lineHeight: 19 },
   older: { alignItems: 'center', paddingVertical: 12 },
-  olderText: { color: C.ink3, fontSize: 11 },
+  olderText: { color: C.ink3, fontSize: 11, lineHeight: 16 },
   bubbleRow: { paddingHorizontal: 14, marginVertical: 4 },
   left: { alignItems: 'flex-start' },
   right: { alignItems: 'flex-end' },
@@ -231,7 +272,8 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingTop: 10,
     borderTopColor: C.line,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
@@ -246,5 +288,5 @@ const s = StyleSheet.create({
     paddingVertical: 10,
   },
   sendBtn: { backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 11 },
-  sendText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  sendText: { color: '#fff', fontSize: 15, fontWeight: '600', lineHeight: 20 },
 });
