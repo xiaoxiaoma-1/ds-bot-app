@@ -9,11 +9,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { useTheme, avatarInk, inkOn } from '../theme';
 import { advisors } from '../api';
 
 // 功能一：Bot 列表。四态：loading / failed / empty / list。
-// 令牌 v4：无分割线、无投影、无描边；行靠 12 的纵距 + 卡片色块分层。
+// 令牌 v4：无分割线、无投影、无描边；行靠 12 纵距 + 卡片色块分层。
+// 头像：底色用电脑端给每只 bot 的语义色（avatar.color），字色按对比度自动选白/深。
 
 const ROW_HEIGHT = 84; // 定高给 getItemLayout：头像 44 + 上下各 20
 
@@ -34,11 +35,14 @@ function dotColor(status, C) {
   return C.ink3;
 }
 
-const AdvisorRow = memo(function AdvisorRow({ item, onOpen, C, s }) {
+const AdvisorRow = memo(function AdvisorRow({ item, onOpen, C, s, scheme }) {
+  // 头像底色 = 电脑端给这个 bot 的语义色（avatar.color）；没给就退回卡片色
+  const inkBg = item.avatar && item.avatar.color ? avatarInk(item.avatar.color, scheme) : C.card2;
+  const inkFg = inkOn(inkBg);
   return (
     <Pressable style={s.row} onPress={() => onOpen(item)}>
-      <View style={s.avatar}>
-        <Text style={s.avatarText} allowFontScaling={false}>
+      <View style={[s.avatar, { backgroundColor: inkBg }]}>
+        <Text style={[s.avatarText, { color: inkFg }]} allowFontScaling={false}>
           {String(item.name || '?').slice(0, 1)}
         </Text>
       </View>
@@ -58,7 +62,7 @@ const AdvisorRow = memo(function AdvisorRow({ item, onOpen, C, s }) {
 });
 
 export default function BotListScreen({ onOpen, onSettings }) {
-  const { C, T, S, R } = useTheme();
+  const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
   const [rows, setRows] = useState([]);
@@ -86,8 +90,8 @@ export default function BotListScreen({ onOpen, onSettings }) {
   }, [load]);
 
   const renderItem = useCallback(
-    ({ item }) => <AdvisorRow item={item} onOpen={onOpen} C={C} s={s} />,
-    [onOpen, C, s],
+    ({ item }) => <AdvisorRow item={item} onOpen={onOpen} C={C} s={s} scheme={scheme} />,
+    [onOpen, C, s, scheme],
   );
   const keyExtractor = useCallback((it) => String(it.id), []);
   const getItemLayout = useCallback(
@@ -218,11 +222,10 @@ const makeStyles = (C, T, S, R) =>
       width: 44,
       height: 44,
       borderRadius: R.capsule,
-      backgroundColor: C.card2,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: { color: C.ink, ...T.title },
+    avatarText: { ...T.title },
     rowBody: { flex: 1 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
     dot: { width: 6, height: 6, borderRadius: 3 },
