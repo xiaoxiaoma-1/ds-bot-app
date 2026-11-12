@@ -157,3 +157,86 @@ export function createFeed(options) {
     },
   };
 }
+
+// ── 一次性 POST 流（表达训练「点评」边生成边显示，2026-11-13）────────────────
+// 与 createFeed 的差别：POST + JSON body + 不重连 + 不依赖 XHR（fetch + body.getReader）。
+// 复用上面的 splitFrames / parseFrame，解析逻辑只有这一份。
+// 事件：start {ok} / delta {t} / done {ok,chars,ms} / error {ok:false,error}
+// 没收到 done 就结束 → 按中断处理（已收到的内容由调用方保留）。
+export async function readEventStream({
+  url,
+  token,
+  body,
+  signal,
+  onStart,
+  onDelta,
+  onDone,
+  onError,
+}) {
+  let finished = false;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'text/event-stream',
+        authorization: token ? 'Bearer ' + token : undefined,
+      },
+      body: JSON.stringify(body || {}),
+      credentials: 'include',
+      signal,
+    });
+    if (!res.ok) {
+      let msg = 'HTTP ' + res.status;
+      try {
+        const j = await res.json();
+        if (j && j.error) msg = j.error;
+      } catch {}
+      if (onError) onError(msg);
+      return { ok: false, error: msg };
+    }
+    if (!res.body || typeof res.body.getReader !== 'function') {
+      if (onError) onError('这个运行环境不支持流式读取');
+      return { ok: false, error: 'no-stream' };
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const [frames, rest] = splitFrames(buf);
+      buf = rest;
+      for (const f of frames) {
+        const ev = parseFrame(f);
+        if (!ev) continue;
+        const d = ev.data;
+        if (ev.event === 'start') {
+          if (onStart) onStart(d);
+        } else if (ev.event === 'delta') {
+          if (onDelta && d && typeof d.t === 'string') onDelta(d.t);
+        } else if (ev.event === 'done') {
+          finished = true;
+          if (onDone) onDone(d);
+        } else if (ev.event === 'error') {
+          finished = true;
+          if (onError) onError((d && d.error) || '生成失败');
+        }
+      }
+      if (finished) break;
+    }
+    if (!finished) {
+      if (onError) onError('生成中断');
+      return { ok: false, error: '中断' };
+    }
+    return { ok: true };
+  } catch (e) {
+    if (e && e.name === 'AbortError') return { ok: false, aborted: true };
+    const msg = e && e.message ? e.message : '网络不通';
+    if (onError) onError(msg);
+    return { ok: false, error: msg };
+  }
+}

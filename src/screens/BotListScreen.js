@@ -110,7 +110,7 @@ const AdvisorRow = memo(function AdvisorRow({
   );
 });
 
-export default function BotListScreen({ onOpen, onSettings }) {
+export default function BotListScreen({ onOpen, onSettings, onExpression }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -361,11 +361,18 @@ export default function BotListScreen({ onOpen, onSettings }) {
             </Pressable>
           ) : null}
           {!dragMode ? (
+            <>
+              <Pressable onPress={onExpression} hitSlop={10}>
+                <Text style={s.gear} allowFontScaling={false}>
+                  表达
+                </Text>
+              </Pressable>
             <Pressable onPress={onSettings} hitSlop={10}>
               <Text style={s.gear} allowFontScaling={false}>
                 设置
               </Text>
             </Pressable>
+          </>
           ) : null}
         </View>
       </View>
