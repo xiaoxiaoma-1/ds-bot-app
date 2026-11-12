@@ -17,7 +17,7 @@ jobs:
   build:
     # 诊断回写提交带 [skip ci]；且 GITHUB_TOKEN 触发的 push 本身不会再起 run，双保险
     if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message || '', '[skip ci]') }}
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
       - name: Checkout
