@@ -5,7 +5,7 @@ import { groupUnreadLabel } from '../groups';
 
 // 顾问列表底部的「群组」区：与 bot 分成两个区，不混在一条列表里。
 // 未读按群计，一个群 N 个成员说话也只算这个群 1 条（数字来自后端 groups[].unread，>9 写 9+）。
-export default function GroupSection({ groups, note, onOpen }) {
+export default function GroupSection({ groups, note, names, onOpen }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   if (!groups || groups.length === 0) return null;
@@ -27,8 +27,11 @@ export default function GroupSection({ groups, note, onOpen }) {
       ) : null}
       {groups.map((g) => {
         const badge = groupUnreadLabel(g);
+        // admin 是成员里的 bot id，不是名字；拿不到名字就退回人数，不显示一串 session-xxx
+        const adminName = g.admin ? names && names[String(g.admin)] : null;
         const meta = [`${g.memberCount} 人`];
-        if (g.admin) meta.push(`牵头 ${g.admin}`);
+        if (adminName) meta.push(`牵头 ${adminName}`);
+        if (g.mode === 'admin') meta.push('只有牵头发言');
         return (
           <Pressable key={g.id} style={s.row} onPress={() => onOpen(g)} disabled={!onOpen}>
             <View style={s.mark}>

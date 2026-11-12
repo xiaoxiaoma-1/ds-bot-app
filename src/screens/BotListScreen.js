@@ -178,6 +178,14 @@ export default function BotListScreen({ onOpen, onSettings }) {
     [sorted, unread],
   );
   const groupsUnread = useMemo(() => groupsUnreadCount(groups), [groups]);
+  // members / admin 都是 bot id，群组区要显示名字得先建一张 id -> name 表
+  const names = useMemo(() => {
+    const m = {};
+    rows.forEach((r) => {
+      m[String(r.id)] = r.name;
+    });
+    return m;
+  }, [rows]);
 
   const reorder = useCallback(
     (fromIndex, dy) => {
@@ -203,14 +211,11 @@ export default function BotListScreen({ onOpen, onSettings }) {
   );
 
   // 点进群：本地先清这个群的未读，再通知后端；消息内容走会话页（接口待后端确认）
-  const openGroup = useCallback(
-    (g) => {
-      setGroups((prev) => prev.map((it) => (it.id === g.id ? { ...it, unread: 0, hasUnread: false } : it)));
-      botApi.read(String(g.id)).catch(() => {});
-      onOpen({ id: g.id, name: g.name, isGroup: true, peerCount: g.memberCount });
-    },
-    [onOpen],
-  );
+  // 群消息手机端还读不到：后端 groups[] 里 log 被剥掉，只留了 preview。
+  // 所以点群只说明一次，不跳会话页（跳过去必然是一条报错），也不清未读（没看过就不算读过）。
+  const openGroup = useCallback((g) => {
+    setFlash('群消息手机端还读不到：后端要加一条读群消息记录的通道（「' + g.name + '」的最后一条已显示在下面）');
+  }, []);
 
   const clearAll = useCallback(() => {
     botApi.readAll().catch(() => {});
@@ -407,7 +412,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
           removeClippedSubviews={false}
           scrollEnabled={dragId === null}
           ListHeaderComponent={
-            dragMode ? null : <GroupSection groups={groups} onOpen={openGroup} />
+            dragMode ? null : <GroupSection groups={groups} names={names} onOpen={openGroup} />
           }
           contentContainerStyle={{ paddingBottom: insets.bottom + S.x5 }}
           refreshControl={
