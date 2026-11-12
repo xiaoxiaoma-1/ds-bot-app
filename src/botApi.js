@@ -84,3 +84,8 @@ export const groupApi = {
     ),
   send: (groupId, text) => call('/api/dsbot/send', { body: { bot: groupId, text } }),
 };
+
+// 语音整理（口头文字 → 书面语）。<4 字后端原样返回且 changed=false；>4000 字直接报错。
+export const speechApi = {
+  tidy: (text) => call('/api/speech/tidy', { body: { text } }),
+};
