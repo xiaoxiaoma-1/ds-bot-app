@@ -1,75 +1,3868 @@
 # diagnostics
-generated: 2026-11-12T06:41:00Z
-run: 43169571661 attempt: 1
-ref: refs/heads/main sha: d1790908630bd487170b2ac34f305e4f28d0e0b0
-job status: cancelled
+generated: 2026-11-12T06:51:07Z
+run: 43170323773 attempt: 1
+ref: refs/heads/main sha: 2c8452fd699d178a8bb672ce49e33adb1375c58b
+job status: success
 $GITHUB_WORKSPACE: /Users/runner/work/ds-bot-app/ds-bot-app
-WORKSPACE=<empty> SCHEME=<empty>
-TARGET_BUILD_DIR=<empty> WRAPPER_NAME=<empty>
-uname: Darwin sjc22-bm207-c51e4817-1bde-49af-abf6-8a48ad3cc1ba-2277EAE80309.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
+WORKSPACE=DSBot.xcworkspace SCHEME=DSBot
+TARGET_BUILD_DIR=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos WRAPPER_NAME=DSBot.app
+uname: Darwin sat12-bq160-2ae8c4f6-3531-48c2-b46e-2d03deb49789-762E171E2BAB.local 24.6.0 Darwin Kernel Version 24.6.0: Sun Oct 11 23:44:11 PDT 2026; root:xnu-11417.140.69.713.47~2/RELEASE_ARM64_VMAPPLE arm64
 xcodebuild: Xcode 26.3 Build version 17C529 
 pod: 1.17.0
 
 === ls -la $GITHUB_WORKSPACE ===
-total 1048
-drwxr-xr-x   15 runner  staff     480 Nov 12 06:40 .
-drwxr-xr-x    3 runner  staff      96 Nov 12 06:40 ..
-drwxr-xr-x   13 runner  staff     416 Nov 12 06:40 .git
-drwxr-xr-x    3 runner  staff      96 Nov 12 06:40 .github
--rw-r--r--    1 runner  staff      73 Nov 12 06:40 .gitignore
--rw-r--r--    1 runner  staff    1886 Nov 12 06:40 App.js
--rw-r--r--    1 runner  staff     279 Nov 12 06:40 app.json
--rw-r--r--    1 runner  staff  501336 Nov 12 06:40 build-log-tail.txt
--rw-r--r--    1 runner  staff    1206 Nov 12 06:40 CHANGELOG.md
--rw-r--r--    1 runner  staff     601 Nov 12 06:41 diagnostics.txt
--rw-r--r--    1 runner  staff     101 Nov 12 06:40 index.js
-drwxr-xr-x  288 runner  staff    9216 Nov 12 06:40 node_modules
--rw-r--r--    1 runner  staff     383 Nov 12 06:40 package.json
--rw-r--r--    1 runner  staff     107 Nov 12 06:40 README.md
-drwxr-xr-x    6 runner  staff     192 Nov 12 06:40 src
+total 21192
+drwxr-xr-x   24 runner  staff      768 Nov 12 06:51 .
+drwxr-xr-x    3 runner  staff       96 Nov 12 06:46 ..
+drwxr-xr-x   13 runner  staff      416 Nov 12 06:49 .git
+drwxr-xr-x    3 runner  staff       96 Nov 12 06:46 .github
+-rw-r--r--    1 runner  staff       73 Nov 12 06:46 .gitignore
+-rw-r--r--    1 runner  staff     1886 Nov 12 06:46 App.js
+-rw-r--r--    1 runner  staff      283 Nov 12 06:46 app.json
+drwxr-xr-x@   8 runner  staff      256 Nov 12 06:48 build
+-rw-r--r--    1 runner  staff        0 Nov 12 06:46 build-log-tail.txt
+-rw-r--r--    1 runner  staff    83454 Nov 12 06:50 build-settings.txt
+-rw-r--r--    1 runner  staff  2995537 Nov 12 06:50 build.log
+-rw-r--r--    1 runner  staff     1206 Nov 12 06:46 CHANGELOG.md
+-rw-r--r--    1 runner  staff      680 Nov 12 06:51 diagnostics.txt
+-rw-r--r--    1 runner  staff  7101920 Nov 12 06:51 ds-bot-unsigned.ipa
+-rw-r--r--    1 runner  staff      101 Nov 12 06:46 index.js
+drwxr-xr-x   13 runner  staff      416 Nov 12 06:48 ios
+drwxr-xr-x  280 runner  staff     8960 Nov 12 06:47 node_modules
+drwxr-xr-x    3 runner  staff       96 Nov 12 06:51 out
+-rw-r--r--    1 runner  staff   229609 Nov 12 06:47 package-lock.json
+-rw-r--r--    1 runner  staff      380 Nov 12 06:47 package.json
+-rw-r--r--    1 runner  staff      107 Nov 12 06:46 README.md
+drwxr-xr-x    6 runner  staff      192 Nov 12 06:46 src
+-rw-r--r--    1 runner  staff     2773 Nov 12 06:48 xcodebuild-list.json
+-rw-r--r--    1 runner  staff     2789 Nov 12 06:48 xcodebuild-list.txt
 
 === ls -la build ===
-ls: build: No such file or directory
+total 8
+drwxr-xr-x@  8 runner  staff   256 Nov 12 06:48 .
+drwxr-xr-x  24 runner  staff   768 Nov 12 06:51 ..
+drwxr-xr-x   4 runner  staff   128 Nov 12 06:48 Build
+drwxr-x---   3 runner  staff    96 Nov 12 06:48 CompilationCache.noindex
+-rw-r--r--   1 runner  staff   359 Nov 12 06:48 info.plist
+drwxr-xr-x   7 runner  staff   224 Nov 12 06:48 Logs
+drwxr-xr-x  82 runner  staff  2624 Nov 12 06:50 ModuleCache.noindex
+drwxr-xr-x   3 runner  staff    96 Nov 12 06:48 SDKStatCaches.noindex
 
 === ls -R build/Build/Products ===
-ls: build/Build/Products: No such file or directory
+Release-iphoneos
+
+build/Build/Products/Release-iphoneos:
+DSBot.app
+DSBot.app.dSYM
+DSBot.swiftmodule
+EXConstants
+Expo
+ExpoAsset
+ExpoDomWebView
+ExpoFileSystem
+ExpoFont
+ExpoKeepAwake
+ExpoLogBox
+ExpoModulesCore
+ExpoModulesJSI
+ExpoModulesWorklets
+ExpoSecureStore
+FBLazyVector
+hermes-engine
+libPods-DSBot.a
+main.jsbundle
+RCTDeprecation
+RCTRequired
+RCTSwiftUI
+RCTSwiftUIWrapper
+RCTTypeSafety
+React
+React-callinvoker
+React-Core
+React-Core-prebuilt
+React-CoreModules
+React-cxxreact
+React-debug
+React-defaultsnativemodule
+React-domnativemodule
+React-Fabric
+React-FabricComponents
+React-FabricImage
+React-featureflags
+React-featureflagsnativemodule
+React-graphics
+React-hermes
+React-idlecallbacksnativemodule
+React-ImageManager
+React-intersectionobservernativemodule
+React-jserrorhandler
+React-jsi
+React-jsiexecutor
+React-jsinspector
+React-jsinspectorcdp
+React-jsinspectornetwork
+React-jsinspectortracing
+React-jsitooling
+React-jsitracing
+React-logger
+React-Mapbuffer
+React-microtasksnativemodule
+React-mutationobservernativemodule
+react-native-safe-area-context
+React-NativeModulesApple
+React-networking
+React-oscompat
+React-perflogger
+React-performancecdpmetrics
+React-performancetimeline
+React-RCTActionSheet
+React-RCTAnimation
+React-RCTAppDelegate
+React-RCTBlob
+React-RCTFabric
+React-RCTFBReactNativeSpec
+React-RCTImage
+React-RCTLinking
+React-RCTNetwork
+React-RCTRuntime
+React-RCTSettings
+React-RCTText
+React-RCTVibration
+React-rendererconsistency
+React-renderercss
+React-rendererdebug
+React-RuntimeApple
+React-RuntimeCore
+React-runtimeexecutor
+React-RuntimeHermes
+React-runtimescheduler
+React-timing
+React-utils
+React-viewtransitionnativemodule
+React-webperformancenativemodule
+ReactAppDependencyProvider
+ReactCodegen
+ReactCommon
+ReactNativeDependencies
+XCFrameworkIntermediates
+Yoga
+
+build/Build/Products/Release-iphoneos/DSBot.app:
+AppIcon60x60@2x.png
+AppIcon76x76@2x~ipad.png
+Assets.car
+DSBot
+EXConstants.bundle
+Expo.plist
+ExpoConstants_privacy.bundle
+ExpoFileSystem_privacy.bundle
+Frameworks
+Info.plist
+main.jsbundle
+PkgInfo
+PrivacyInfo.xcprivacy
+React-Core_privacy.bundle
+React-cxxreact_privacy.bundle
+React-timing_privacy.bundle
+SplashScreen.storyboardc
+
+build/Build/Products/Release-iphoneos/DSBot.app/EXConstants.bundle:
+app.config
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/ExpoConstants_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/ExpoFileSystem_privacy.bundle:
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks:
+ExpoFileSystem.framework
+ExpoFont.framework
+ExpoModulesCore.framework
+ExpoModulesJSI.framework
+ExpoModulesWorklets.framework
+hermesvm.framework
+React.framework
+ReactNativeDependencies.framework
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ExpoFileSystem.framework:
+ExpoFileSystem
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ExpoFont.framework:
+ExpoFont
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ExpoModulesCore.framework:
+ExpoModulesCore
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ExpoModulesJSI.framework:
+ExpoModulesJSI
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ExpoModulesWorklets.framework:
+ExpoModulesWorklets
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/hermesvm.framework:
+hermesvm
+Info.plist
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/React.framework:
+Info.plist
+React
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ReactNativeDependencies.framework:
+Info.plist
+ReactNativeDependencies
+ReactNativeDependencies_boost.bundle
+ReactNativeDependencies_folly.bundle
+ReactNativeDependencies_glog.bundle
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/React-Core_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/React-cxxreact_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/React-timing_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/DSBot.app/SplashScreen.storyboardc:
+EXPO-VIEWCONTROLLER-1-view-EXPO-ContainerView.nib
+Info.plist
+SplashScreenViewController.nib
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources:
+DWARF
+Relocations
+Swift
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources/DWARF:
+DSBot
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources/Relocations/aarch64:
+DSBot.yml
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources/Swift:
+aarch64
+
+build/Build/Products/Release-iphoneos/DSBot.app.dSYM/Contents/Resources/Swift/aarch64:
+ExpoFileSystem.swiftinterface
+ExpoFont.swiftinterface
+ExpoModulesCore.swiftinterface
+
+build/Build/Products/Release-iphoneos/DSBot.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/DSBot.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/EXConstants:
+EXConstants-umbrella.h
+EXConstants.bundle
+EXConstants.modulemap
+EXConstants.swiftmodule
+ExpoConstants_privacy.bundle
+libEXConstants.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/EXConstants/EXConstants.bundle:
+app.config
+Info.plist
+
+build/Build/Products/Release-iphoneos/EXConstants/EXConstants.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/EXConstants/EXConstants.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/EXConstants/ExpoConstants_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/EXConstants/Swift Compatibility Header:
+EXConstants-Swift.h
+
+build/Build/Products/Release-iphoneos/Expo:
+Expo-umbrella.h
+Expo.modulemap
+Expo.swiftmodule
+libExpo.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/Expo/Expo.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/Expo/Expo.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/Expo/Swift Compatibility Header:
+Expo-Swift.h
+
+build/Build/Products/Release-iphoneos/ExpoAsset:
+ExpoAsset-umbrella.h
+ExpoAsset.modulemap
+ExpoAsset.swiftmodule
+libExpoAsset.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoAsset/ExpoAsset.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoAsset/ExpoAsset.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoAsset/Swift Compatibility Header:
+ExpoAsset-Swift.h
+
+build/Build/Products/Release-iphoneos/ExpoDomWebView:
+ExpoDomWebView-umbrella.h
+ExpoDomWebView.modulemap
+ExpoDomWebView.swiftmodule
+libExpoDomWebView.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoDomWebView/ExpoDomWebView.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoDomWebView/ExpoDomWebView.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoDomWebView/Swift Compatibility Header:
+ExpoDomWebView-Swift.h
+
+build/Build/Products/Release-iphoneos/ExpoFileSystem:
+ExpoFileSystem_privacy.bundle
+
+build/Build/Products/Release-iphoneos/ExpoFileSystem/ExpoFileSystem_privacy.bundle:
+Info.plist
+
+build/Build/Products/Release-iphoneos/ExpoFont:
+
+build/Build/Products/Release-iphoneos/ExpoKeepAwake:
+ExpoKeepAwake-umbrella.h
+ExpoKeepAwake.modulemap
+ExpoKeepAwake.swiftmodule
+libExpoKeepAwake.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoKeepAwake/ExpoKeepAwake.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoKeepAwake/ExpoKeepAwake.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoKeepAwake/Swift Compatibility Header:
+ExpoKeepAwake-Swift.h
+
+build/Build/Products/Release-iphoneos/ExpoLogBox:
+ExpoLogBox-umbrella.h
+ExpoLogBox.modulemap
+ExpoLogBox.swiftmodule
+libExpoLogBox.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/ExpoLogBox.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoLogBox/Swift Compatibility Header:
+ExpoLogBox-Swift.h
+
+build/Build/Products/Release-iphoneos/ExpoModulesCore:
+
+build/Build/Products/Release-iphoneos/ExpoModulesJSI:
+
+build/Build/Products/Release-iphoneos/ExpoModulesWorklets:
+
+build/Build/Products/Release-iphoneos/ExpoSecureStore:
+ExpoSecureStore-umbrella.h
+ExpoSecureStore.modulemap
+ExpoSecureStore.swiftmodule
+libExpoSecureStore.a
+Swift Compatibility Header
+
+build/Build/Products/Release-iphoneos/ExpoSecureStore/ExpoSecureStore.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftmodule
+Project
+
+build/Build/Products/Release-iphoneos/ExpoSecureStore/ExpoSecureStore.swiftmodule/Project:
+arm64-apple-ios.swiftsourceinfo
+
+build/Build/Products/Release-iphoneos/ExpoSecureStore/Swift Compatibility Header:
+ExpoSecureStore-Swift.h
+
+build/Build/Products/Release-iphoneos/FBLazyVector:
+
+build/Build/Products/Release-iphoneos/hermes-engine:
+
+build/Build/Products/Release-iphoneos/RCTDeprecation:
+
+build/Build/Products/Release-iphoneos/RCTRequired:
+
+build/Build/Products/Release-iphoneos/RCTSwiftUI:
+
+build/Build/Products/Release-iphoneos/RCTSwiftUIWrapper:
+
+build/Build/Products/Release-iphoneos/RCTTypeSafety:
+
+build/Build/Products/Release-iphoneos/React:
+
+build/Build/Products/Release-iphoneos/React-callinvoker:
+
+build/Build/Products/Release-iphoneos/React-Core:
+React-Core_privacy.bundle
+
+build/Build/Products/Release-iphoneos/React-Core/React-Core_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/React-Core-prebuilt:
+
+build/Build/Products/Release-iphoneos/React-CoreModules:
+
+build/Build/Products/Release-iphoneos/React-cxxreact:
+React-cxxreact_privacy.bundle
+
+build/Build/Products/Release-iphoneos/React-cxxreact/React-cxxreact_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/React-debug:
+
+build/Build/Products/Release-iphoneos/React-defaultsnativemodule:
+
+build/Build/Products/Release-iphoneos/React-domnativemodule:
+
+build/Build/Products/Release-iphoneos/React-Fabric:
+
+build/Build/Products/Release-iphoneos/React-FabricComponents:
+
+build/Build/Products/Release-iphoneos/React-FabricImage:
+
+build/Build/Products/Release-iphoneos/React-featureflags:
+
+build/Build/Products/Release-iphoneos/React-featureflagsnativemodule:
+
+build/Build/Products/Release-iphoneos/React-graphics:
+
+build/Build/Products/Release-iphoneos/React-hermes:
+
+build/Build/Products/Release-iphoneos/React-idlecallbacksnativemodule:
+
+build/Build/Products/Release-iphoneos/React-ImageManager:
+
+build/Build/Products/Release-iphoneos/React-intersectionobservernativemodule:
+
+build/Build/Products/Release-iphoneos/React-jserrorhandler:
+
+build/Build/Products/Release-iphoneos/React-jsi:
+
+build/Build/Products/Release-iphoneos/React-jsiexecutor:
+
+build/Build/Products/Release-iphoneos/React-jsinspector:
+
+build/Build/Products/Release-iphoneos/React-jsinspectorcdp:
+
+build/Build/Products/Release-iphoneos/React-jsinspectornetwork:
+
+build/Build/Products/Release-iphoneos/React-jsinspectortracing:
+
+build/Build/Products/Release-iphoneos/React-jsitooling:
+
+build/Build/Products/Release-iphoneos/React-jsitracing:
+
+build/Build/Products/Release-iphoneos/React-logger:
+
+build/Build/Products/Release-iphoneos/React-Mapbuffer:
+
+build/Build/Products/Release-iphoneos/React-microtasksnativemodule:
+
+build/Build/Products/Release-iphoneos/React-mutationobservernativemodule:
+
+build/Build/Products/Release-iphoneos/react-native-safe-area-context:
+libreact-native-safe-area-context.a
+
+build/Build/Products/Release-iphoneos/React-NativeModulesApple:
+
+build/Build/Products/Release-iphoneos/React-networking:
+
+build/Build/Products/Release-iphoneos/React-oscompat:
+
+build/Build/Products/Release-iphoneos/React-perflogger:
+
+build/Build/Products/Release-iphoneos/React-performancecdpmetrics:
+
+build/Build/Products/Release-iphoneos/React-performancetimeline:
+
+build/Build/Products/Release-iphoneos/React-RCTActionSheet:
+
+build/Build/Products/Release-iphoneos/React-RCTAnimation:
+
+build/Build/Products/Release-iphoneos/React-RCTAppDelegate:
+
+build/Build/Products/Release-iphoneos/React-RCTBlob:
+
+build/Build/Products/Release-iphoneos/React-RCTFabric:
+
+build/Build/Products/Release-iphoneos/React-RCTFBReactNativeSpec:
+
+build/Build/Products/Release-iphoneos/React-RCTImage:
+
+build/Build/Products/Release-iphoneos/React-RCTLinking:
+
+build/Build/Products/Release-iphoneos/React-RCTNetwork:
+
+build/Build/Products/Release-iphoneos/React-RCTRuntime:
+
+build/Build/Products/Release-iphoneos/React-RCTSettings:
+
+build/Build/Products/Release-iphoneos/React-RCTText:
+
+build/Build/Products/Release-iphoneos/React-RCTVibration:
+
+build/Build/Products/Release-iphoneos/React-rendererconsistency:
+
+build/Build/Products/Release-iphoneos/React-renderercss:
+
+build/Build/Products/Release-iphoneos/React-rendererdebug:
+
+build/Build/Products/Release-iphoneos/React-RuntimeApple:
+
+build/Build/Products/Release-iphoneos/React-RuntimeCore:
+
+build/Build/Products/Release-iphoneos/React-runtimeexecutor:
+
+build/Build/Products/Release-iphoneos/React-RuntimeHermes:
+
+build/Build/Products/Release-iphoneos/React-runtimescheduler:
+
+build/Build/Products/Release-iphoneos/React-timing:
+React-timing_privacy.bundle
+
+build/Build/Products/Release-iphoneos/React-timing/React-timing_privacy.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/React-utils:
+
+build/Build/Products/Release-iphoneos/React-viewtransitionnativemodule:
+
+build/Build/Products/Release-iphoneos/React-webperformancenativemodule:
+
+build/Build/Products/Release-iphoneos/ReactAppDependencyProvider:
+libReactAppDependencyProvider.a
+
+build/Build/Products/Release-iphoneos/ReactCodegen:
+libReactCodegen.a
+
+build/Build/Products/Release-iphoneos/ReactCommon:
+
+build/Build/Products/Release-iphoneos/ReactNativeDependencies:
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates:
+ExpoFileSystem
+ExpoFont
+ExpoModulesCore
+ExpoModulesJSI
+ExpoModulesWorklets
+hermes-engine
+React-Core-prebuilt
+ReactNativeDependencies
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem:
+dSYMs
+ExpoFileSystem.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs:
+ExpoFileSystem.framework.dSYM
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources:
+DWARF
+Relocations
+Swift
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources/DWARF:
+ExpoFileSystem
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources/Relocations/aarch64:
+ExpoFileSystem.yml
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources/Swift:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/dSYMs/ExpoFileSystem.framework.dSYM/Contents/Resources/Swift/aarch64:
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework:
+ExpoFileSystem
+Headers
+Info.plist
+Modules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework/Headers:
+EXFileSystemAssetLibraryHandler.h
+EXFileSystemHandler.h
+EXFileSystemLocalFileHandler.h
+ExpoFileSystem_umbrella.h
+ExpoFileSystem-Swift.h
+ExpoFileSystem.h
+EXSessionCancelableUploadTaskDelegate.h
+EXSessionDownloadTaskDelegate.h
+EXSessionHandler.h
+EXSessionResumableDownloadTaskDelegate.h
+EXSessionTaskDelegate.h
+EXSessionTaskDispatcher.h
+EXSessionUploadTaskDelegate.h
+EXTaskHandlersManager.h
+NSData+EXFileSystem.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework/Modules:
+ExpoFileSystem.swiftmodule
+module.modulemap
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework/Modules/ExpoFileSystem.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.package.swiftinterface
+arm64-apple-ios.private.swiftinterface
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftinterface
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont:
+dSYMs
+ExpoFont.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs:
+ExpoFont.framework.dSYM
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources:
+DWARF
+Relocations
+Swift
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources/DWARF:
+ExpoFont
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources/Relocations/aarch64:
+ExpoFont.yml
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources/Swift:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/dSYMs/ExpoFont.framework.dSYM/Contents/Resources/Swift/aarch64:
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework:
+ExpoFont
+Headers
+Info.plist
+Modules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework/Headers:
+ExpoFont-Swift.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework/Modules:
+ExpoFont.swiftmodule
+module.modulemap
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework/Modules/ExpoFont.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.package.swiftinterface
+arm64-apple-ios.private.swiftinterface
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftinterface
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore:
+dSYMs
+ExpoModulesCore.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs:
+ExpoModulesCore.framework.dSYM
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM/Contents/Resources:
+DWARF
+Relocations
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM/Contents/Resources/DWARF:
+ExpoModulesCore
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/dSYMs/ExpoModulesCore.framework.dSYM/Contents/Resources/Relocations/aarch64:
+ExpoModulesCore.yml
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework:
+ExpoModulesCore
+Headers
+Info.plist
+Modules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework/Headers:
+BridgelessJSCallInvoker.h
+ContentOriginRegistry.h
+CoreModuleHelper.h
+EventEmitter.h
+EXAccelerometerInterface.h
+EXAppContextProtocol.h
+EXAppDefines.h
+EXAppLifecycleListener.h
+EXAppLifecycleService.h
+EXBarometerInterface.h
+EXCameraInterface.h
+EXConstantsInterface.h
+EXContentOriginRegistry.h
+EXDefines.h
+EXDeviceMotionInterface.h
+EXExportedModule.h
+EXFaceDetectorManagerInterface.h
+EXFaceDetectorManagerProviderInterface.h
+EXFilePermissionModuleInterface.h
+EXFileSystemInterface.h
+EXGyroscopeInterface.h
+EXHostWrapper.h
+EXImageLoader.h
+EXImageLoaderInterface.h
+EXInternalModule.h
+EXJavaScriptContextProvider.h
+EXJSIConversions.h
+EXJSIInstaller.h
+EXJSUtils.h
+EXMagnetometerInterface.h
+EXMagnetometerUncalibratedInterface.h
+EXModuleRegistry.h
+EXModuleRegistryAdapter.h
+EXModuleRegistryConsumer.h
+EXModuleRegistryDelegate.h
+EXModuleRegistryHolderReactModule.h
+EXModuleRegistryProvider.h
+EXOptimizedFunctionUtils.h
+EXPermissionsInterface.h
+EXPermissionsMethodsDelegate.h
+EXPermissionsService.h
+ExpoFabricViewObjC.h
+ExpoModulesCore_umbrella.h
+ExpoModulesCore-Swift.h
+ExpoModulesCore.h
+ExpoViewComponentDescriptor.h
+ExpoViewEventEmitter.h
+ExpoViewProps.h
+ExpoViewShadowNode.h
+ExpoViewState.h
+EXReactDelegateProtocol.h
+EXReactDelegateWrapper.h
+EXReactNativeAdapter.h
+EXReactNativeUserNotificationCenterProxy.h
+EXReactSchedulerDispatch.h
+EXSharedObjectUtils.h
+EXSingletonModule.h
+EXTaskConsumerInterface.h
+EXTaskInterface.h
+EXTaskLaunchReason.h
+EXTaskManagerInterface.h
+EXTaskServiceInterface.h
+EXUIManager.h
+EXUserNotificationCenterProxyInterface.h
+EXUtilities.h
+EXUtilitiesInterface.h
+JSIUtils.h
+LazyObject.h
+MemoryBuffer.h
+NativeModule.h
+ObjectDeallocator.h
+Platform.h
+SharedObject.h
+SharedRef.h
+Swift.h
+SwiftUIViewProps.h
+SwiftUIVirtualViewObjC.h
+SwiftUIVirtualViewObjCDev.h
+TestingSyncJSCallInvoker.h
+TypedArray.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework/Modules:
+ExpoModulesCore.swiftmodule
+module.modulemap
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework/Modules/ExpoModulesCore.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.package.swiftinterface
+arm64-apple-ios.private.swiftinterface
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftinterface
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI:
+ExpoModulesJSI.framework
+ExpoModulesJSI.framework.dSYM
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework:
+ExpoModulesJSI
+Headers
+Info.plist
+Modules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework/Headers:
+ExpoModulesJSI-Swift.h
+module.modulemap
+NativeState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework/Modules:
+ExpoModulesJSI.swiftmodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework/Modules/ExpoModulesJSI.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftinterface
+arm64-apple-ios.swiftmodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM/Contents/Resources:
+DWARF
+Relocations
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM/Contents/Resources/DWARF:
+ExpoModulesJSI
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework.dSYM/Contents/Resources/Relocations/aarch64:
+ExpoModulesJSI.yml
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets:
+dSYMs
+ExpoModulesWorklets.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs:
+ExpoModulesWorklets.framework.dSYM
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM:
+Contents
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents:
+Info.plist
+Resources
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources:
+DWARF
+Relocations
+Swift
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources/DWARF:
+ExpoModulesWorklets
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources/Relocations:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources/Relocations/aarch64:
+ExpoModulesWorklets.yml
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources/Swift:
+aarch64
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/dSYMs/ExpoModulesWorklets.framework.dSYM/Contents/Resources/Swift/aarch64:
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework:
+ExpoModulesWorklets
+Headers
+Info.plist
+Modules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework/Headers:
+EXJavaScriptSerializable.h
+ExpoModulesWorklets_umbrella.h
+ExpoModulesWorklets-Swift.h
+EXWorkletsProvider.h
+EXWorkletsProvider+Private.h
+SerializableExtractor.h
+WorkletRuntimeHandle.h
+WorkletRuntimeResolver.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework/Modules:
+ExpoModulesWorklets.swiftmodule
+module.modulemap
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework/Modules/ExpoModulesWorklets.swiftmodule:
+arm64-apple-ios.abi.json
+arm64-apple-ios.package.swiftinterface
+arm64-apple-ios.private.swiftinterface
+arm64-apple-ios.swiftdoc
+arm64-apple-ios.swiftinterface
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/hermes-engine:
+Pre-built
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/hermes-engine/Pre-built:
+hermesvm.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/hermes-engine/Pre-built/hermesvm.framework:
+hermesvm
+Info.plist
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt:
+React.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework:
+Headers
+Info.plist
+Modules
+React
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers:
+FBLazyVector
+RCTDeprecation
+RCTRequired
+RCTSwiftUIWrapper
+RCTTypeSafety
+React_callinvoker
+React_Core
+React_CoreModules
+React_cxxreact
+React_debug
+React_defaultsnativemodule
+React_domnativemodule
+React_Fabric
+React_FabricComponents
+React_FabricImage
+React_featureflags
+React_featureflagsnativemodule
+React_graphics
+React_hermes
+React_idlecallbacksnativemodule
+React_ImageManager
+React_intersectionobservernativemodule
+React_jserrorhandler
+React_jsi
+React_jsiexecutor
+React_jsinspector
+React_jsinspectorcdp
+React_jsinspectornetwork
+React_jsinspectortracing
+React_jsitooling
+React_logger
+React_Mapbuffer
+React_microtasksnativemodule
+React_mutationobservernativemodule
+React_NativeModulesApple
+React_networking
+React_oscompat
+React_perflogger
+React_performancecdpmetrics
+React_performancetimeline
+React_RCTAnimation
+React_RCTAppDelegate
+React_RCTBlob
+React_RCTFabric
+React_RCTFBReactNativeSpec
+React_RCTImage
+React_RCTRuntime
+React_RCTSettings
+React_RCTText
+React_RCTVibration
+React_rendererconsistency
+React_renderercss
+React_rendererdebug
+React_RuntimeApple
+React_RuntimeCore
+React_runtimeexecutor
+React_RuntimeHermes
+React_runtimescheduler
+React_timing
+React_utils
+React_viewtransitionnativemodule
+React_webperformancenativemodule
+ReactCommon
+Yoga
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/FBLazyVector:
+FBLazyVector
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/FBLazyVector/FBLazyVector:
+FBLazyIterator.h
+FBLazyVector.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTDeprecation:
+RCTDeprecation.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTRequired:
+RCTRequired
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTRequired/RCTRequired:
+RCTRequired.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTSwiftUIWrapper:
+RCTSwiftUIWrapper
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTSwiftUIWrapper/RCTSwiftUIWrapper:
+RCTSwiftUIContainerViewWrapper.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTTypeSafety:
+RCTTypeSafety
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/RCTTypeSafety/RCTTypeSafety:
+RCTConvertHelpers.h
+RCTTypedModuleConstants.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_callinvoker:
+ReactCommon
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_callinvoker/ReactCommon:
+CallInvoker.h
+SchedulerPriority.h
+TestCallInvoker.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Core:
+React
+React_Core-umbrella.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Core/React:
+CoreModulesPlugins.h
+DispatchMessageQueueThread.h
+FBXXHashUtils.h
+NSDataBigString.h
+NSTextStorage+FontScaling.h
+RCTAccessibilityManager.h
+RCTAccessibilityManager+Internal.h
+RCTActionSheetManager.h
+RCTActivityIndicatorView.h
+RCTActivityIndicatorViewManager.h
+RCTAdditionAnimatedNode.h
+RCTAlertController.h
+RCTAlertManager.h
+RCTAnimatedImage.h
+RCTAnimatedNode.h
+RCTAnimationDriver.h
+RCTAnimationPlugins.h
+RCTAnimationType.h
+RCTAnimationUtils.h
+RCTAppearance.h
+RCTAppState.h
+RCTAssert.h
+RCTAutoInsetsProtocol.h
+RCTBackedTextInputDelegate.h
+RCTBackedTextInputDelegateAdapter.h
+RCTBackedTextInputViewProtocol.h
+RCTBaseTextInputShadowView.h
+RCTBaseTextInputView.h
+RCTBaseTextInputViewManager.h
+RCTBaseTextShadowView.h
+RCTBaseTextViewManager.h
+RCTBlobManager.h
+RCTBorderCurve.h
+RCTBorderDrawing.h
+RCTBorderStyle.h
+RCTBridge.h
+RCTBridge+Inspector.h
+RCTBridge+Private.h
+RCTBridgeConstants.h
+RCTBridgeDelegate.h
+RCTBridgeMethod.h
+RCTBridgeModule.h
+RCTBridgeModuleDecorator.h
+RCTBridgeProxy.h
+RCTBridgeProxy+Cxx.h
+RCTBundleAssetImageLoader.h
+RCTBundleManager.h
+RCTBundleURLProvider.h
+RCTCallInvoker.h
+RCTCallInvokerModule.h
+RCTClipboard.h
+RCTColorAnimatedNode.h
+RCTComponent.h
+RCTComponentData.h
+RCTComponentEvent.h
+RCTConstants.h
+RCTConvert.h
+RCTConvert+CoreLocation.h
+RCTConvert+Text.h
+RCTConvert+Transform.h
+RCTCursor.h
+RCTCxxBridgeDelegate.h
+RCTCxxConvert.h
+RCTCxxInspectorPackagerConnection.h
+RCTCxxInspectorPackagerConnectionDelegate.h
+RCTCxxInspectorWebSocketAdapter.h
+RCTCxxMethod.h
+RCTCxxUtils.h
+RCTDataRequestHandler.h
+RCTDebuggingOverlay.h
+RCTDebuggingOverlayManager.h
+RCTDecayAnimation.h
+RCTDefaultCxxLogFunction.h
+RCTDefines.h
+RCTDeviceInfo.h
+RCTDevLoadingView.h
+RCTDevLoadingViewProtocol.h
+RCTDevLoadingViewSetEnabled.h
+RCTDevMenu.h
+RCTDevMenuConfigurationDecorator.h
+RCTDevSettings.h
+RCTDevSupportHttpHeaders.h
+RCTDevToolsRuntimeSettingsModule.h
+RCTDiffClampAnimatedNode.h
+RCTDisplayLink.h
+RCTDisplayWeakRefreshable.h
+RCTDivisionAnimatedNode.h
+RCTDynamicTypeRamp.h
+RCTErrorCustomizer.h
+RCTErrorInfo.h
+RCTEventAnimation.h
+RCTEventDispatcher.h
+RCTEventDispatcherProtocol.h
+RCTEventEmitter.h
+RCTExceptionsManager.h
+RCTFileReaderModule.h
+RCTFileRequestHandler.h
+RCTFollyConvert.h
+RCTFont.h
+RCTFont+Private.h
+RCTFPSGraph.h
+RCTFrameAnimation.h
+RCTFrameTimingsObserver.h
+RCTFrameUpdate.h
+RCTGIFImageDecoder.h
+RCTHTTPRequestHandler.h
+RCTI18nManager.h
+RCTI18nUtil.h
+RCTImageBlurUtils.h
+RCTImageCache.h
+RCTImageDataDecoder.h
+RCTImageEditingManager.h
+RCTImageLoader.h
+RCTImageLoaderLoggable.h
+RCTImageLoaderProtocol.h
+RCTImageLoaderWithAttributionProtocol.h
+RCTImagePlugins.h
+RCTImageShadowView.h
+RCTImageSource.h
+RCTImageStoreManager.h
+RCTImageURLLoader.h
+RCTImageURLLoaderWithAttribution.h
+RCTImageUtils.h
+RCTImageView.h
+RCTImageViewManager.h
+RCTInitializing.h
+RCTInputAccessoryShadowView.h
+RCTInputAccessoryView.h
+RCTInputAccessoryViewContent.h
+RCTInputAccessoryViewManager.h
+RCTInspector.h
+RCTInspectorDevServerHelper.h
+RCTInspectorNetworkHelper.h
+RCTInspectorNetworkReporter.h
+RCTInspectorPackagerConnection.h
+RCTInspectorUtils.h
+RCTInterpolationAnimatedNode.h
+RCTInvalidating.h
+RCTJavaScriptExecutor.h
+RCTJavaScriptLoader.h
+RCTJscSafeUrl+Internal.h
+RCTJSIExecutorRuntimeInstaller.h
+RCTJSStackFrame.h
+RCTJSThread.h
+RCTKeyboardObserver.h
+RCTKeyCommands.h
+RCTLayout.h
+RCTLayoutAnimation.h
+RCTLayoutAnimationGroup.h
+RCTLinkingManager.h
+RCTLinkingPlugins.h
+RCTLocalAssetImageLoader.h
+RCTLocalizedString.h
+RCTLog.h
+RCTLogBox.h
+RCTLogBoxView.h
+RCTMacros.h
+RCTManagedPointer.h
+RCTMessageThread.h
+RCTMockDef.h
+RCTModalHostView.h
+RCTModalHostViewController.h
+RCTModalHostViewManager.h
+RCTModalManager.h
+RCTModuleData.h
+RCTModuleMethod.h
+RCTModuloAnimatedNode.h
+RCTMultilineTextInputView.h
+RCTMultilineTextInputViewManager.h
+RCTMultipartDataTask.h
+RCTMultipartStreamReader.h
+RCTMultiplicationAnimatedNode.h
+RCTNativeAnimatedModule.h
+RCTNativeAnimatedNodesManager.h
+RCTNativeAnimatedTurboModule.h
+RCTNativeModule.h
+RCTNetworkConversions.h
+RCTNetworking.h
+RCTNetworking+Internal.h
+RCTNetworkPlugins.h
+RCTNetworkTask.h
+RCTNullability.h
+RCTObjcExecutor.h
+RCTObjectAnimatedNode.h
+RCTPackagerClient.h
+RCTPackagerConnection.h
+RCTParserUtils.h
+RCTPausedInDebuggerOverlayController.h
+RCTPerformanceLogger.h
+RCTPerformanceLoggerLabels.h
+RCTPlatform.h
+RCTPLTag.h
+RCTPointerEvents.h
+RCTProfile.h
+RCTPropsAnimatedNode.h
+RCTPushNotificationManager.h
+RCTPushNotificationPlugins.h
+RCTRawTextShadowView.h
+RCTRawTextViewManager.h
+RCTReconnectingWebSocket.h
+RCTRedBox.h
+RCTRedBox+Internal.h
+RCTRedBox2AnsiParser+Internal.h
+RCTRedBox2Controller+Internal.h
+RCTRedBox2ErrorParser+Internal.h
+RCTRedBoxController+Internal.h
+RCTRedBoxExtraDataViewController.h
+RCTRedBoxHMRClient+Internal.h
+RCTRedBoxSetEnabled.h
+RCTRefreshableProtocol.h
+RCTRefreshControl.h
+RCTRefreshControlManager.h
+RCTReloadCommand.h
+RCTResizeMode.h
+RCTRootContentView.h
+RCTRootShadowView.h
+RCTRootView.h
+RCTRootViewDelegate.h
+RCTRootViewInternal.h
+RCTSafeAreaShadowView.h
+RCTSafeAreaView.h
+RCTSafeAreaViewLocalData.h
+RCTSafeAreaViewManager.h
+RCTScrollableProtocol.h
+RCTScrollContentShadowView.h
+RCTScrollContentView.h
+RCTScrollContentViewManager.h
+RCTScrollEvent.h
+RCTScrollView.h
+RCTScrollViewManager.h
+RCTSettingsManager.h
+RCTSettingsPlugins.h
+RCTShadowView.h
+RCTShadowView+Internal.h
+RCTShadowView+Layout.h
+RCTSinglelineTextInputView.h
+RCTSinglelineTextInputViewManager.h
+RCTSourceCode.h
+RCTSpringAnimation.h
+RCTStatusBarManager.h
+RCTStyleAnimatedNode.h
+RCTSubtractionAnimatedNode.h
+RCTSurface.h
+RCTSurfaceDelegate.h
+RCTSurfaceHostingProxyRootView.h
+RCTSurfaceHostingView.h
+RCTSurfacePresenterStub.h
+RCTSurfaceProtocol.h
+RCTSurfaceRootShadowView.h
+RCTSurfaceRootShadowViewDelegate.h
+RCTSurfaceRootView.h
+RCTSurfaceSizeMeasureMode.h
+RCTSurfaceStage.h
+RCTSurfaceView.h
+RCTSurfaceView+Internal.h
+RCTSwitch.h
+RCTSwitchManager.h
+RCTTextAttributes.h
+RCTTextDecorationLineType.h
+RCTTextSelection.h
+RCTTextShadowView.h
+RCTTextTransform.h
+RCTTextView.h
+RCTTextViewManager.h
+RCTTiming.h
+RCTTouchEvent.h
+RCTTouchHandler.h
+RCTTrackingAnimatedNode.h
+RCTTransformAnimatedNode.h
+RCTTurboModuleRegistry.h
+RCTUIImageViewAnimated.h
+RCTUIManager.h
+RCTUIManagerObserverCoordinator.h
+RCTUIManagerUtils.h
+RCTUITextField.h
+RCTUITextView.h
+RCTURLRequestDelegate.h
+RCTURLRequestHandler.h
+RCTUtils.h
+RCTUtilsUIOverride.h
+RCTValueAnimatedNode.h
+RCTVersion.h
+RCTVibration.h
+RCTVibrationPlugins.h
+RCTView.h
+RCTViewManager.h
+RCTViewUtils.h
+RCTVirtualTextShadowView.h
+RCTVirtualTextView.h
+RCTVirtualTextViewManager.h
+RCTWebSocketModule.h
+RCTWrapperViewController.h
+UIView+Private.h
+UIView+React.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_CoreModules:
+CoreModules
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_CoreModules/CoreModules:
+CoreModulesPlugins.h
+RCTAccessibilityManager.h
+RCTAccessibilityManager+Internal.h
+RCTActionSheetManager.h
+RCTAlertController.h
+RCTAlertManager.h
+RCTAppearance.h
+RCTAppState.h
+RCTClipboard.h
+RCTDeviceInfo.h
+RCTDevLoadingView.h
+RCTDevMenu.h
+RCTDevMenuConfigurationDecorator.h
+RCTDevSettings.h
+RCTDevToolsRuntimeSettingsModule.h
+RCTEventDispatcher.h
+RCTExceptionsManager.h
+RCTFPSGraph.h
+RCTI18nManager.h
+RCTJscSafeUrl+Internal.h
+RCTKeyboardObserver.h
+RCTLogBox.h
+RCTLogBoxView.h
+RCTPlatform.h
+RCTRedBox.h
+RCTRedBox+Internal.h
+RCTRedBox2AnsiParser+Internal.h
+RCTRedBox2Controller+Internal.h
+RCTRedBox2ErrorParser+Internal.h
+RCTRedBoxController+Internal.h
+RCTRedBoxHMRClient+Internal.h
+RCTSourceCode.h
+RCTStatusBarManager.h
+RCTTiming.h
+RCTWebSocketModule.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_cxxreact:
+cxxreact
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_cxxreact/cxxreact:
+CxxModule.h
+CxxNativeModule.h
+ErrorUtils.h
+Instance.h
+JsArgumentHelpers-inl.h
+JsArgumentHelpers.h
+JSBigString.h
+JSBundleType.h
+JSExecutor.h
+JSIndexedRAMBundle.h
+JSModulesUnbundle.h
+MessageQueueThread.h
+MethodCall.h
+ModuleRegistry.h
+MoveWrapper.h
+NativeModule.h
+NativeToJsBridge.h
+RAMBundleRegistry.h
+ReactMarker.h
+ReactNativeVersion.h
+RecoverableError.h
+SystraceSection.h
+TraceSection.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_debug:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_debug/react:
+debug
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_debug/react/debug:
+AnsiParser.h
+flags.h
+JscSafeUrl.h
+react_native_assert.h
+react_native_expect.h
+RedBoxErrorParser.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_defaultsnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_defaultsnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_defaultsnativemodule/react/nativemodule:
+defaults
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_defaultsnativemodule/react/nativemodule/defaults:
+DefaultTurboModules.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_domnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_domnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_domnativemodule/react/nativemodule:
+dom
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_domnativemodule/react/nativemodule/dom:
+NativeDOM.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer:
+animated
+animationbackend
+animations
+attributedstring
+bridging
+componentregistry
+components
+consistency
+core
+dom
+imagemanager
+leakchecker
+mounting
+observers
+scheduler
+telemetry
+uimanager
+viewtransition
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/animated:
+AdditionAnimatedNode.h
+AnimatedModule.h
+AnimatedMountingOverrideDelegate.h
+AnimatedNode.h
+AnimationDriver.h
+AnimationDriverUtils.h
+ColorAnimatedNode.h
+DecayAnimationDriver.h
+DiffClampAnimatedNode.h
+DivisionAnimatedNode.h
+EventAnimationDriver.h
+EventEmitterListener.h
+FrameAnimationDriver.h
+InterpolationAnimatedNode.h
+MergedValueDispatcher.h
+ModulusAnimatedNode.h
+MultiplicationAnimatedNode.h
+NativeAnimatedAllowlist.h
+NativeAnimatedNodesManager.h
+NativeAnimatedNodesManagerProvider.h
+ObjectAnimatedNode.h
+primitives.h
+PropsAnimatedNode.h
+RoundAnimatedNode.h
+SpringAnimationDriver.h
+StyleAnimatedNode.h
+SubtractionAnimatedNode.h
+TrackingAnimatedNode.h
+TransformAnimatedNode.h
+ValueAnimatedNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/animationbackend:
+AnimatedProps.h
+AnimatedPropsBuilder.h
+AnimatedPropsRegistry.h
+AnimatedPropsSerializer.h
+AnimationBackend.h
+AnimationBackendCommitHook.h
+AnimationChoreographer.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/animations:
+conversions.h
+LayoutAnimationCallbackWrapper.h
+LayoutAnimationDriver.h
+LayoutAnimationKeyFrameManager.h
+primitives.h
+utils.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/attributedstring:
+AttributedString.h
+AttributedStringBox.h
+conversions.h
+ParagraphAttributes.h
+PlaceholderAttributedString.h
+primitives.h
+TextAttributes.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/bridging:
+bridging.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/componentregistry:
+ComponentDescriptorFactory.h
+ComponentDescriptorProvider.h
+ComponentDescriptorProviderRegistry.h
+ComponentDescriptorRegistry.h
+componentNameByReactViewName.h
+native
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/componentregistry/native:
+NativeComponentRegistryBinding.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/components:
+legacyviewmanagerinterop
+root
+scrollview
+view
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/components/legacyviewmanagerinterop:
+LegacyViewManagerInteropComponentDescriptor.h
+LegacyViewManagerInteropShadowNode.h
+LegacyViewManagerInteropState.h
+LegacyViewManagerInteropViewProps.h
+RCTLegacyViewManagerInteropCoordinator.h
+UnstableLegacyViewManagerAutomaticComponentDescriptor.h
+UnstableLegacyViewManagerAutomaticShadowNode.h
+UnstableLegacyViewManagerInteropComponentDescriptor.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/components/root:
+RootComponentDescriptor.h
+RootProps.h
+RootShadowNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/components/scrollview:
+BaseScrollViewProps.h
+conversions.h
+HostPlatformScrollViewProps.h
+primitives.h
+RCTComponentViewHelpers.h
+ScrollEvent.h
+ScrollViewComponentDescriptor.h
+ScrollViewEventEmitter.h
+ScrollViewProps.h
+ScrollViewShadowNode.h
+ScrollViewState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/components/view:
+AccessibilityPrimitives.h
+AccessibilityProps.h
+accessibilityPropsConversions.h
+BackgroundImagePropsConversions.h
+BaseTouch.h
+BaseViewEventEmitter.h
+BaseViewProps.h
+BoxShadowPropsConversions.h
+ConcreteViewShadowNode.h
+conversions.h
+CSSConversions.h
+FilterPropsConversions.h
+HostPlatformTouch.h
+HostPlatformViewEventEmitter.h
+HostPlatformViewProps.h
+HostPlatformViewTraitsInitializer.h
+LayoutConformanceComponentDescriptor.h
+LayoutConformanceProps.h
+LayoutConformanceShadowNode.h
+PointerEvent.h
+primitives.h
+propsConversions.h
+Touch.h
+TouchEvent.h
+TouchEventEmitter.h
+ViewComponentDescriptor.h
+ViewEventEmitter.h
+ViewProps.h
+ViewPropsInterpolation.h
+ViewShadowNode.h
+YogaLayoutableShadowNode.h
+YogaStylableProps.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/consistency:
+ScopedShadowTreeRevisionLock.h
+ShadowTreeRevisionConsistencyManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/core:
+ComponentDescriptor.h
+ConcreteComponentDescriptor.h
+ConcreteShadowNode.h
+ConcreteState.h
+conversions.h
+DynamicEventPayload.h
+DynamicPointerEvent.h
+DynamicPropsUtilities.h
+EventBeat.h
+EventDispatcher.h
+EventEmitter.h
+EventListener.h
+EventLogger.h
+EventPayload.h
+EventPayloadType.h
+EventPipe.h
+EventQueue.h
+EventQueueProcessor.h
+EventTarget.h
+graphicsConversions.h
+InstanceHandle.h
+LayoutableShadowNode.h
+LayoutConstraints.h
+LayoutContext.h
+LayoutMetrics.h
+LayoutPrimitives.h
+Props.h
+propsConversions.h
+PropsMacros.h
+PropsParserContext.h
+RawEvent.h
+RawProps.h
+RawPropsKey.h
+RawPropsKeyMap.h
+RawPropsParser.h
+RawPropsPrimitives.h
+RawValue.h
+ReactEventPriority.h
+ReactPrimitives.h
+ReactRootViewTagGenerator.h
+Sealable.h
+ShadowNode.h
+ShadowNodeFamily.h
+ShadowNodeFragment.h
+ShadowNodeTraits.h
+State.h
+StateData.h
+StatePipe.h
+StateUpdate.h
+ValueFactory.h
+ValueFactoryEventPayload.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/dom:
+DOM.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/imagemanager:
+ImageManager.h
+ImageRequest.h
+ImageResponse.h
+ImageResponseObserver.h
+ImageResponseObserverCoordinator.h
+ImageTelemetry.h
+primitives.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/leakchecker:
+LeakChecker.h
+WeakFamilyRegistry.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/mounting:
+CullingContext.h
+Differentiator.h
+DiffMap.h
+LongestIncreasingSubsequence.h
+MountingCoordinator.h
+MountingOverrideDelegate.h
+MountingTransaction.h
+ShadowTree.h
+ShadowTreeDelegate.h
+ShadowTreeRegistry.h
+ShadowTreeRevision.h
+ShadowView.h
+ShadowViewMutation.h
+ShadowViewNodePair.h
+sliceChildShadowNodeViewPairs.h
+stubs.h
+StubView.h
+StubViewTree.h
+TelemetryController.h
+TinyMap.h
+updateMountedFlag.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/observers:
+events
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/observers/events:
+EventPerformanceLogger.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/scheduler:
+InspectorData.h
+Scheduler.h
+SchedulerDelegate.h
+SchedulerToolbox.h
+SurfaceHandler.h
+SurfaceManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/telemetry:
+SurfaceTelemetry.h
+TransactionTelemetry.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/uimanager:
+AppRegistryBinding.h
+consistency
+LayoutAnimationStatusDelegate.h
+PointerEventsProcessor.h
+PointerHoverTracker.h
+primitives.h
+SurfaceRegistryBinding.h
+UIManager.h
+UIManagerAnimationBackend.h
+UIManagerAnimationDelegate.h
+UIManagerBinding.h
+UIManagerCommitHook.h
+UIManagerDelegate.h
+UIManagerMountHook.h
+UIManagerNativeAnimatedDelegate.h
+UIManagerViewTransitionDelegate.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/uimanager/consistency:
+LazyShadowTreeRevisionConsistencyManager.h
+ShadowTreeRevisionProvider.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Fabric/react/renderer/viewtransition:
+ViewTransitionModule.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer:
+components
+textlayoutmanager
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components:
+inputaccessory
+iostextinput
+modal
+rncore
+safeareaview
+scrollview
+switch
+text
+textinput
+unimplementedview
+virtualview
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/inputaccessory:
+InputAccessoryComponentDescriptor.h
+InputAccessoryShadowNode.h
+InputAccessoryState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/iostextinput:
+baseConversions.h
+basePrimitives.h
+BaseTextInputProps.h
+BaseTextInputShadowNode.h
+conversions.h
+primitives.h
+propsConversions.h
+TextInputComponentDescriptor.h
+TextInputEventEmitter.h
+TextInputProps.h
+TextInputShadowNode.h
+TextInputState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/modal:
+ModalHostViewComponentDescriptor.h
+ModalHostViewShadowNode.h
+ModalHostViewState.h
+ModalHostViewUtils.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/rncore:
+ComponentDescriptors.h
+EventEmitters.h
+Props.h
+ShadowNodes.h
+States.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/safeareaview:
+SafeAreaViewComponentDescriptor.h
+SafeAreaViewShadowNode.h
+SafeAreaViewState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/scrollview:
+BaseScrollViewProps.h
+conversions.h
+HostPlatformScrollViewProps.h
+primitives.h
+ScrollEvent.h
+ScrollViewComponentDescriptor.h
+ScrollViewEventEmitter.h
+ScrollViewProps.h
+ScrollViewShadowNode.h
+ScrollViewState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/switch:
+AppleSwitchComponentDescriptor.h
+AppleSwitchShadowNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/text:
+BaseParagraphComponentDescriptor.h
+BaseParagraphProps.h
+BaseTextProps.h
+BaseTextShadowNode.h
+HostPlatformParagraphProps.h
+ParagraphComponentDescriptor.h
+ParagraphEventEmitter.h
+ParagraphProps.h
+ParagraphShadowNode.h
+ParagraphState.h
+RawTextComponentDescriptor.h
+RawTextProps.h
+RawTextShadowNode.h
+SelectableParagraphComponentDescriptor.h
+SelectableParagraphShadowNode.h
+stateConversions.h
+TextComponentDescriptor.h
+TextProps.h
+TextShadowNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/textinput:
+AndroidTextInputComponentDescriptor.h
+AndroidTextInputEventEmitter.h
+AndroidTextInputProps.h
+AndroidTextInputShadowNode.h
+AndroidTextInputState.h
+baseConversions.h
+basePrimitives.h
+BaseTextInputProps.h
+BaseTextInputShadowNode.h
+conversions.h
+primitives.h
+propsConversions.h
+TextInputComponentDescriptor.h
+TextInputEventEmitter.h
+TextInputProps.h
+TextInputShadowNode.h
+TextInputState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/unimplementedview:
+UnimplementedViewComponentDescriptor.h
+UnimplementedViewProps.h
+UnimplementedViewShadowNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/components/virtualview:
+VirtualViewComponentDescriptor.h
+VirtualViewShadowNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricComponents/react/renderer/textlayoutmanager:
+RCTAttributedTextUtils.h
+RCTFontProperties.h
+RCTFontUtils.h
+RCTTextLayoutManager.h
+RCTTextPrimitivesConversions.h
+TextLayoutContext.h
+TextLayoutManager.h
+TextLayoutManagerExtended.h
+TextMeasureCache.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricImage:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricImage/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricImage/react/renderer:
+components
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricImage/react/renderer/components:
+image
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_FabricImage/react/renderer/components/image:
+conversions.h
+ImageComponentDescriptor.h
+ImageEventEmitter.h
+ImageProps.h
+ImageShadowNode.h
+ImageState.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflags:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflags/react:
+featureflags
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflags/react/featureflags:
+ReactNativeFeatureFlags.h
+ReactNativeFeatureFlagsAccessor.h
+ReactNativeFeatureFlagsDefaults.h
+ReactNativeFeatureFlagsDynamicProvider.h
+ReactNativeFeatureFlagsOverridesOSSCanary.h
+ReactNativeFeatureFlagsOverridesOSSExperimental.h
+ReactNativeFeatureFlagsOverridesOSSStable.h
+ReactNativeFeatureFlagsProvider.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflagsnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflagsnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflagsnativemodule/react/nativemodule:
+featureflags
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_featureflagsnativemodule/react/nativemodule/featureflags:
+NativeReactNativeFeatureFlags.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_graphics:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_graphics/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_graphics/react/renderer:
+graphics
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_graphics/react/renderer/graphics:
+BackgroundImage.h
+BackgroundPosition.h
+BackgroundRepeat.h
+BackgroundSize.h
+BlendMode.h
+BoxShadow.h
+Color.h
+ColorComponents.h
+ColorStop.h
+conversions.h
+Filter.h
+Float.h
+fromRawValueShared.h
+Geometry.h
+HostPlatformColor.h
+Isolation.h
+LinearGradient.h
+PlatformColorParser.h
+Point.h
+RadialGradient.h
+RCTPlatformColorUtils.h
+Rect.h
+RectangleCorners.h
+RectangleEdges.h
+rounding.h
+Size.h
+Transform.h
+TransformUtils.h
+ValueUnit.h
+Vector.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_hermes:
+reacthermes
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_hermes/reacthermes:
+ConnectionDemux.h
+HermesExecutorFactory.h
+HermesRuntimeAgentDelegate.h
+HermesRuntimeSamplingProfileSerializer.h
+HermesRuntimeTargetDelegate.h
+Registration.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_idlecallbacksnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_idlecallbacksnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_idlecallbacksnativemodule/react/nativemodule:
+idlecallbacks
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_idlecallbacksnativemodule/react/nativemodule/idlecallbacks:
+NativeIdleCallbacks.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_ImageManager:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_ImageManager/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_ImageManager/react/renderer:
+imagemanager
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_ImageManager/react/renderer/imagemanager:
+ImageRequestParams.h
+RCTImageManager.h
+RCTImageManagerProtocol.h
+RCTImagePrimitivesConversions.h
+RCTSyncImageManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_intersectionobservernativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_intersectionobservernativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_intersectionobservernativemodule/react/nativemodule:
+intersectionobserver
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_intersectionobservernativemodule/react/nativemodule/intersectionobserver:
+NativeIntersectionObserver.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jserrorhandler:
+jserrorhandler
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jserrorhandler/jserrorhandler:
+JsErrorHandler.h
+StackTraceParser.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsi:
+jsi
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsi/jsi:
+decorator.h
+hermes-interfaces.h
+instrumentation.h
+jsi-inl.h
+jsi.h
+JSIDynamic.h
+jsilib.h
+threadsafe.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsiexecutor:
+jsireact
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsiexecutor/jsireact:
+JSIExecutor.h
+JSINativeModules.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspector:
+jsinspector-modern
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspector/jsinspector-modern:
+ConsoleMessage.h
+ConsoleTask.h
+ConsoleTaskContext.h
+ConsoleTaskOrchestrator.h
+EmulationAgent.h
+EnumArray.h
+ExecutionContext.h
+ExecutionContextManager.h
+FallbackRuntimeAgentDelegate.h
+FallbackRuntimeTargetDelegate.h
+HostAgent.h
+HostCommand.h
+HostTarget.h
+HostTargetTraceRecording.h
+HostTargetTracing.h
+InspectorFlags.h
+InspectorInterfaces.h
+InspectorPackagerConnection.h
+InspectorPackagerConnectionImpl.h
+InspectorUtilities.h
+InstanceAgent.h
+InstanceTarget.h
+NetworkIOAgent.h
+PerfMonitorV2.h
+ReactCdp.h
+RuntimeAgent.h
+RuntimeAgentDelegate.h
+RuntimeTarget.h
+RuntimeTargetGlobalStateObserver.h
+RuntimeTargetTracingStateObserver.h
+ScopedExecutor.h
+SessionState.h
+StackTrace.h
+TracingAgent.h
+UniqueMonostate.h
+Utf8.h
+WeakList.h
+WebSocketInterfaces.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectorcdp:
+jsinspector-modern
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectorcdp/jsinspector-modern:
+cdp
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectorcdp/jsinspector-modern/cdp:
+CdpJson.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectornetwork:
+jsinspector-modern
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectornetwork/jsinspector-modern:
+network
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectornetwork/jsinspector-modern/network:
+BoundedRequestBuffer.h
+CdpNetwork.h
+HttpUtils.h
+NetworkHandler.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectortracing:
+jsinspector-modern
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectortracing/jsinspector-modern:
+tracing
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsinspectortracing/jsinspector-modern/tracing:
+ConsoleTimeStamp.h
+EventLoopReporter.h
+FrameTimingSequence.h
+HostTracingProfile.h
+HostTracingProfileSerializer.h
+InstanceTracingProfile.h
+PerformanceTracer.h
+PerformanceTracerSection.h
+ProfileTreeNode.h
+RuntimeSamplingProfile.h
+RuntimeSamplingProfileTraceEventSerializer.h
+TargetTracingAgent.h
+TimeWindowedBuffer.h
+Timing.h
+TraceEvent.h
+TraceEventGenerator.h
+TraceEventProfile.h
+TraceEventSerializer.h
+TraceRecordingState.h
+TracingCategory.h
+TracingMode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsitooling:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsitooling/react:
+runtime
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_jsitooling/react/runtime:
+JSRuntimeBindings.h
+JSRuntimeFactory.h
+JSRuntimeFactoryCAPI.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_logger:
+logger
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_logger/logger:
+react_native_log.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Mapbuffer:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Mapbuffer/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Mapbuffer/react/renderer:
+mapbuffer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_Mapbuffer/react/renderer/mapbuffer:
+MapBuffer.h
+MapBufferBuilder.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_microtasksnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_microtasksnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_microtasksnativemodule/react/nativemodule:
+microtasks
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_microtasksnativemodule/react/nativemodule/microtasks:
+NativeMicrotasks.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_mutationobservernativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_mutationobservernativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_mutationobservernativemodule/react/nativemodule:
+mutationobserver
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_mutationobservernativemodule/react/nativemodule/mutationobserver:
+NativeMutationObserver.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_NativeModulesApple:
+ReactCommon
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_NativeModulesApple/ReactCommon:
+RCTInteropTurboModule.h
+RCTTurboModule.h
+RCTTurboModuleManager.h
+RCTTurboModuleWithJSIBindings.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_networking:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_networking/react:
+networking
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_networking/react/networking:
+NetworkReporter.h
+NetworkTypes.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_oscompat:
+oscompat
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_oscompat/oscompat:
+OSCompat.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_perflogger:
+reactperflogger
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_perflogger/reactperflogger:
+BridgeNativeModulePerfLogger.h
+FuseboxPerfettoDataSource.h
+FuseboxTracer.h
+HermesPerfettoDataSource.h
+NativeModulePerfLogger.h
+ReactPerfetto.h
+ReactPerfettoCategories.h
+ReactPerfettoLogger.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancecdpmetrics:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancecdpmetrics/react:
+performance
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancecdpmetrics/react/performance:
+cdpmetrics
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancecdpmetrics/react/performance/cdpmetrics:
+CdpInteractionTypes.h
+CdpMetricsReporter.h
+CdpPerfIssuesReporter.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancetimeline:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancetimeline/react:
+performance
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancetimeline/react/performance:
+timeline
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_performancetimeline/react/performance/timeline:
+CircularBuffer.h
+PerformanceEntry.h
+PerformanceEntryBuffer.h
+PerformanceEntryCircularBuffer.h
+PerformanceEntryKeyedBuffer.h
+PerformanceEntryReporter.h
+PerformanceEntryReporterListeners.h
+PerformanceObserver.h
+PerformanceObserverRegistry.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTAnimation:
+RCTAnimation
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTAnimation/RCTAnimation:
+RCTAdditionAnimatedNode.h
+RCTAnimatedNode.h
+RCTAnimationDriver.h
+RCTAnimationPlugins.h
+RCTAnimationUtils.h
+RCTColorAnimatedNode.h
+RCTDecayAnimation.h
+RCTDiffClampAnimatedNode.h
+RCTDivisionAnimatedNode.h
+RCTEventAnimation.h
+RCTFrameAnimation.h
+RCTInterpolationAnimatedNode.h
+RCTModuloAnimatedNode.h
+RCTMultiplicationAnimatedNode.h
+RCTNativeAnimatedModule.h
+RCTNativeAnimatedNodesManager.h
+RCTNativeAnimatedTurboModule.h
+RCTObjectAnimatedNode.h
+RCTPropsAnimatedNode.h
+RCTSpringAnimation.h
+RCTStyleAnimatedNode.h
+RCTSubtractionAnimatedNode.h
+RCTTrackingAnimatedNode.h
+RCTTransformAnimatedNode.h
+RCTValueAnimatedNode.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTAppDelegate:
+RCTAppDelegate.h
+RCTAppSetupUtils.h
+RCTArchConfiguratorProtocol.h
+RCTDefaultReactNativeFactoryDelegate.h
+RCTDependencyProvider.h
+RCTJSRuntimeConfiguratorProtocol.h
+RCTReactNativeFactory.h
+RCTRootViewFactory.h
+RCTUIConfiguratorProtocol.h
+React_RCTAppDelegate-umbrella.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTBlob:
+RCTBlob
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTBlob/RCTBlob:
+RCTBlobCollector.h
+RCTBlobManager.h
+RCTBlobPlugins.h
+RCTFileReaderModule.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFabric:
+React
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFabric/React:
+AppleEventBeat.h
+PlatformRunLoopObserver.h
+RCTAccessibilityElement.h
+RCTActivityIndicatorViewComponentView.h
+RCTBackgroundImageUtils.h
+RCTBoxShadow.h
+RCTColorSpaceUtils.h
+RCTComponentViewClassDescriptor.h
+RCTComponentViewDescriptor.h
+RCTComponentViewFactory.h
+RCTComponentViewProtocol.h
+RCTComponentViewRegistry.h
+RCTConversions.h
+RCTCustomPullToRefreshViewProtocol.h
+RCTDebuggingOverlayComponentView.h
+RCTEnhancedScrollView.h
+RCTFabricComponentsPlugins.h
+RCTFabricModalHostViewController.h
+RCTFabricSurface.h
+RCTGenericDelegateSplitter.h
+RCTGradientUtils.h
+RCTIdentifierPool.h
+RCTImageComponentView.h
+RCTImageResponseDelegate.h
+RCTImageResponseObserverProxy.h
+RCTInputAccessoryComponentView.h
+RCTInputAccessoryContentView.h
+RCTLegacyViewManagerInteropComponentView.h
+RCTLegacyViewManagerInteropCoordinatorAdapter.h
+RCTLinearGradient.h
+RCTLocalizationProvider.h
+RCTModalHostViewComponentView.h
+RCTMountingManager.h
+RCTMountingManagerDelegate.h
+RCTMountingTransactionObserverCoordinator.h
+RCTMountingTransactionObserving.h
+RCTParagraphComponentAccessibilityProvider.h
+RCTParagraphComponentView.h
+RCTPrimitives.h
+RCTPullToRefreshViewComponentView.h
+RCTRadialGradient.h
+RCTReactTaggedView.h
+RCTRootComponentView.h
+RCTSafeAreaViewComponentView.h
+RCTScheduler.h
+RCTScrollViewComponentView.h
+RCTSurfacePointerHandler.h
+RCTSurfacePresenter.h
+RCTSurfacePresenterBridgeAdapter.h
+RCTSurfaceRegistry.h
+RCTSurfaceTouchHandler.h
+RCTSwitchComponentView.h
+RCTTextInputComponentView.h
+RCTTextInputNativeCommands.h
+RCTTextInputUtils.h
+RCTTouchableComponentViewProtocol.h
+RCTUnimplementedNativeComponentView.h
+RCTUnimplementedViewComponentView.h
+RCTViewComponentView.h
+RCTVirtualViewComponentView.h
+RCTVirtualViewContainerProtocol.h
+RCTVirtualViewContainerState.h
+RCTVirtualViewMode.h
+RCTVirtualViewProtocol.h
+RCTVirtualViewRenderState.h
+UIView+ComponentViewProtocol.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec:
+FBReactNativeSpec
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec/FBReactNativeSpec:
+FBReactNativeSpec.h
+FBReactNativeSpecJSI.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec/react/renderer:
+components
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec/react/renderer/components:
+FBReactNativeSpec
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTFBReactNativeSpec/react/renderer/components/FBReactNativeSpec:
+ComponentDescriptors.h
+EventEmitters.h
+Props.h
+RCTComponentViewHelpers.h
+ShadowNodes.h
+States.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTImage:
+RCTImage
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTImage/RCTImage:
+RCTAnimatedImage.h
+RCTBundleAssetImageLoader.h
+RCTDisplayWeakRefreshable.h
+RCTGIFImageDecoder.h
+RCTImageBlurUtils.h
+RCTImageCache.h
+RCTImageDataDecoder.h
+RCTImageEditingManager.h
+RCTImageLoader.h
+RCTImageLoaderLoggable.h
+RCTImageLoaderProtocol.h
+RCTImageLoaderWithAttributionProtocol.h
+RCTImagePlugins.h
+RCTImageShadowView.h
+RCTImageStoreManager.h
+RCTImageURLLoader.h
+RCTImageURLLoaderWithAttribution.h
+RCTImageUtils.h
+RCTImageView.h
+RCTImageViewManager.h
+RCTLocalAssetImageLoader.h
+RCTResizeMode.h
+RCTUIImageViewAnimated.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTRuntime:
+React
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTRuntime/React:
+RCTHermesInstanceFactory.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTSettings:
+RCTSettings
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTSettings/RCTSettings:
+RCTSettingsManager.h
+RCTSettingsPlugins.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTText:
+RCTText
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTText/RCTText:
+NSTextStorage+FontScaling.h
+RCTBackedTextInputDelegate.h
+RCTBackedTextInputDelegateAdapter.h
+RCTBackedTextInputViewProtocol.h
+RCTBaseTextInputShadowView.h
+RCTBaseTextInputView.h
+RCTBaseTextInputViewManager.h
+RCTBaseTextShadowView.h
+RCTBaseTextViewManager.h
+RCTConvert+Text.h
+RCTDynamicTypeRamp.h
+RCTInputAccessoryShadowView.h
+RCTInputAccessoryView.h
+RCTInputAccessoryViewContent.h
+RCTInputAccessoryViewManager.h
+RCTMultilineTextInputView.h
+RCTMultilineTextInputViewManager.h
+RCTRawTextShadowView.h
+RCTRawTextViewManager.h
+RCTSinglelineTextInputView.h
+RCTSinglelineTextInputViewManager.h
+RCTTextAttributes.h
+RCTTextSelection.h
+RCTTextShadowView.h
+RCTTextTransform.h
+RCTTextView.h
+RCTTextViewManager.h
+RCTUITextField.h
+RCTUITextView.h
+RCTVirtualTextShadowView.h
+RCTVirtualTextView.h
+RCTVirtualTextViewManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTVibration:
+RCTVibration
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RCTVibration/RCTVibration:
+RCTVibration.h
+RCTVibrationPlugins.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererconsistency:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererconsistency/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererconsistency/react/renderer:
+consistency
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererconsistency/react/renderer/consistency:
+ScopedShadowTreeRevisionLock.h
+ShadowTreeRevisionConsistencyManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_renderercss:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_renderercss/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_renderercss/react/renderer:
+css
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_renderercss/react/renderer/css:
+CSSAngle.h
+CSSAngleUnit.h
+CSSBackgroundImage.h
+CSSColor.h
+CSSColorFunction.h
+CSSCompoundDataType.h
+CSSDataType.h
+CSSFilter.h
+CSSFontVariant.h
+CSSHexColor.h
+CSSKeyword.h
+CSSLength.h
+CSSLengthPercentage.h
+CSSLengthUnit.h
+CSSList.h
+CSSNamedColor.h
+CSSNumber.h
+CSSPercentage.h
+CSSRatio.h
+CSSShadow.h
+CSSSyntaxParser.h
+CSSToken.h
+CSSTokenizer.h
+CSSTransform.h
+CSSTransformOrigin.h
+CSSValueParser.h
+CSSZero.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererdebug:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererdebug/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererdebug/react/renderer:
+debug
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_rendererdebug/react/renderer/debug:
+DebugStringConvertible.h
+DebugStringConvertibleItem.h
+debugStringConvertibleUtils.h
+flags.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeApple:
+ReactCommon
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeApple/ReactCommon:
+ObjCTimerRegistry.h
+RCTContextContainerHandling.h
+RCTHermesInstance.h
+RCTHost.h
+RCTHost+Internal.h
+RCTInstance.h
+RCTJSThreadManager.h
+RCTLegacyUIManagerConstantsProvider.h
+RCTPerformanceLoggerUtils.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeCore:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeCore/react:
+runtime
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeCore/react/runtime:
+BindingsInstaller.h
+BridgelessNativeMethodCallInvoker.h
+BufferedRuntimeExecutor.h
+LegacyUIManagerConstantsProviderBinding.h
+PlatformTimerRegistry.h
+ReactInstance.h
+TimerManager.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimeexecutor:
+ReactCommon
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimeexecutor/ReactCommon:
+RuntimeExecutor.h
+RuntimeExecutorSyncUIThreadUtils.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeHermes:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeHermes/react:
+runtime
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeHermes/react/runtime:
+hermes
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_RuntimeHermes/react/runtime/hermes:
+HermesInstance.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimescheduler:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimescheduler/react:
+renderer
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimescheduler/react/renderer:
+runtimescheduler
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_runtimescheduler/react/renderer/runtimescheduler:
+primitives.h
+RuntimeScheduler_Legacy.h
+RuntimeScheduler_Modern.h
+RuntimeScheduler.h
+RuntimeSchedulerBinding.h
+RuntimeSchedulerCallInvoker.h
+RuntimeSchedulerEventTimingDelegate.h
+RuntimeSchedulerIntersectionObserverDelegate.h
+SchedulerPriorityUtils.h
+Task.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_timing:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_timing/react:
+timing
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_timing/react/timing:
+primitives.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_utils:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_utils/react:
+utils
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_utils/react/utils:
+Base64.h
+ContextContainer.h
+FloatComparison.h
+fnv1a.h
+FollyConvert.h
+hash_combine.h
+iequals.h
+jsi-utils.h
+LowPriorityExecutor.h
+ManagedObjectWrapper.h
+OnScopeExit.h
+PackTraits.h
+RunLoopObserver.h
+SharedFunction.h
+SimpleThreadSafeCache.h
+Telemetry.h
+TemplateStringLiteral.h
+to_underlying.h
+toLower.h
+Uuid.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_viewtransitionnativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_viewtransitionnativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_viewtransitionnativemodule/react/nativemodule:
+viewtransition
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_viewtransitionnativemodule/react/nativemodule/viewtransition:
+NativeViewTransition.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_webperformancenativemodule:
+react
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_webperformancenativemodule/react:
+nativemodule
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_webperformancenativemodule/react/nativemodule:
+webperformance
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/React_webperformancenativemodule/react/nativemodule/webperformance:
+NativePerformance.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/ReactCommon:
+react
+ReactCommon
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/ReactCommon/react:
+bridging
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/ReactCommon/react/bridging:
+Array.h
+AString.h
+Base.h
+Bool.h
+Bridging.h
+CallbackWrapper.h
+Class.h
+Convert.h
+Dynamic.h
+Error.h
+EventEmitter.h
+Function.h
+HighResTimeStamp.h
+LongLivedObject.h
+Number.h
+Object.h
+Promise.h
+Value.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/ReactCommon/ReactCommon:
+CxxTurboModuleUtils.h
+TurboModule.h
+TurboModuleBinding.h
+TurboModulePerfLogger.h
+TurboModuleUtils.h
+TurboModuleWithJSIBindings.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga:
+yoga
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga:
+algorithm
+config
+debug
+enums
+event
+node
+numeric
+style
+YGConfig.h
+YGEnums.h
+YGMacros.h
+YGNode.h
+YGNodeLayout.h
+YGNodeStyle.h
+YGPixelGrid.h
+YGValue.h
+Yoga.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/algorithm:
+AbsoluteLayout.h
+Align.h
+Baseline.h
+BoundAxis.h
+Cache.h
+CalculateLayout.h
+FlexDirection.h
+FlexLine.h
+PixelGrid.h
+SizingMode.h
+TrailingPosition.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/config:
+Config.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/debug:
+AssertFatal.h
+Log.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/enums:
+Align.h
+BoxSizing.h
+Dimension.h
+Direction.h
+Display.h
+Edge.h
+Errata.h
+ExperimentalFeature.h
+FlexDirection.h
+GridTrackType.h
+Gutter.h
+Justify.h
+LogLevel.h
+MeasureMode.h
+NodeType.h
+Overflow.h
+PhysicalEdge.h
+PositionType.h
+Unit.h
+Wrap.h
+YogaEnums.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/event:
+event.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/node:
+CachedMeasurement.h
+LayoutableChildren.h
+LayoutResults.h
+Node.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/numeric:
+Comparison.h
+FloatOptional.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Headers/Yoga/yoga/style:
+GridLine.h
+GridTrack.h
+SmallValueBuffer.h
+Style.h
+StyleLength.h
+StyleSizeLength.h
+StyleValueHandle.h
+StyleValuePool.h
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework/Modules:
+module.modulemap
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies:
+ReactNativeDependencies.framework
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework:
+Info.plist
+ReactNativeDependencies
+ReactNativeDependencies_boost.bundle
+ReactNativeDependencies_folly.bundle
+ReactNativeDependencies_glog.bundle
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle:
+Info.plist
+PrivacyInfo.xcprivacy
+
+build/Build/Products/Release-iphoneos/Yoga:
 
 === ls -la build/Build/Products/Release-iphoneos ===
-ls: build/Build/Products/Release-iphoneos: No such file or directory
+total 4264
+drwxr-xr-x@ 96 runner  staff     3072 Nov 12 06:50 .
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:48 ..
+drwxr-xr-x  19 runner  staff      608 Nov 12 06:50 DSBot.app
+drwxr-xr-x   3 runner  staff       96 Nov 12 06:50 DSBot.app.dSYM
+drwxr-xr-x   6 runner  staff      192 Nov 12 06:50 DSBot.swiftmodule
+drwxr-xr-x@  9 runner  staff      288 Nov 12 06:49 EXConstants
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:50 Expo
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:49 ExpoAsset
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:49 ExpoDomWebView
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:48 ExpoFileSystem
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ExpoFont
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:49 ExpoKeepAwake
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:49 ExpoLogBox
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ExpoModulesCore
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ExpoModulesJSI
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ExpoModulesWorklets
+drwxr-xr-x@  7 runner  staff      224 Nov 12 06:49 ExpoSecureStore
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 FBLazyVector
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 hermes-engine
+-rw-r--r--   1 runner  staff     4112 Nov 12 06:50 libPods-DSBot.a
+-rw-r--r--   1 runner  staff  2170984 Nov 12 06:50 main.jsbundle
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 RCTDeprecation
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 RCTRequired
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 RCTSwiftUI
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 RCTSwiftUIWrapper
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 RCTTypeSafety
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-callinvoker
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:48 React-Core
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-Core-prebuilt
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-CoreModules
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:48 React-cxxreact
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-debug
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-defaultsnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-domnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-Fabric
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-FabricComponents
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-FabricImage
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-featureflags
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-featureflagsnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-graphics
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-hermes
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-idlecallbacksnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-ImageManager
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-intersectionobservernativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jserrorhandler
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsi
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsiexecutor
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsinspector
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsinspectorcdp
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsinspectornetwork
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsinspectortracing
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsitooling
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-jsitracing
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-logger
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-Mapbuffer
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-microtasksnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-mutationobservernativemodule
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:49 react-native-safe-area-context
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-NativeModulesApple
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-networking
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-oscompat
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-perflogger
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-performancecdpmetrics
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-performancetimeline
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTActionSheet
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTAnimation
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTAppDelegate
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTBlob
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTFabric
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTFBReactNativeSpec
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTImage
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTLinking
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTNetwork
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTRuntime
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTSettings
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTText
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RCTVibration
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-rendererconsistency
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-renderercss
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-rendererdebug
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RuntimeApple
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RuntimeCore
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-runtimeexecutor
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-RuntimeHermes
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-runtimescheduler
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:48 React-timing
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-utils
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-viewtransitionnativemodule
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 React-webperformancenativemodule
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:49 ReactAppDependencyProvider
+drwxr-xr-x@  3 runner  staff       96 Nov 12 06:49 ReactCodegen
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ReactCommon
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 ReactNativeDependencies
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:49 XCFrameworkIntermediates
+drwxr-xr-x@  2 runner  staff       64 Nov 12 06:48 Yoga
 
 === find . -maxdepth 6 -name '*.app' ===
+./out/Payload/DSBot.app
+./build/Build/Products/Release-iphoneos/DSBot.app
 
 === find build -maxdepth 8 -type d -name '*.app' ===
-find: build: No such file or directory
+build/Build/Products/Release-iphoneos/DSBot.app
 
 === ls -la ios ===
-ls: ios: No such file or directory
+total 184
+drwxr-xr-x  13 runner  staff    416 Nov 12 06:48 .
+drwxr-xr-x  24 runner  staff    768 Nov 12 06:51 ..
+-rw-r--r--   1 runner  staff    321 Nov 12 06:47 .gitignore
+-rw-r--r--   1 runner  staff    482 Nov 12 06:47 .xcode.env
+-rw-r--r--   1 runner  staff     77 Nov 12 06:47 .xcode.env.local
+drwxr-xr-x   3 runner  staff     96 Nov 12 06:47 build
+drwxr-xr-x  10 runner  staff    320 Nov 12 06:48 DSBot
+drwxr-xr-x   5 runner  staff    160 Nov 12 06:48 DSBot.xcodeproj
+drwxr-xr-x   4 runner  staff    128 Nov 12 06:48 DSBot.xcworkspace
+-rw-r--r--   1 runner  staff   2778 Nov 12 06:47 Podfile
+-rw-r--r--   1 runner  staff  71285 Nov 12 06:48 Podfile.lock
+-rw-r--r--   1 runner  staff    215 Nov 12 06:47 Podfile.properties.json
+drwxr-xr-x  18 runner  staff    576 Nov 12 06:50 Pods
 
 === xcodebuild -list -workspace ios/*.xcworkspace ===
---- ios/*.xcworkspace
+--- ios/DSBot.xcworkspace
 Command line invocation:
-    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -list -workspace "ios/*.xcworkspace"
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -list -workspace ios/DSBot.xcworkspace
 
-2026-11-12 06:41:06.504 xcodebuild[1590:7811] Writing error result bundle to /var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/ResultBundle_2026-12-11_06-41-0006.xcresult
-xcodebuild: error: 'ios/*.xcworkspace' does not exist.
+Information about workspace "DSBot":
+    Schemes:
+        DSBot
+        EXConstants
+        EXConstants-EXConstants
+        EXConstants-ExpoConstants_privacy
+        Expo
+        ExpoAsset
+        ExpoDomWebView
+        ExpoFileSystem
+        ExpoFileSystem-ExpoFileSystem_privacy
+        ExpoFont
+        ExpoKeepAwake
+        ExpoLogBox
+        ExpoModulesCore
+        ExpoModulesJSI
+        ExpoModulesWorklets
+        ExpoSecureStore
+        FBLazyVector
+        hermes-engine
+        Pods-DSBot
+        RCTDeprecation
+        RCTRequired
+        RCTSwiftUI
+        RCTSwiftUIWrapper
+        RCTTypeSafety
+        React
+        React-callinvoker
+        React-Core
+        React-Core-prebuilt
+        React-Core-React-Core_privacy
+        React-CoreModules
+        React-cxxreact
+        React-cxxreact-React-cxxreact_privacy
+        React-debug
+        React-defaultsnativemodule
+        React-domnativemodule
+        React-Fabric
+        React-FabricComponents
+        React-FabricImage
+        React-featureflags
+        React-featureflagsnativemodule
+        React-graphics
+        React-hermes
+        React-idlecallbacksnativemodule
+        React-ImageManager
+        React-intersectionobservernativemodule
+        React-jserrorhandler
+        React-jsi
+        React-jsiexecutor
+        React-jsinspector
+        React-jsinspectorcdp
+        React-jsinspectornetwork
+        React-jsinspectortracing
+        React-jsitooling
+        React-jsitracing
+        React-logger
+        React-Mapbuffer
+        React-microtasksnativemodule
+        React-mutationobservernativemodule
+        react-native-safe-area-context
+        React-NativeModulesApple
+        React-networking
+        React-oscompat
+        React-perflogger
+        React-performancecdpmetrics
+        React-performancetimeline
+        React-RCTActionSheet
+        React-RCTAnimation
+        React-RCTAppDelegate
+        React-RCTBlob
+        React-RCTFabric
+        React-RCTFBReactNativeSpec
+        React-RCTImage
+        React-RCTLinking
+        React-RCTNetwork
+        React-RCTRuntime
+        React-RCTSettings
+        React-RCTText
+        React-RCTVibration
+        React-rendererconsistency
+        React-renderercss
+        React-rendererdebug
+        React-RuntimeApple
+        React-RuntimeCore
+        React-runtimeexecutor
+        React-RuntimeHermes
+        React-runtimescheduler
+        React-timing
+        React-timing-React-timing_privacy
+        React-utils
+        React-viewtransitionnativemodule
+        React-webperformancenativemodule
+        ReactAppDependencyProvider
+        ReactCodegen
+        ReactCommon
+        ReactNativeDependencies
+        Yoga
+
 
 === xcodebuild -list (json) ===
-cat: xcodebuild-list.json: No such file or directory
+{
+  "workspace" : {
+    "name" : "DSBot",
+    "schemes" : [
+      "DSBot",
+      "EXConstants",
+      "EXConstants-EXConstants",
+      "EXConstants-ExpoConstants_privacy",
+      "Expo",
+      "ExpoAsset",
+      "ExpoDomWebView",
+      "ExpoFileSystem",
+      "ExpoFileSystem-ExpoFileSystem_privacy",
+      "ExpoFont",
+      "ExpoKeepAwake",
+      "ExpoLogBox",
+      "ExpoModulesCore",
+      "ExpoModulesJSI",
+      "ExpoModulesWorklets",
+      "ExpoSecureStore",
+      "FBLazyVector",
+      "hermes-engine",
+      "Pods-DSBot",
+      "RCTDeprecation",
+      "RCTRequired",
+      "RCTSwiftUI",
+      "RCTSwiftUIWrapper",
+      "RCTTypeSafety",
+      "React",
+      "React-callinvoker",
+      "React-Core",
+      "React-Core-prebuilt",
+      "React-Core-React-Core_privacy",
+      "React-CoreModules",
+      "React-cxxreact",
+      "React-cxxreact-React-cxxreact_privacy",
+      "React-debug",
+      "React-defaultsnativemodule",
+      "React-domnativemodule",
+      "React-Fabric",
+      "React-FabricComponents",
+      "React-FabricImage",
+      "React-featureflags",
+      "React-featureflagsnativemodule",
+      "React-graphics",
+      "React-hermes",
+      "React-idlecallbacksnativemodule",
+      "React-ImageManager",
+      "React-intersectionobservernativemodule",
+      "React-jserrorhandler",
+      "React-jsi",
+      "React-jsiexecutor",
+      "React-jsinspector",
+      "React-jsinspectorcdp",
+      "React-jsinspectornetwork",
+      "React-jsinspectortracing",
+      "React-jsitooling",
+      "React-jsitracing",
+      "React-logger",
+      "React-Mapbuffer",
+      "React-microtasksnativemodule",
+      "React-mutationobservernativemodule",
+      "react-native-safe-area-context",
+      "React-NativeModulesApple",
+      "React-networking",
+      "React-oscompat",
+      "React-perflogger",
+      "React-performancecdpmetrics",
+      "React-performancetimeline",
+      "React-RCTActionSheet",
+      "React-RCTAnimation",
+      "React-RCTAppDelegate",
+      "React-RCTBlob",
+      "React-RCTFabric",
+      "React-RCTFBReactNativeSpec",
+      "React-RCTImage",
+      "React-RCTLinking",
+      "React-RCTNetwork",
+      "React-RCTRuntime",
+      "React-RCTSettings",
+      "React-RCTText",
+      "React-RCTVibration",
+      "React-rendererconsistency",
+      "React-renderercss",
+      "React-rendererdebug",
+      "React-RuntimeApple",
+      "React-RuntimeCore",
+      "React-runtimeexecutor",
+      "React-RuntimeHermes",
+      "React-runtimescheduler",
+      "React-timing",
+      "React-timing-React-timing_privacy",
+      "React-utils",
+      "React-viewtransitionnativemodule",
+      "React-webperformancenativemodule",
+      "ReactAppDependencyProvider",
+      "ReactCodegen",
+      "ReactCommon",
+      "ReactNativeDependencies",
+      "Yoga"
+    ]
+  }
+}
 
 === xcodebuild -list (txt) ===
-cat: xcodebuild-list.txt: No such file or directory
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -list -workspace DSBot.xcworkspace
+
+Information about workspace "DSBot":
+    Schemes:
+        DSBot
+        EXConstants
+        EXConstants-EXConstants
+        EXConstants-ExpoConstants_privacy
+        Expo
+        ExpoAsset
+        ExpoDomWebView
+        ExpoFileSystem
+        ExpoFileSystem-ExpoFileSystem_privacy
+        ExpoFont
+        ExpoKeepAwake
+        ExpoLogBox
+        ExpoModulesCore
+        ExpoModulesJSI
+        ExpoModulesWorklets
+        ExpoSecureStore
+        FBLazyVector
+        hermes-engine
+        Pods-DSBot
+        RCTDeprecation
+        RCTRequired
+        RCTSwiftUI
+        RCTSwiftUIWrapper
+        RCTTypeSafety
+        React
+        React-callinvoker
+        React-Core
+        React-Core-prebuilt
+        React-Core-React-Core_privacy
+        React-CoreModules
+        React-cxxreact
+        React-cxxreact-React-cxxreact_privacy
+        React-debug
+        React-defaultsnativemodule
+        React-domnativemodule
+        React-Fabric
+        React-FabricComponents
+        React-FabricImage
+        React-featureflags
+        React-featureflagsnativemodule
+        React-graphics
+        React-hermes
+        React-idlecallbacksnativemodule
+        React-ImageManager
+        React-intersectionobservernativemodule
+        React-jserrorhandler
+        React-jsi
+        React-jsiexecutor
+        React-jsinspector
+        React-jsinspectorcdp
+        React-jsinspectornetwork
+        React-jsinspectortracing
+        React-jsitooling
+        React-jsitracing
+        React-logger
+        React-Mapbuffer
+        React-microtasksnativemodule
+        React-mutationobservernativemodule
+        react-native-safe-area-context
+        React-NativeModulesApple
+        React-networking
+        React-oscompat
+        React-perflogger
+        React-performancecdpmetrics
+        React-performancetimeline
+        React-RCTActionSheet
+        React-RCTAnimation
+        React-RCTAppDelegate
+        React-RCTBlob
+        React-RCTFabric
+        React-RCTFBReactNativeSpec
+        React-RCTImage
+        React-RCTLinking
+        React-RCTNetwork
+        React-RCTRuntime
+        React-RCTSettings
+        React-RCTText
+        React-RCTVibration
+        React-rendererconsistency
+        React-renderercss
+        React-rendererdebug
+        React-RuntimeApple
+        React-RuntimeCore
+        React-runtimeexecutor
+        React-RuntimeHermes
+        React-runtimescheduler
+        React-timing
+        React-timing-React-timing_privacy
+        React-utils
+        React-viewtransitionnativemodule
+        React-webperformancenativemodule
+        ReactAppDependencyProvider
+        ReactCodegen
+        ReactCommon
+        ReactNativeDependencies
+        Yoga
+
 
 === build-settings 关键项 ===
-grep: build-settings.txt: No such file or directory
+    SDKROOT = iphoneos26.2
+    ARCHS = arm64
+    BUILT_PRODUCTS_DIR = /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos
+    CONFIGURATION = Release
+    CONFIGURATION_BUILD_DIR = /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos
+    DEPLOYMENT_LOCATION = NO
+    FULL_PRODUCT_NAME = DSBot.app
+    PRODUCT_NAME = DSBot
+    PRODUCT_TYPE = com.apple.product-type.application
+    SDKROOT = /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk
+    SYMROOT = /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products
+    TARGET_BUILD_DIR = /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos
+    WRAPPER_NAME = DSBot.app
 
 === build.log tail 300 ===
-tail: build.log: No such file or directory
++ [[ ! -n '' ]]
++ [[ Release = *Debug* ]]
++ [[ -n '' ]]
++ case "$CONFIGURATION" in
++ DEV=false
++++ dirname /Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native/scripts/react-native-xcode.sh
+++ cd /Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native/scripts/..
+++ pwd
++ REACT_NATIVE_DIR=/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native
++ PROJECT_ROOT=/Users/runner/work/ds-bot-app/ds-bot-app/ios/..
++ cd /Users/runner/work/ds-bot-app/ds-bot-app/ios/..
++ [[ -n /Users/runner/work/ds-bot-app/ds-bot-app/index.js ]]
++ :
++ source /Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native/scripts/node-binary.sh
+++ '[' -z /Users/runner/hostedtoolcache/node/22.23.4/arm64/bin/node ']'
+++ type /Users/runner/hostedtoolcache/node/22.23.4/arm64/bin/node
++ HERMES_ENGINE_PATH=/Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/hermes-engine
++ '[' -z /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/../../node_modules/hermes-compiler/hermesc/osx-bin/hermesc ']'
++ [[ true != false ]]
++ [[ -f /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/hermes-engine ]]
++ '[' -z '' ']'
++ export NODE_ARGS=
++ NODE_ARGS=
++ '[' -z /Users/runner/work/ds-bot-app/ds-bot-app/node_modules/expo/node_modules/@expo/cli/build/bin/cli ']'
++ '[' -z export:embed ']'
++ '[' -z '' ']'
++ COMPOSE_SOURCEMAP_PATH=/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native/scripts/compose-source-maps.js
++ [[ -z '' ]]
++ CONFIG_ARG=
++ [[ -z '' ]]
++ BUNDLE_NAME=main
++ BUNDLE_FILE=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle
++ EXTRA_ARGS=()
++ case "$PLATFORM_NAME" in
++ BUNDLE_PLATFORM=ios
++ '[' '' = YES ']'
++ EMIT_SOURCEMAP=
++ [[ ! -z '' ]]
++ PACKAGER_SOURCEMAP_FILE=
++ [[ '' == true ]]
++ [[ true != false ]]
++ [[ false == false ]]
++ EXTRA_ARGS+=("--minify" "false")
++ [[ -n '' ]]
++ [[ -n '' ]]
++ EXTRA_ARGS+=("--config-cmd" "'$NODE_BINARY' $NODE_ARGS '$REACT_NATIVE_DIR/cli.js' config")
++ /Users/runner/hostedtoolcache/node/22.23.4/arm64/bin/node /Users/runner/work/ds-bot-app/ds-bot-app/node_modules/expo/node_modules/@expo/cli/build/bin/cli export:embed --entry-file /Users/runner/work/ds-bot-app/ds-bot-app/index.js --platform ios --dev false --reset-cache --bundle-output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle --assets-dest /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --minify false --config-cmd ''\''/Users/runner/hostedtoolcache/node/22.23.4/arm64/bin/node'\''  '\''/Users/runner/work/ds-bot-app/ds-bot-app/node_modules/react-native/cli.js'\'' config'
+Starting Metro Bundler
+
+iOS Bundled 6197ms index.js (599 modules)
+Writing bundle output to: /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle
+Done writing bundle output
++ [[ true == false ]]
++ EXTRA_COMPILER_ARGS=
++ [[ false == true ]]
++ EXTRA_COMPILER_ARGS=-O
++ [[ '' == true ]]
++ /Users/runner/work/ds-bot-app/ds-bot-app/ios/Pods/../../node_modules/hermes-compiler/hermesc/osx-bin/hermesc -emit-binary -max-diagnostic-width=80 -O -out /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/main.jsbundle /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:869:13: warning: the variable "Promise" was not declared in anonymous function
+    var z = Promise,
+            ^~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:3520:25: warning: the variable "ErrorUtils" was not declared in anonymous function
+    var globalHandler = ErrorUtils.getGlobalHandler();
+                        ^~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:3567:39: warning: the variable "FormData" was not declared in anonymous function
+  (0, _FormData.installFormDataPatch)(FormData);
+                                      ^~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:3568:45: warning: the variable "AbortSignal" was not declared in anonymous function
+  (0, _AbortSignal.installAbortSignalPatch)(AbortSignal);
+                                            ^~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:6158:71: warning: the variable "performance" was not declared in anonymous function
+...!== undefined ? initTimestamp : performance.now();
+                                   ^~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:18569:7: warning: the variable "setTimeout" was not declared in function "logUncaughtError"
+      setTimeout(function () {
+      ^~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:21347:31: warning: the variable "nativeFabricUIManager" was not declared in anonymous function
+  var _nativeFabricUIManage = nativeFabricUIManager,
+                              ^~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:21411:21: warning: the variable "clearTimeout" was not declared in anonymous function
+    cancelTimeout = clearTimeout;
+                    ^~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:26200:15: warning: the variable "Blob" was not declared in anonymous function
+          new Blob();
+              ^~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:26339:24: warning: the variable "FileReader" was not declared in function "readBlobAsArrayBuffer"
+      var reader = new FileReader();
+                       ^~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:26394:44: warning: the variable "URLSearchParams" was not declared in anonymous function
+...e if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body...
+                                 ^~~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:26647:23: warning: the variable "XMLHttpRequest" was not declared in anonymous function
+        var xhr = new XMLHttpRequest();
+                      ^~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:30870:22: warning: the variable "DOMException" was not declared in function "timeout"
+    var reason = new DOMException('The signal timed out.', 'TimeoutError');
+                     ^~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:31607:35: warning: the variable "TransformStream" was not declared in anonymous function
+  class TextDecoderStream extends TransformStream {
+                                  ^~~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:31609:25: warning: the variable "TextDecoder" was not declared in anonymous function
+      var decoder = new TextDecoder(label, options);
+                        ^~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:31646:25: warning: the variable "TextEncoder" was not declared in anonymous function
+      var encoder = new TextEncoder();
+                        ^~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:33521:19: warning: the variable "URL" was not declared in function "getBundleUrl"
+    var url = new URL(scriptURL);
+                  ^~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:33932:50: warning: the variable "Request" was not declared in anonymous arrow function
+...ody' in input || input instanceof Request || input[Symbol.toStringTag] ===...
+                                     ^~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:37330:13: warning: the variable "clearImmediate" was not declared in anonymous arrow function
+            clearImmediate(flushQueueImmediate);
+            ^~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:38893:32: warning: the variable "requestAnimationFrame" was not declared in anonymous function
+        this._animationFrame = requestAnimationFrame(() => this.onUpdate());
+                               ^~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:55493:22: warning: the variable "ReadableStream" was not declared in function "wrapWithConsumption"
+    var stream = new ReadableStream({
+                     ^~~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:55764:18: warning: the variable "Headers" was not declared in anonymous function
+      return new Headers(this._rawHeaders);
+                 ^~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:56397:16: warning: Direct call to eval(), but lexical scope is not supported.
+        return eval(body);
+               ^~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:57467:21: warning: the variable "Image" was not declared in anonymous arrow function
+      var img = new Image();
+                    ^~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:59182:19: warning: the variable "fetch" was not declared in function "request"
+      res = await fetch(join(base, path), {
+                  ^~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:59657:30: warning: the variable "clearInterval" was not declared in anonymous arrow function
+      if (pollTimer.current) clearInterval(pollTimer.current);
+                             ^~~~~~~~~~~~~
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:59683:27: warning: the variable "setInterval" was not declared in anonymous arrow function
+      pollTimer.current = setInterval(async () => {
+                          ^~~~~~~~~~~
++ [[ '' == true ]]
++ BUNDLE_FILE=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/main.jsbundle
++ [[ false != true ]]
++ [[ ! -f /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/main.jsbundle ]]
+
+GenerateDSYMFile /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app.dSYM /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot -o /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app.dSYM
+
+PhaseScriptExecution [CP]\ Copy\ Pods\ Resources /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-800E24972A6A228C8D4807E9.sh (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-800E24972A6A228C8D4807E9.sh
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/EXConstants/EXConstants.bundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/EXConstants/ExpoConstants_privacy.bundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/ExpoFileSystem/ExpoFileSystem_privacy.bundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/React-Core/React-Core_privacy.bundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/React-cxxreact/React-cxxreact_privacy.bundle
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/React-timing/React-timing_privacy.bundle
+Transfer starting: 17 files
+EXConstants.bundle/
+EXConstants.bundle/Info.plist
+EXConstants.bundle/app.config
+ExpoConstants_privacy.bundle/
+ExpoConstants_privacy.bundle/Info.plist
+ExpoConstants_privacy.bundle/PrivacyInfo.xcprivacy
+ExpoFileSystem_privacy.bundle/
+ExpoFileSystem_privacy.bundle/Info.plist
+React-Core_privacy.bundle/
+React-Core_privacy.bundle/Info.plist
+React-Core_privacy.bundle/PrivacyInfo.xcprivacy
+React-cxxreact_privacy.bundle/
+React-cxxreact_privacy.bundle/Info.plist
+React-cxxreact_privacy.bundle/PrivacyInfo.xcprivacy
+React-timing_privacy.bundle/
+React-timing_privacy.bundle/Info.plist
+React-timing_privacy.bundle/PrivacyInfo.xcprivacy
+
+sent 9072 bytes  received 298 bytes  774380 bytes/sec
+total size is 7451  speedup is 0.80
+
+PhaseScriptExecution [CP]\ Embed\ Pods\ Frameworks /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-763E03DC14EC30118B9B6D68.sh (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-763E03DC14EC30118B9B6D68.sh
+mkdir -p /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+ExpoFileSystem.framework/
+ExpoFileSystem.framework/ExpoFileSystem
+ExpoFileSystem.framework/Info.plist
+
+sent 1136042 bytes  received 70 bytes  66439298 bytes/sec
+total size is 1135478  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+ExpoFont.framework/
+ExpoFont.framework/ExpoFont
+ExpoFont.framework/Info.plist
+
+sent 208688 bytes  received 70 bytes  22940439 bytes/sec
+total size is 208260  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+ExpoModulesCore.framework/
+ExpoModulesCore.framework/ExpoModulesCore
+ExpoModulesCore.framework/Info.plist
+
+sent 3828044 bytes  received 70 bytes  109063076 bytes/sec
+total size is 3827148  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+ExpoModulesJSI.framework/
+ExpoModulesJSI.framework/ExpoModulesJSI
+ExpoModulesJSI.framework/Info.plist
+
+sent 886629 bytes  received 70 bytes  62886453 bytes/sec
+total size is 886093  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+ExpoModulesWorklets.framework/
+ExpoModulesWorklets.framework/ExpoModulesWorklets
+ExpoModulesWorklets.framework/Info.plist
+
+sent 164464 bytes  received 70 bytes  23173802 bytes/sec
+total size is 164000  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+React.framework/
+React.framework/Info.plist
+React.framework/React
+
+sent 12017472 bytes  received 70 bytes  102626319 bytes/sec
+total size is 12015616  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 12 files
+ReactNativeDependencies.framework/
+ReactNativeDependencies.framework/Info.plist
+ReactNativeDependencies.framework/ReactNativeDependencies
+ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle/
+ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle/Info.plist
+ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle/PrivacyInfo.xcprivacy
+ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle/
+ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle/Info.plist
+ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle/PrivacyInfo.xcprivacy
+ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/
+ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/Info.plist
+ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/PrivacyInfo.xcprivacy
+
+sent 1242199 bytes  received 220 bytes  68641933 bytes/sec
+total size is 1240342  speedup is 1.00
+rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/hermes-engine/Pre-built/hermesvm.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
+Transfer starting: 3 files
+hermesvm.framework/
+hermesvm.framework/Info.plist
+hermesvm.framework/hermesvm
+
+sent 5068055 bytes  received 70 bytes  93680683 bytes/sec
+total size is 5067035  speedup is 1.00
+
+CopySwiftLibs /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/PlugIns --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/SystemExtensions --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.y2jlJd/Metal.xctoolchain --toolchain /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.y2jlJd/Metal.xctoolchain --module-name DSBot --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier com.jinyu.dsbot --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-11-12 06:50:55.177 appintentsmetadataprocessor[8870:28682] Starting appintentsmetadataprocessor export
+2026-11-12 06:50:55.182 appintentsmetadataprocessor[8870:28682] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+AppIntentsSSUTraining (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Info.plist --temp-dir-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/ssu --bundle-id com.jinyu.dsbot --product-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --extracted-metadata-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Metadata.appintents --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyMetadataFileList --archive-ssu-assets
+2026-11-12 06:50:55.236 appintentsnltrainingprocessor[8880:28703] Parsing options for appintentsnltrainingprocessor
+2026-11-12 06:50:55.239 appintentsnltrainingprocessor[8880:28703] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    builtin-RegisterExecutionPolicyException /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app
+
+Validate /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    builtin-validationUtility /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app -validate-for-store -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /usr/bin/touch -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app
+
+warning: Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'hermes-engine' from project 'Pods')
+note: Run script build phase '[CP-User] [RNDeps] Replace React Native Dependencies for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ReactNativeDependencies' from project 'Pods')
+note: Run script build phase '[CP-User] [RN]Check FBReactNativeSpec' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-RCTFBReactNativeSpec' from project 'Pods')
+note: Run script build phase '[CP-User] [RNCore] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')
+note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesWorklets XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesWorklets' from project 'Pods')
+note: Run script build phase '[CP-User] Build ExpoModulesJSI xcframework' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesJSI' from project 'Pods')
+note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesCore XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoModulesCore' from project 'Pods')
+note: Run script build phase '[CP-User] [Expo] Switch ExpoFont XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFont' from project 'Pods')
+note: Run script build phase '[CP-User] [Expo] Switch ExpoFileSystem XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFileSystem' from project 'Pods')
+note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
+note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
+note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
+** BUILD SUCCEEDED **
+
 
 === build.log 关键行 ===
-grep: build.log: No such file or directory
+1583:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+2110:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+3706:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+5673:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+6250:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+6776:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+7354:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+8586:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+9297:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+9825:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+10464:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+10992:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+11520:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+12048:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+12574:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+13100:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+16000:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+16549:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+19316:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+19869:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+20423:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+21220:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+22431:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+23002:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+24689:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+25492:** BUILD SUCCEEDED **
 
 === out/ 与 ipa ===
-ls: out: No such file or directory
-ls: ds-bot-unsigned.ipa: No such file or directory
+total 0
+drwxr-xr-x   3 runner  staff   96 Nov 12 06:51 .
+drwxr-xr-x  24 runner  staff  768 Nov 12 06:51 ..
+drwxr-xr-x   3 runner  staff   96 Nov 12 06:51 Payload
+
+out/Payload:
+total 0
+drwxr-xr-x   3 runner  staff   96 Nov 12 06:51 .
+drwxr-xr-x   3 runner  staff   96 Nov 12 06:51 ..
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 DSBot.app
+
+out/Payload/DSBot.app:
+total 5216
+drwxr-xr-x  19 runner  staff      608 Nov 12 06:50 .
+drwxr-xr-x   3 runner  staff       96 Nov 12 06:51 ..
+-rw-r--r--   1 runner  staff      495 Nov 12 06:50 AppIcon60x60@2x.png
+-rw-r--r--   1 runner  staff      585 Nov 12 06:50 AppIcon76x76@2x~ipad.png
+-rw-r--r--   1 runner  staff    20328 Nov 12 06:50 Assets.car
+-rwxr-xr-x   1 runner  staff  1140656 Nov 12 06:50 DSBot
+drwxr-xr-x   4 runner  staff      128 Nov 12 06:49 EXConstants.bundle
+-rw-r--r--   1 runner  staff      173 Nov 12 06:50 Expo.plist
+drwxr-xr-x   4 runner  staff      128 Nov 12 06:48 ExpoConstants_privacy.bundle
+drwxr-xr-x   3 runner  staff       96 Nov 12 06:48 ExpoFileSystem_privacy.bundle
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:50 Frameworks
+-rw-r--r--   1 runner  staff     1638 Nov 12 06:50 Info.plist
+-rw-r--r--   1 runner  staff  1482675 Nov 12 06:50 main.jsbundle
+-rw-r--r--   1 runner  staff        8 Nov 12 06:50 PkgInfo
+-rw-r--r--   1 runner  staff      986 Nov 12 06:50 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff      128 Nov 12 06:48 React-Core_privacy.bundle
+drwxr-xr-x   4 runner  staff      128 Nov 12 06:48 React-cxxreact_privacy.bundle
+drwxr-xr-x   4 runner  staff      128 Nov 12 06:48 React-timing_privacy.bundle
+drwxr-xr-x   5 runner  staff      160 Nov 12 06:50 SplashScreen.storyboardc
+
+out/Payload/DSBot.app/EXConstants.bundle:
+total 16
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:49 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  255 Nov 12 06:49 app.config
+-rw-r--r--   1 runner  staff  769 Nov 12 06:48 Info.plist
+
+out/Payload/DSBot.app/ExpoConstants_privacy.bundle:
+total 16
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:48 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  791 Nov 12 06:48 Info.plist
+-rw-r--r--   1 runner  staff  607 Nov 12 06:48 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/ExpoFileSystem_privacy.bundle:
+total 8
+drwxr-xr-x   3 runner  staff   96 Nov 12 06:48 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  792 Nov 12 06:48 Info.plist
+
+out/Payload/DSBot.app/Frameworks:
+total 0
+drwxr-xr-x  10 runner  staff  320 Nov 12 06:50 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+drwxr-xr-x   4 runner  staff  128 Sep 11 11:23 ExpoFileSystem.framework
+drwxr-xr-x   4 runner  staff  128 Sep 11 11:23 ExpoFont.framework
+drwxr-xr-x   4 runner  staff  128 Nov  5 09:28 ExpoModulesCore.framework
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:49 ExpoModulesJSI.framework
+drwxr-xr-x   4 runner  staff  128 Nov  5 09:28 ExpoModulesWorklets.framework
+drwxr-xr-x   4 runner  staff  128 Aug 21 10:10 hermesvm.framework
+drwxr-xr-x   4 runner  staff  128 Aug 24 14:28 React.framework
+drwxr-xr-x   7 runner  staff  224 Aug 24 14:07 ReactNativeDependencies.framework
+
+out/Payload/DSBot.app/Frameworks/ExpoFileSystem.framework:
+total 2232
+drwxr-xr-x   4 runner  staff      128 Sep 11 11:23 .
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  1134712 Sep 11 11:23 ExpoFileSystem
+-rw-r--r--   1 runner  staff      766 Sep 11 11:23 Info.plist
+
+out/Payload/DSBot.app/Frameworks/ExpoFont.framework:
+total 416
+drwxr-xr-x   4 runner  staff     128 Sep 11 11:23 .
+drwxr-xr-x  10 runner  staff     320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  207512 Sep 11 11:23 ExpoFont
+-rw-r--r--   1 runner  staff     748 Sep 11 11:23 Info.plist
+
+out/Payload/DSBot.app/Frameworks/ExpoModulesCore.framework:
+total 7488
+drwxr-xr-x   4 runner  staff      128 Nov  5 09:28 .
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  3826376 Nov  5 09:28 ExpoModulesCore
+-rw-r--r--   1 runner  staff      772 Nov  5 09:28 Info.plist
+
+out/Payload/DSBot.app/Frameworks/ExpoModulesJSI.framework:
+total 1744
+drwxr-xr-x   4 runner  staff     128 Nov 12 06:49 .
+drwxr-xr-x  10 runner  staff     320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  885336 Nov 12 06:49 ExpoModulesJSI
+-rw-r--r--   1 runner  staff     757 Nov 12 06:49 Info.plist
+
+out/Payload/DSBot.app/Frameworks/ExpoModulesWorklets.framework:
+total 328
+drwxr-xr-x   4 runner  staff     128 Nov  5 09:28 .
+drwxr-xr-x  10 runner  staff     320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  163216 Nov  5 09:28 ExpoModulesWorklets
+-rw-r--r--   1 runner  staff     784 Nov  5 09:28 Info.plist
+
+out/Payload/DSBot.app/Frameworks/hermesvm.framework:
+total 9904
+drwxr-xr-x   4 runner  staff      128 Aug 21 10:10 .
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:50 ..
+-rwxr-xr-x   1 runner  staff  5066176 Aug 21 10:10 hermesvm
+-rw-r--r--   1 runner  staff      859 Aug 21 10:10 Info.plist
+
+out/Payload/DSBot.app/Frameworks/React.framework:
+total 23480
+drwxr-xr-x   4 runner  staff       128 Aug 24 14:28 .
+drwxr-xr-x  10 runner  staff       320 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff       744 Aug 24 14:27 Info.plist
+-rw-r--r--   1 runner  staff  12014872 Aug 24 14:27 React
+
+out/Payload/DSBot.app/Frameworks/ReactNativeDependencies.framework:
+total 2424
+drwxr-xr-x   7 runner  staff      224 Aug 24 14:07 .
+drwxr-xr-x  10 runner  staff      320 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff      781 Aug 24 14:07 Info.plist
+-rw-r--r--   1 runner  staff  1235616 Aug 24 14:07 ReactNativeDependencies
+drwxr-xr-x   4 runner  staff      128 Aug 24 14:07 ReactNativeDependencies_boost.bundle
+drwxr-xr-x   4 runner  staff      128 Aug 24 14:07 ReactNativeDependencies_folly.bundle
+drwxr-xr-x   4 runner  staff      128 Aug 24 14:07 ReactNativeDependencies_glog.bundle
+
+out/Payload/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_boost.bundle:
+total 16
+drwxr-xr-x  4 runner  staff  128 Aug 24 14:07 .
+drwxr-xr-x  7 runner  staff  224 Aug 24 14:07 ..
+-rw-r--r--  1 runner  staff  689 Aug 24 14:07 Info.plist
+-rw-r--r--  1 runner  staff  776 Aug 24 14:07 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_folly.bundle:
+total 16
+drwxr-xr-x  4 runner  staff  128 Aug 24 14:07 .
+drwxr-xr-x  7 runner  staff  224 Aug 24 14:07 ..
+-rw-r--r--  1 runner  staff  689 Aug 24 14:07 Info.plist
+-rw-r--r--  1 runner  staff  552 Aug 24 14:07 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/Frameworks/ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle:
+total 16
+drwxr-xr-x  4 runner  staff  128 Aug 24 14:07 .
+drwxr-xr-x  7 runner  staff  224 Aug 24 14:07 ..
+-rw-r--r--  1 runner  staff  687 Aug 24 14:07 Info.plist
+-rw-r--r--  1 runner  staff  552 Aug 24 14:07 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/React-Core_privacy.bundle:
+total 16
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:48 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  784 Nov 12 06:48 Info.plist
+-rw-r--r--   1 runner  staff  768 Nov 12 06:48 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/React-cxxreact_privacy.bundle:
+total 16
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:48 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  792 Nov 12 06:48 Info.plist
+-rw-r--r--   1 runner  staff  552 Nov 12 06:48 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/React-timing_privacy.bundle:
+total 16
+drwxr-xr-x   4 runner  staff  128 Nov 12 06:48 .
+drwxr-xr-x  19 runner  staff  608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  788 Nov 12 06:48 Info.plist
+-rw-r--r--   1 runner  staff  553 Nov 12 06:48 PrivacyInfo.xcprivacy
+
+out/Payload/DSBot.app/SplashScreen.storyboardc:
+total 24
+drwxr-xr-x   5 runner  staff   160 Nov 12 06:50 .
+drwxr-xr-x  19 runner  staff   608 Nov 12 06:50 ..
+-rw-r--r--   1 runner  staff  2143 Nov 12 06:50 EXPO-VIEWCONTROLLER-1-view-EXPO-ContainerView.nib
+-rw-r--r--   1 runner  staff   225 Nov 12 06:50 Info.plist
+-rw-r--r--   1 runner  staff  1004 Nov 12 06:50 SplashScreenViewController.nib
+-rw-r--r--  1 runner  staff  7101920 Nov 12 06:51 ds-bot-unsigned.ipa
 
 === END ===
