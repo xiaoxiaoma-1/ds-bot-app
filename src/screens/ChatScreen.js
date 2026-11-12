@@ -15,11 +15,10 @@ import { chat, openFeed, send } from '../api';
 import { useKeyboardShift } from '../keyboard';
 
 // 功能二 + 三：会话历史 + 发消息 + 流式回复。
-// 结构约束（对应已修的真机 bug）：
-//   1. 消息区永远是 flex:1 容器，加载指示画在它内部 —— 输入栏始终贴底。
-//   2. 流式增量不碰父组件 state，走 LiveBubble 的 ref 局部更新 + rAF 合并。
-//   3. 键盘位移不用 KeyboardAvoidingView，走 useKeyboardShift（同帧同曲线）。
-// 令牌 v4：无分割线无描边；气泡圆角 24、内边距 16、最大宽 279。
+// 1) 消息区永远 flex:1，加载指示画在里面 —— 输入栏贴底。
+// 2) 流式增量不碰父 state，走 LiveBubble 的 ref 局部更新 + rAF 合并。
+// 3) 键盘位移走 useKeyboardShift（同帧同曲线）。
+// 4) 消息列表开 keyboardDismissMode="interactive"：拖消息区时键盘跟手收起（iOS 原生）。
 
 const BUBBLE_MAX = 279;
 
@@ -56,6 +55,8 @@ const MessageList = memo(function MessageList({ items, C, T, S, R }) {
       maxToRenderPerBatch={10}
       windowSize={9}
       removeClippedSubviews
+      keyboardDismissMode="interactive"
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={{ paddingVertical: S.x3 }}
       ListHeaderComponent={
         <View style={s.older}>
