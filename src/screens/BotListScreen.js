@@ -8,15 +8,22 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../theme';
 import { advisors } from '../api';
 
 // 功能一：Bot 列表。数据来自 GET /api/dsbot/advisors -> {id, name, role}
-// 注意：状态字段代理层现在没吐（只给 id/name/role），所以这里用 role 占位，
-// 等代理层补上 status 再显示真实状态点（见 CHANGELOG 缺口二）。
+//
+// 四态分开显示（第一版把它们混成一个空列表，看不出到底错在哪）：
+//   loading  —— 还在拉
+//   failed   —— 拉取失败，写出「哪一步 + 原始错误」并给重试按钮
+//   empty    —— 拉成功了，但一个顾问都没有
+//   list     —— 有数据
+// 顶部用 insets.top 让开状态栏/灵动岛。
 export default function BotListScreen({ onOpen, onSettings }) {
+  const insets = useSafeAreaInsets();
   const [rows, setRows] = useState([]);
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState(null); // { step, message }
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -25,9 +32,10 @@ export default function BotListScreen({ onOpen, onSettings }) {
     try {
       const list = await advisors();
       setRows(list);
-      setErr('');
+      setErr(null);
     } catch (e) {
-      setErr(e.message || '拉不到列表');
+      setRows([]);
+      setErr({ step: e.step || 'list', message: e.message || '未知错误' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -38,68 +46,136 @@ export default function BotListScreen({ onOpen, onSettings }) {
     load(false);
   }, [load]);
 
-  if (loading) {
-    return (
-      <View style={s.center}>
-        <ActivityIndicator color={C.accent} />
-      </View>
-    );
-  }
+  const stepLabel = {
+    login: '登录失败',
+    auth: '认证失败',
+    list: '取顾问列表失败',
+  };
 
   return (
-    <View style={s.root}>
+    <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.head}>
-        <Text style={s.title}>顾问</Text>
+        <Text style={s.title} allowFontScaling={false}>
+          顾问
+        </Text>
         <Pressable onPress={onSettings} hitSlop={12}>
-          <Text style={s.gear}>设置</Text>
+          <Text style={s.gear} allowFontScaling={false}>
+            设置
+          </Text>
         </Pressable>
       </View>
 
-      {err ? <Text style={s.err}>{err}</Text> : null}
-
-      <FlatList
-        data={rows}
-        keyExtractor={(it) => String(it.id)}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={C.ink2} />
-        }
-        ListEmptyComponent={<Text style={s.empty}>一个顾问都没有</Text>}
-        renderItem={({ item }) => (
-          <Pressable style={s.row} onPress={() => onOpen(item)}>
-            <View style={s.avatar}>
-              <Text style={s.avatarText}>{String(item.name || '?').slice(0, 1)}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.name} numberOfLines={1}>
-                {item.name}
+      {loading ? (
+        <View style={s.center}>
+          <ActivityIndicator color={C.accent} />
+          <Text style={s.centerText} allowFontScaling={false}>
+            正在取顾问列表
+          </Text>
+        </View>
+      ) : err ? (
+        <View style={s.errBox}>
+          <Text style={s.errTitle} allowFontScaling={false}>
+            {stepLabel[err.step] || '出错了'}
+          </Text>
+          <Text style={s.errMsg} allowFontScaling={false}>
+            {err.message}
+          </Text>
+          <View style={s.errActions}>
+            <Pressable style={s.errBtn} onPress={() => load(false)}>
+              <Text style={s.errBtnText} allowFontScaling={false}>
+                重试
               </Text>
-              <Text style={s.role} numberOfLines={1}>
-                {item.role || '顾问'}
+            </Pressable>
+            <Pressable style={[s.errBtn, s.errBtnGhost]} onPress={onSettings}>
+              <Text style={[s.errBtnText, s.errBtnGhostText]} allowFontScaling={false}>
+                去改地址/口令
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={rows}
+          keyExtractor={(it) => String(it.id)}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load(true)}
+              tintColor={C.ink2}
+            />
+          }
+          ListEmptyComponent={
+            <View style={s.center}>
+              <Text style={s.emptyTitle} allowFontScaling={false}>
+                一个顾问都没有
+              </Text>
+              <Text style={s.centerText} allowFontScaling={false}>
+                列表拉取成功，但电脑那边返回的是空数组
               </Text>
             </View>
-            <Text style={s.chev}>›</Text>
-          </Pressable>
-        )}
-      />
+          }
+          renderItem={({ item }) => (
+            <Pressable style={s.row} onPress={() => onOpen(item)}>
+              <View style={s.avatar}>
+                <Text style={s.avatarText} allowFontScaling={false}>
+                  {String(item.name || '?').slice(0, 1)}
+                </Text>
+              </View>
+              <View style={s.rowBody}>
+                <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
+                  {item.name}
+                </Text>
+                <Text style={s.role} numberOfLines={1} allowFontScaling={false}>
+                  {item.role || '顾问'}
+                </Text>
+              </View>
+              <Text style={s.chev} allowFontScaling={false}>
+                ›
+              </Text>
+            </Pressable>
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  center: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
-    paddingTop: 14,
+    paddingTop: 10,
     paddingBottom: 10,
   },
-  title: { color: C.ink, fontSize: 26, fontWeight: '700' },
-  gear: { color: C.ink2, fontSize: 14 },
-  err: { color: C.bad, fontSize: 13, paddingHorizontal: 18, paddingBottom: 8 },
-  empty: { color: C.ink3, fontSize: 14, textAlign: 'center', marginTop: 40 },
+  title: { color: C.ink, fontSize: 22, fontWeight: '700', lineHeight: 28 },
+  gear: { color: C.ink2, fontSize: 14, lineHeight: 20 },
+  center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 10 },
+  centerText: { color: C.ink3, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+  emptyTitle: { color: C.ink2, fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  errBox: {
+    margin: 16,
+    padding: 16,
+    backgroundColor: C.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.line,
+    gap: 8,
+  },
+  errTitle: { color: C.bad, fontSize: 15, fontWeight: '700', lineHeight: 21 },
+  errMsg: { color: C.ink, fontSize: 13, lineHeight: 20 },
+  errActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  errBtn: {
+    backgroundColor: C.accent,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  errBtnText: { color: '#fff', fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  errBtnGhost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.line },
+  errBtnGhostText: { color: C.ink2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -117,8 +193,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: C.ink, fontSize: 16, fontWeight: '600' },
-  name: { color: C.ink, fontSize: 16, fontWeight: '600' },
-  role: { color: C.ink2, fontSize: 12, marginTop: 3 },
-  chev: { color: C.ink3, fontSize: 22 },
+  avatarText: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  rowBody: { flex: 1 },
+  name: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  role: { color: C.ink2, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  chev: { color: C.ink3, fontSize: 20, lineHeight: 24 },
 });
