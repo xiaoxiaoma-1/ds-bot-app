@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../theme';
 import { advisors } from '../api';
 
-// 功能一：Bot 列表。数据来自 GET /api/dsbot/advisors -> {id, name, role}
+// 功能一：Bot 列表。数据来自 GET /api/dsbot/advisors -> {id, name, role, status, activity?, tool?, since?}
 //
 // 四态分开显示（第一版把它们混成一个空列表，看不出到底错在哪）：
 //   loading  —— 还在拉
@@ -20,6 +20,26 @@ import { advisors } from '../api';
 //   empty    —— 拉成功了，但一个顾问都没有
 //   list     —— 有数据
 // 顶部用 insets.top 让开状态栏/灵动岛。
+
+// 后端 2026-11-12 起每条 advisor 带 status：busy / idle / unknown；
+// busy 时附 activity（正在做什么）、tool（用哪个工具）、since（毫秒时间戳）。
+function statusText(item) {
+  const st = String(item.status || 'unknown');
+  if (st === 'busy') {
+    const extra = item.tool || item.activity || '';
+    return extra ? `在忙 · ${extra}` : '在忙';
+  }
+  if (st === 'idle') return '空闲';
+  return '状态未知';
+}
+
+function dotColor(st) {
+  const v = String(st || 'unknown');
+  if (v === 'busy') return C.accent;
+  if (v === 'idle') return C.good;
+  return C.ink3;
+}
+
 export default function BotListScreen({ onOpen, onSettings }) {
   const insets = useSafeAreaInsets();
   const [rows, setRows] = useState([]);
@@ -125,6 +145,12 @@ export default function BotListScreen({ onOpen, onSettings }) {
                 <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
                   {item.name}
                 </Text>
+                <View style={s.metaRow}>
+                  <View style={[s.dot, { backgroundColor: dotColor(item.status) }]} />
+                  <Text style={s.status} numberOfLines={1} allowFontScaling={false}>
+                    {statusText(item)}
+                  </Text>
+                </View>
                 <Text style={s.role} numberOfLines={1} allowFontScaling={false}>
                   {item.role || '顾问'}
                 </Text>
@@ -195,6 +221,9 @@ const s = StyleSheet.create({
   },
   avatarText: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22 },
   rowBody: { flex: 1 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  status: { color: C.ink2, fontSize: 12, lineHeight: 16, flexShrink: 1 },
   name: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 22 },
   role: { color: C.ink2, fontSize: 12, lineHeight: 17, marginTop: 2 },
   chev: { color: C.ink3, fontSize: 20, lineHeight: 24 },
