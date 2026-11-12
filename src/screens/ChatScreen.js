@@ -15,120 +15,137 @@ import { C } from '../theme';
 import { chat, openFeed, send } from '../api';
 
 // 功能二 + 三：会话历史 + 发消息 + 流式回复。
-// 历史：GET /api/dsbot/chat?bot=<id>，一次给全部（代理层还没透出 cursor，翻页先禁用）。
-// 发送：POST /api/dsbot/send {bot, text}。
-// 流式：优先 SSE GET /api/bot/feed（'stream' 事件）；该路由不存在时自动降级轮询。
-
-const POLL_MS = 1500;
-const POLL_MAX = 30;
+//   历史：GET /api/dsbot/chat?bot=<id>（代理层还没透出 cursor，翻页先禁用）
+//   发送：POST /api/dsbot/send {bot, text}
+//   流式：SSE GET /api/dsbot/feed —— stream 事件 phase:start → text 增量 → phase:end；
+//         message 事件带 seq，以服务端为准校正，避免重复。
+// 断线重连在 src/sse.js 里做（2 秒退避，401 不重连）。
 
 export default function ChatScreen({ bot, onBack }) {
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
+  const [err, setErr] = useState(null); // { step, message }
   const [live, setLive] = useState('');
   const [mode, setMode] = useState('');
   const stopFeed = useRef(null);
-  const pollTimer = useRef(null);
-  const lastCount = useRef(0);
+  const seqs = useRef(new Set());
+  const targetBot = useRef(String(bot.id));
 
-  const stopAll = useCallback(() => {
-    stopFeed.current && stopFeed.current();
-    stopFeed.current = null;
-    if (pollTimer.current) clearInterval(pollTimer.current);
-    pollTimer.current = null;
+  const applyMessages = useCallback((msgs) => {
+    seqs.current = new Set(msgs.map((m) => m.seq).filter((x) => x !== undefined && x !== null));
+    setItems(msgs);
   }, []);
 
   const load = useCallback(async () => {
     try {
       const msgs = await chat(bot.id);
-      setItems(msgs);
-      lastCount.current = msgs.length;
+      applyMessages(msgs);
       setErr(null);
     } catch (e) {
       setErr({ step: e.step || 'chat', message: e.message || '读不到对话' });
     } finally {
       setLoading(false);
     }
-  }, [bot.id]);
+  }, [bot.id, applyMessages]);
 
-  useEffect(() => {
-    load();
-    return stopAll;
-  }, [load, stopAll]);
-
-  const startPoll = useCallback(() => {
-    setMode('poll');
-    let ticks = 0;
-    if (pollTimer.current) clearInterval(pollTimer.current);
-    pollTimer.current = setInterval(async () => {
-      ticks += 1;
-      try {
-        const msgs = await chat(bot.id);
-        if (msgs.length > lastCount.current) {
-          setItems(msgs);
-          lastCount.current = msgs.length;
-          setLive('');
-        }
-        if (msgs.length > 0) {
-          const last = msgs[msgs.length - 1];
-          if (last.who !== '我') setLive(last.text);
-        }
-      } catch {}
-      if (ticks >= POLL_MAX) {
-        clearInterval(pollTimer.current);
-        pollTimer.current = null;
-        setLive('');
+  const onEvent = useCallback(
+    (name, data) => {
+      if (!data) return;
+      if (name === 'hello') {
+        setMode('live');
+        load();
+        return;
       }
-    }, POLL_MS);
-  }, [bot.id]);
+      if (data.botId && String(data.botId) !== targetBot.current) return;
+
+      if (name === 'stream') {
+        setMode('live');
+        if (data.phase === 'start') {
+          setLive('');
+        } else if (data.phase === 'end') {
+          // 等 message 事件做最终校正
+        } else if (typeof data.text === 'string' && data.text) {
+          setLive((prev) => prev + data.text);
+        }
+        return;
+      }
+
+      if (name === 'message') {
+        const item = data.item || {};
+        const seq = item.seq;
+        if (seq !== undefined && seq !== null) {
+          if (seqs.current.has(seq)) return;
+          seqs.current.add(seq);
+        }
+        const text = typeof item.text === 'string' ? item.text.trim() : '';
+        if (!text) return;
+        const who = item.kind === 'user' ? '我' : '顾问';
+        setItems((prev) => {
+          if (who === '我') {
+            const i = prev.findIndex((m) => m.local && m.text === text);
+            if (i >= 0) {
+              const next = prev.slice();
+              next[i] = { who, text, at: item.time, seq };
+              return next;
+            }
+          }
+          return [...prev, { who, text, at: item.time, seq }];
+        });
+        if (who !== '我') setLive('');
+      }
+    },
+    [load],
+  );
+
+  // 进页面就挂上流，离开就关，避免泄漏
+  useEffect(() => {
+    targetBot.current = String(bot.id);
+    load();
+    stopFeed.current = openFeed({
+      onEvent,
+      onError: (e) => {
+        if (e && e.step === 'auth') {
+          setErr({ step: 'auth', message: e.message });
+          return;
+        }
+        setMode('reconnecting');
+      },
+      onAuthFail: (e) => {
+        stopFeed.current && stopFeed.current();
+        stopFeed.current = null;
+        setErr({ step: 'auth', message: e.message || '会话过期，请重新登录' });
+      },
+    });
+    return () => {
+      stopFeed.current && stopFeed.current();
+      stopFeed.current = null;
+    };
+  }, [bot.id, load, onEvent]);
 
   async function onSend() {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
     setErr(null);
-    const before = items;
-    setItems([...before, { who: '我', text, local: true }]);
-    setLive(' ');
+    setLive('');
+    const local = { who: '我', text, local: true };
+    setItems((prev) => [...prev, local]);
     try {
       await send(bot.id, text);
     } catch (e) {
       setErr({ step: e.step || 'send', message: e.message || '发送失败' });
-      setLive('');
-      setItems(before);
-      return;
+      setItems((prev) => prev.filter((m) => m !== local));
     }
-
-    let gotEvent = false;
-    stopAll();
-    stopFeed.current = openFeed({
-      onEvent: (name, data) => {
-        if (name !== 'stream' && name !== 'message') return;
-        gotEvent = true;
-        setMode('sse');
-        const botId = data && data.botId;
-        if (botId && String(botId) !== String(bot.id)) return;
-        if (name === 'stream') {
-          const chunk = data.text || data.delta || '';
-          if (chunk) setLive((prev) => (prev === ' ' ? chunk : prev + chunk));
-        }
-        if (name === 'message' && data.item && typeof data.item.text === 'string') {
-          setLive('');
-          load();
-        }
-      },
-      onError: () => {
-        if (gotEvent) return;
-        stopAll();
-        startPoll();
-      },
-    });
   }
 
-  const stepLabel = { chat: '读会话失败', send: '发送失败', auth: '认证失败', feed: '流式断开' };
+  const stepLabel = {
+    chat: '读会话失败',
+    send: '发送失败',
+    auth: '需要重新登录',
+    feed: '流式断开',
+  };
 
   return (
     <KeyboardAvoidingView
@@ -146,7 +163,7 @@ export default function ChatScreen({ bot, onBack }) {
           {bot.name}
         </Text>
         <Text style={s.mode} allowFontScaling={false}>
-          {mode === 'sse' ? '流式' : mode === 'poll' ? '轮询' : ''}
+          {mode === 'live' ? '实时' : mode === 'reconnecting' ? '重连' : ''}
         </Text>
       </View>
 
@@ -172,7 +189,7 @@ export default function ChatScreen({ bot, onBack }) {
         <FlatList
           data={[...items].reverse()}
           inverted
-          keyExtractor={(it, i) => String(it.at || '') + i}
+          keyExtractor={(it, i) => String(it.seq ?? it.at ?? '') + i}
           contentContainerStyle={{ paddingVertical: 10 }}
           ListHeaderComponent={
             <View style={s.older}>
