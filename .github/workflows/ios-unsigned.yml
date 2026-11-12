@@ -27,6 +27,13 @@ jobs:
           # 取全量历史，诊断回写那次 push 才不会因为浅克隆被拒
           fetch-depth: 0
 
+      - name: Select Xcode
+        # expo-modules-jsi/apple 的 SwiftPM 包要 swift-tools 6.2.0；
+        # macos-15 默认 Xcode 16.4 只带 Swift 6.1.0，故钉死到自带 Swift 6.2.4 的 Xcode 26.3
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.3'
+
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
