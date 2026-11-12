@@ -1,9 +1,8 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,11 +12,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { chat, openFeed, send } from '../api';
+import { useKeyboardShift } from '../keyboard';
 
 // 功能二 + 三：会话历史 + 发消息 + 流式回复。
 // 结构上两条硬约束（对应两个真机 bug）：
 //   1. 消息区永远是 flex:1 的容器，加载指示画在它内部 —— 输入栏因此始终贴底，不会被顶到半空。
 //   2. 流式增量不碰父组件 state，走 LiveBubble 的 ref 局部更新 + rAF 合并 —— 不带动整个列表重渲染。
+// 键盘：不用 KeyboardAvoidingView，改用 src/keyboard.js 的 useKeyboardShift（同帧同曲线）。
 
 const BubbleRow = memo(function BubbleRow({ item, s }) {
   const mine = item.who === '我';
@@ -71,7 +72,6 @@ const MessageList = memo(function MessageList({ items, C }) {
   );
 });
 
-// 正在吐的那条气泡：自己管自己的文本，父组件不参与
 const LiveBubble = memo(
   forwardRef(function LiveBubble({ C }, ref) {
     const s = useMemo(() => makeStyles(C), [C]);
@@ -89,7 +89,6 @@ const LiveBubble = memo(
       () => ({
         append(chunk) {
           buf.current += chunk;
-          // 一帧最多刷一次：SSE 每片都 setState 会打出 30+ 次/秒的重渲染
           if (raf.current === null) raf.current = requestAnimationFrame(flush);
         },
         clear() {
@@ -136,6 +135,12 @@ export default function ChatScreen({ bot, onBack }) {
   const { C } = useTheme();
   const s = useMemo(() => makeStyles(C), [C]);
   const insets = useSafeAreaInsets();
+  // 键盘位移：与键盘同一条 duration/easing，走原生驱动（根因见 src/keyboard.js 顶部）
+  const keyboardShift = useKeyboardShift();
+  const keyboardMove = useMemo(
+    () => ({ transform: [{ translateY: Animated.multiply(keyboardShift, -1) }] }),
+    [keyboardShift],
+  );
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
@@ -254,11 +259,7 @@ export default function ChatScreen({ bot, onBack }) {
   const stepLabel = { chat: '读会话失败', send: '发送失败', auth: '需要重新登录', feed: '流式断开' };
 
   return (
-    <KeyboardAvoidingView
-      style={s.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
-    >
+    <View style={s.root}>
       <View style={[s.head, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={onBack} hitSlop={12}>
           <Text style={s.back} allowFontScaling={false}>
@@ -284,8 +285,9 @@ export default function ChatScreen({ bot, onBack }) {
         </View>
       ) : null}
 
-      {/* 关键：消息区永远是 flex:1，加载/空/列表都画在里面，输入栏因此固定贴底 */}
-      <View style={s.body}>
+      {/* 消息区 + 输入栏整体跟随键盘位移：transform 走原生驱动，与键盘同帧起步 */}
+      <Animated.View style={[s.body, keyboardMove]}>
+        <View style={s.body}>
         {loading ? (
           <View style={s.center}>
             <ActivityIndicator color={C.accent} />
@@ -297,7 +299,7 @@ export default function ChatScreen({ bot, onBack }) {
           <MessageList items={items} C={C} />
         )}
         <LiveBubble ref={liveRef} C={C} />
-      </View>
+        </View>
 
       <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TextInput
@@ -314,7 +316,8 @@ export default function ChatScreen({ bot, onBack }) {
           </Text>
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 
