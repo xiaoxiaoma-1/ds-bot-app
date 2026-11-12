@@ -9,9 +9,12 @@ import { isConfigured } from './src/store';
 import SetupScreen from './src/screens/SetupScreen';
 import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
+import GroupChatScreen from './src/screens/GroupChatScreen';
 
-// 导航：原生栈。边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false。
-// App 只负责栈与路由；四栅（首页/工作台/顾问/我的）全在 MainTabs 里，dock 也在那里。
+// 导航：原生栈（react-native-screens）。
+//   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
+//   中间区域的横向手势留给页内内容（观点库将来做左右滑不会和返回打架）。
+// 深浅色：导航容器自身主题也跟随，避免转场时闪系统默认白底。
 
 const Stack = createNativeStackNavigator();
 
@@ -43,7 +46,7 @@ export default function App() {
 }
 
 function NavRoot({ scheme }) {
-  const { C } = useTheme();
+  const { C, S } = useTheme();
   const theme = useMemo(() => navThemeFor(scheme, C), [scheme, C]);
 
   return (
@@ -61,8 +64,9 @@ function NavRoot({ scheme }) {
       >
         <Stack.Screen name="Boot" component={BootScreen} options={{ animation: 'none' }} />
         <Stack.Screen name="Setup" component={SetupRoute} />
-        <Stack.Screen name="Main" component={MainRoute} />
+        <Stack.Screen name="BotList" component={BotListRoute} />
         <Stack.Screen name="Chat" component={ChatRoute} />
+        <Stack.Screen name="GroupChat" component={GroupChatRoute} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -75,7 +79,7 @@ function BootScreen({ navigation }) {
 
   const boot = useCallback(async () => {
     const ok = await isConfigured();
-    navigation.replace(ok ? 'Main' : 'Setup');
+    navigation.replace(ok ? 'BotList' : 'Setup');
     setChecked(true);
   }, [navigation]);
 
@@ -96,26 +100,35 @@ function BootScreen({ navigation }) {
 }
 
 function SetupRoute({ navigation }) {
-  // 两用：首次启动=登录页（无返回）；从其他处进入=设置页（带返回）。
+  // 同一屏两用：首次启动时是登录页（无返回），从列表点「设置」进来时是设置页（必须有返回）。
+  // 判断依据就是栈里有没有上一层 —— canGoBack()。
   const canGoBack = navigation.canGoBack();
   return (
     <SetupScreen
       onBack={canGoBack ? () => navigation.goBack() : undefined}
       onDone={() => {
         if (navigation.canGoBack()) navigation.goBack();
-        else navigation.replace('Main');
+        else navigation.replace('BotList');
       }}
     />
   );
 }
 
-function MainRoute({ navigation }) {
-  return <MainTabs navigation={navigation} />;
+function BotListRoute({ navigation }) {
+  return (
+    <BotListScreen
+      onOpen={(bot) => {
+        navigation.navigate(bot && bot.isGroup ? 'GroupChat' : 'Chat', { bot });
+      }}
+      onSettings={() => navigation.navigate('Setup')}
+    />
+  );
 }
 
 function ChatRoute({ route, navigation }) {
   const bot = route.params?.bot;
-  // 侧滑退出时收键盘：transitionStart 是转场开始的第一刻；beforeRemove 兼顾按钮/程序返回。
+  // iOS 的键盘是系统级动画，页面转场一开始就 dismiss 是能拿到的最早时机；
+  // 系统仍可能让它比页面慢一拍（见交付说明）。
   useEffect(() => {
     const offStart = navigation.addListener('transitionStart', (e) => {
       if (e && e.data && e.data.closing) Keyboard.dismiss();
@@ -126,7 +139,6 @@ function ChatRoute({ route, navigation }) {
       offRemove && offRemove();
     };
   }, [navigation]);
-
   const { C, T, S } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S), [C, T, S]);
   if (!bot || !bot.id) {
@@ -144,6 +156,27 @@ function ChatRoute({ route, navigation }) {
     );
   }
   return <ChatScreen bot={bot} onBack={() => navigation.goBack()} />;
+}
+
+function GroupChatRoute({ route, navigation }) {
+  const group = route.params?.bot;
+  const { C, T, S } = useTheme();
+  const s = useMemo(() => makeStyles(C, T, S), [C, T, S]);
+  if (!group || !group.id) {
+    return (
+      <View style={s.boot}>
+        <Text style={s.bootText} allowFontScaling={false}>
+          群参数丢了，正在返回
+        </Text>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+          <Text style={[s.bootText, { color: C.accent }]} allowFontScaling={false}>
+            返回
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+  return <GroupChatScreen group={group} onBack={() => navigation.goBack()} />;
 }
 
 const makeStyles = (C, T, S) =>

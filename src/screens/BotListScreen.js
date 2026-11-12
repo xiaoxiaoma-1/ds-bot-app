@@ -210,12 +210,15 @@ export default function BotListScreen({ onOpen, onSettings }) {
     [onOpen],
   );
 
-  // 点进群：本地先清这个群的未读，再通知后端；消息内容走会话页（接口待后端确认）
-  // 群消息手机端还读不到：后端 groups[] 里 log 被剥掉，只留了 preview。
-  // 所以点群只说明一次，不跳会话页（跳过去必然是一条报错），也不清未读（没看过就不算读过）。
-  const openGroup = useCallback((g) => {
-    setFlash('群消息手机端还读不到：后端要加一条读群消息记录的通道（「' + g.name + '」的最后一条已显示在下面）');
-  }, []);
+  // 点进群：先进会话页（群消息走 GET /api/dsbot/group），未读同时清掉 —— 这条路现在真能读到消息了
+  const openGroup = useCallback(
+    (g) => {
+      setGroups((prev) => prev.map((it) => (it.id === g.id ? { ...it, unread: 0, hasUnread: false } : it)));
+      botApi.read(String(g.id)).catch(() => {});
+      onOpen({ id: g.id, name: g.name, isGroup: true, memberCount: g.memberCount });
+    },
+    [onOpen],
+  );
 
   const clearAll = useCallback(() => {
     botApi.readAll().catch(() => {});

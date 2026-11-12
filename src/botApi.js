@@ -73,3 +73,14 @@ export const SHAPE_NAMES = [
   'whale', 'star', 'moon', 'wave', 'squircle', 'zed', 'hex', 'gumdrop', 'peanut', 'saucer',
   'bunny', 'kitty', 'beacon', 'plus', 'magnet', 'acorn', 'pebbles', 'cushion', 'ring', 'gem',
 ];
+
+// 群：读消息 / 发消息。后端已把 /api/dsbot/send 扩到认群 id，返回体与 GET 同一个结构。
+// 一页 20 条、seq 升序；cursor 是 JSON 字符串 {"beforeSeq":N}，不传就是第一页。
+export const groupApi = {
+  chat: (groupId, cursor) =>
+    call(
+      '/api/dsbot/group?group=' + encodeURIComponent(groupId) + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''),
+      { method: 'GET' },
+    ),
+  send: (groupId, text) => call('/api/dsbot/send', { body: { bot: groupId, text } }),
+};
