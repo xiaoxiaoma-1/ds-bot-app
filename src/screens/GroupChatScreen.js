@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { useKeyboardShift } from '../keyboard';
 import { groupApi } from '../botApi';
-import { TidyButton, useTidy } from '../tidy';
 
 // 群会话页：GET /api/dsbot/group 一页 20 条（seq 升序），cursor 往上翻。
 // 群日志没有时间戳（at 恒为 null），所以不显示时间；「谁说的」用 whoName，自己说的是 'me'。
@@ -38,7 +37,6 @@ export default function GroupChatScreen({ group, onBack }) {
   const [more, setMore] = useState(false);
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState('');
-  const tidy = useTidy({ value: draft, onChange: setDraft });
   const [err, setErr] = useState(null);
   const [pendingHint, setPendingHint] = useState('');
 
@@ -203,35 +201,17 @@ export default function GroupChatScreen({ group, onBack }) {
             </Text>
           ) : null}
 
-          {tidy.errMsg ? (
-            <Pressable onPress={tidy.clearErr} style={s.tidyErrLine}>
-              <Text style={s.tidyErr} numberOfLines={2} allowFontScaling={false}>
-                {tidy.errMsg}
-              </Text>
-            </Pressable>
-          ) : null}
-
           <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) }]}>
-            <View style={s.inputWrap}>
-              <TextInput
-                style={[s.input, tidy.busy ? s.inputDim : null]}
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="说点什么"
-                placeholderTextColor={C.ink3}
-                multiline
-                editable={!sending && !tidy.busy}
-                allowFontScaling={false}
-              />
-              {tidy.busy ? (
-                <View style={s.tidyOverlay} pointerEvents="none">
-                  <Text style={s.tidyOverlayText} allowFontScaling={false}>
-                    整理中…
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            <TidyButton busy={tidy.busy} disabled={!tidy.canRun || sending} onPress={tidy.run} />
+            <TextInput
+              style={s.input}
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="说点什么"
+              placeholderTextColor={C.ink3}
+              multiline
+              editable={!sending}
+              allowFontScaling={false}
+            />
             <Pressable
               style={[s.sendBtn, sending || !draft.trim() ? s.sendDim : null]}
               onPress={onSend}
@@ -310,17 +290,4 @@ const makeStyles = (C, T, S, R) =>
     },
     sendDim: { opacity: 0.5 },
     sendText: { color: C.onAccent, ...T.body },
-    inputWrap: { flex: 1, justifyContent: 'center' },
-    inputDim: { opacity: 0.35 },
-    tidyOverlay: {
-      position: 'absolute',
-      left: S.x4,
-      right: S.x4,
-      top: 0,
-      bottom: 0,
-      justifyContent: 'center',
-    },
-    tidyOverlayText: { color: C.ink3, ...T.body },
-    tidyErrLine: { paddingHorizontal: S.page, paddingBottom: S.x2 },
-    tidyErr: { color: C.bad, ...T.meta },
   });

@@ -13,11 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { chat, openFeed, send } from '../api';
 import { useKeyboardShift } from '../keyboard';
-import { TidyButton, useTidy } from '../tidy';
 import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
 
 // 会话页（定案稿第二屏）：顶栏 44 高无分割线；消息区 flex:1；输入栏贴底；
-// 气泡最大宽 279 / 圆角 24 / 内边距 16 / 同人 4 / 换人 12；加载态 11pt + 三点；发送键 brand 底。
+// 气泡 最大宽 279 / 圆角 24 / 内边距 16 / 同人 4 / 换人 12；加载态 11pt + 三点；发送键 brand 底。
 // 动效：气泡采纳 S3 弹一次、新消息轻跳一次，全部 native driver。
 
 const BUBBLE_MAX = 279;
@@ -39,7 +38,7 @@ function useDots() {
   return v;
 }
 
-function LoadingDots({ C, s }) {
+function LoadingDots({ s }) {
   const v = useDots();
   const dot = (i) => {
     const opacity = v.interpolate({
@@ -199,7 +198,6 @@ export default function ChatScreen({ bot, onBack }) {
 
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
-  const tidy = useTidy({ value: draft, onChange: setDraft });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [mode, setMode] = useState('');
@@ -347,38 +345,19 @@ export default function ChatScreen({ bot, onBack }) {
 
       <Animated.View style={[s.body, keyboardMove]}>
         <View style={s.body}>
-          {loading ? <LoadingDots C={C} s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
+          {loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
         </View>
 
-        {tidy.errMsg ? (
-          <Pressable onPress={tidy.clearErr} style={s.tidyErrLine}>
-            <Text style={s.tidyErr} numberOfLines={2} allowFontScaling={false}>
-              {tidy.errMsg}
-            </Text>
-          </Pressable>
-        ) : null}
-
         <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) }]}>
-          <View style={s.inputWrap}>
-            <TextInput
-              style={[s.input, tidy.busy ? s.inputDim : null]}
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="说点什么"
-              placeholderTextColor={C.ink3}
-              multiline
-              editable={!tidy.busy}
-            />
-            {tidy.busy ? (
-              <View style={s.tidyOverlay} pointerEvents="none">
-                <Text style={s.tidyOverlayText} allowFontScaling={false}>
-                  整理中…
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <TidyButton busy={tidy.busy} disabled={!tidy.canRun} onPress={tidy.run} />
+          <TextInput
+            style={s.input}
+            value={draft}
+            onChangeText={setDraft}
+            placeholder="说点什么"
+            placeholderTextColor={C.ink3}
+            multiline
+          />
           <Animated.View style={sendPress.scale}>
             <Pressable
               style={s.sendBtn}
@@ -462,17 +441,4 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x3,
     },
     sendText: { color: C.onAccent, ...T.body },
-    inputWrap: { flex: 1, justifyContent: 'center' },
-    inputDim: { opacity: 0.35 },
-    tidyOverlay: {
-      position: 'absolute',
-      left: S.x4,
-      right: S.x4,
-      top: 0,
-      bottom: 0,
-      justifyContent: 'center',
-    },
-    tidyOverlayText: { color: C.ink3, ...T.body },
-    tidyErrLine: { paddingHorizontal: S.page, paddingBottom: S.x2 },
-    tidyErr: { color: C.bad, ...T.meta },
   });
