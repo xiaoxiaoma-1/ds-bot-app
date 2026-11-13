@@ -16,8 +16,10 @@ import { useTheme } from '../../theme';
 export function roleOf(C, scheme) {
   const light = scheme === 'light';
   return {
-    brand: C.accent,
-    onBrand: C.onAccent,
+    // 深色模式下 C.accent 是近白 #F0EDF4，用来铺顶部整块形状会变成一大片刺眼白（老板：「上面那一块白色的太突兀了」）。
+    // 浅色仍用丁香紫品牌色，不动。
+    brand: light ? C.accent : C.card2,
+    onBrand: light ? C.onAccent : C.ink,
     brandHi: C.brandHi,
     coral: C.accentCoral,
     edge: light ? C.card : C.hero,

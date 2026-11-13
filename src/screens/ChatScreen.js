@@ -105,6 +105,7 @@ const MessageList = memo(function MessageList({ items, C, T, S, R }) {
     <FlatList
       data={data}
       inverted
+      style={{ flex: 1 }}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       initialNumToRender={14}
@@ -386,7 +387,9 @@ const makeStyles = (C, T, S, R) =>
     dotsRow: { flexDirection: 'row', gap: 6 },
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.ink3 },
     head: {
-      height: 44,
+      // minHeight 而不是 height：内联还叠了 paddingTop: insets.top（iPhone 47~59），
+      // 写死 height:44 是 border-box，padding 比它还大 → 内容高被算成负数，文字顶到状态栏。
+      minHeight: 44,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: S.page,

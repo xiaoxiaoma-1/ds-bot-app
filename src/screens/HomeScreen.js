@@ -218,14 +218,18 @@ const makeStyles = (C, T, S, R, scheme) =>
       right: 0,
       top: 0,
       height: 196,
-      backgroundColor: C.accent,
+      // 深色下 C.accent 接近纯白，这块 196 高会变成刺眼大白块（老板：「上面那一块白色的太突兀了」）。
+      // 换 C.card2：深 #2E2E38 / 浅 #EFE7F2。浅色下与页底 #F5EFF7 很接近，块感几乎消失——这是有意的。
+      backgroundColor: C.card2,
       borderBottomLeftRadius: R.big * 2,
       borderBottomRightRadius: R.big * 2,
     },
     greetWrap: { position: 'absolute', left: S.page, right: S.page, gap: S.x1 },
-    // 紫底/近白底都要能读，所以两种模式都用 C.onAccent，不用白字
-    greet: { color: C.onAccent, fontSize: 34, lineHeight: 41, fontWeight: '700' },
-    date: { color: C.onAccent, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },
+    // 底色已从 C.accent（深色近白 #F0EDF4）换成 C.card2（深色 #2E2E38）。
+    // 深色下必须同时换浅字，否则 #151518 压在 #2E2E38 上只有 1.36:1，问候语看不见。
+    // 浅色仍用 onAccent（#302636 on #EFE7F2 = 11.94:1）。
+    greet: { color: scheme === 'light' ? C.onAccent : C.ink, fontSize: 34, lineHeight: 41, fontWeight: '700' },
+    date: { color: scheme === 'light' ? C.onAccent : C.ink, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },
     // 破边点：设计稿写 brandHi，但浅紫压浅紫看不清（EAD2EE on CE9EDB）。
     // 改成「与白圆同族但有主次」：浅色白 55% / 深色近黑 40%（形状深色是近白，白点会消失）。
     dot: {
