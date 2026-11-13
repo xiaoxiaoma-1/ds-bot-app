@@ -113,25 +113,19 @@ export default function MainTabs({ navigation }) {
 
   // 问候与日期按当天算（不许写死「11月12日」——老板每天都会看见它）
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
-  // 懒挂载：只装已经点开过的页；顾问是初始页，一开始就装
-  const [mounted, setMounted] = useState({ home: true });
+  
   const [reduceMotion, setReduceMotion] = useState(false);
 
-  const dockBottom = Math.max(insets.bottom, S.x2) + S.x2;
+  const dockBottom = Math.max(insets?.bottom ?? 0, S.x2) + S.x2;
   const innerWidth = Math.max(0, winWidth - DOCK_INSET * 2);
   const count = TABS.length;
 
-  // 每页一个不透明度值，常驻挂载、只切 opacity
-  const opacities = useRef({});
-  const getOpacity = useCallback((key) => {
-    if (!opacities.current[key]) opacities.current[key] = new Animated.Value(key === 'home' ? 1 : 0);
-    return opacities.current[key];
-  }, []);
+  
 
   // 指示器：宽 + left 两个值，同一段动画、同一个 JS driver
   const dotW = useRef(new Animated.Value(IND_DOT)).current;
   const dotLeft = useRef(
-    new Animated.Value(leftForCenter(cellCenter(innerWidth, count, TABS.findIndex((t) => t.key === 'advisors')), IND_DOT)),
+    new Animated.Value(leftForCenter(cellCenter(innerWidth, count, TABS.findIndex((t) => t.key === 'home')), IND_DOT)),
   ).current;
   const phase2Timer = useRef(null);
   const runToken = useRef(0); // 连点十次不飘：每次点击递增，旧 timer 一律作废
@@ -220,17 +214,12 @@ export default function MainTabs({ navigation }) {
       const toIndex = TABS.findIndex((t) => t.key === key);
       if (toIndex < 0) return;
 
-      // 第一次点开才挂载；之后一直留着
-      setMounted((m) => (m[key] ? m : { ...m, [key]: true }));
-
-      // opacity 直接给值，不要动画（否则 setMounted 异步、动画启动时 View 还没挂载 → opacity 停在 0）
-      getOpacity(key).setValue(1);
-      getOpacity(tab).setValue(0);
+      
 
       moveDot(toIndex);
       setTab(key);
     },
-    [tab, getOpacity, moveDot, reduceMotion],
+    [tab, moveDot, reduceMotion],
   );
 
   // 七张功能卡 → 栈内页面
@@ -290,14 +279,10 @@ export default function MainTabs({ navigation }) {
       <View style={{ flex: 1, paddingBottom: IND_H + 20 + dockBottom }}>
         <View style={s.stack}>
           {TABS.map((t) =>
-            mounted[t.key] ? (
-              <Animated.View
-                key={t.key}
-                style={[s.layer, { opacity: getOpacity(t.key) }]}
-                pointerEvents={t.key === tab ? 'auto' : 'none'}
-              >
-                {renderPage(t.key, t.key === tab)}
-              </Animated.View>
+            tab === t.key ? (
+              <View key={t.key} style={{ flex: 1, backgroundColor: '#FF0000' }}>
+                {renderPage(t.key, true)}
+              </View>
             ) : null,
           )}
         </View>
@@ -333,8 +318,7 @@ export default function MainTabs({ navigation }) {
 
 const s = StyleSheet.create({
   stack: { flex: 1 },
-  // 四页常驻：全部绝对定位同位置叠着，只切 opacity / pointerEvents
-  layer: { ...StyleSheet.absoluteFillObject },
+  
   dock: {
     position: 'absolute',
     left: DOCK_INSET,
