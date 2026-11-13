@@ -198,9 +198,11 @@ export default function WorkbenchHomeScreen({
                     <Text style={s.cardTitle} numberOfLines={1} allowFontScaling={false}>
                       {f.title}
                     </Text>
-                    <Text style={s.cardSub} numberOfLines={1} allowFontScaling={false}>
-                      {f.sub}
-                    </Text>
+                    {f.sub ? (
+                      <Text style={s.cardSub} numberOfLines={1} allowFontScaling={false}>
+                        {f.sub}
+                      </Text>
+                    ) : null}
                   </View>
                 </Pressable>
               ))}
