@@ -21,6 +21,10 @@ export class ApiError extends Error {
 export const SESSION_COOKIE = 'pocket_sess';
 const COOKIE_HEADER = 'cookie';
 
+// 超时时间（毫秒）
+const DEFAULT_TIMEOUT = 20000; // 默认 20 秒
+const UPLOAD_TIMEOUT = 60000; // 上传 60 秒
+
 // 2026-11-12 后端已定：登录成功时响应体带 `session`（43 位不透明随机串）。
 // 其余键名只为兼容旧服务端，正常不会命中。
 const TOKEN_KEYS = [
@@ -129,6 +133,12 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
   };
   if (body !== undefined) headers['content-type'] = 'application/json';
 
+  // 判断超时时间：上传接口用 60 秒，其他用 20 秒
+  const isUpload = path.includes('/upload');
+  const timeoutMs = isUpload ? UPLOAD_TIMEOUT : DEFAULT_TIMEOUT;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   let res;
   try {
     res = await fetch(join(base, path), {
@@ -136,9 +146,13 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials: 'include',
+      signal: ctrl.signal,
     });
   } catch (e) {
+    if (e && e.name === 'AbortError') throw new ApiError('请求超时', step, { code: 'timeout', message: '等太久了，重试一下' });
     throw new ApiError('网络不通：' + (e.message || '请求失败'), step);
+  } finally {
+    clearTimeout(timer);
   }
 
   if (res.status === 401) {
@@ -276,7 +290,6 @@ export async function uploadImage(fileUri) {
   const d = await request('/api/dsbot/upload', {
     method: 'POST',
     body: formData,
-    headers: { 'Content-Type': 'multipart/form-data' },
     step: 'upload',
   });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '上传图片失败', 'upload');

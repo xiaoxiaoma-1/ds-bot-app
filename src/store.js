@@ -15,9 +15,14 @@ export const DEFAULT_BASE = 'https://user-20260813ol.tail1bd429.ts.net';
 const LOCAL_BASE_RE = /^https?:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i;
 
 export async function getBase() {
-  const stored = await SecureStore.getItemAsync(K.base);
-  if (!stored) return DEFAULT_BASE;
-  return LOCAL_BASE_RE.test(stored) ? DEFAULT_BASE : stored;
+  try {
+    const stored = await SecureStore.getItemAsync(K.base);
+    if (!stored) return DEFAULT_BASE;
+    return LOCAL_BASE_RE.test(stored) ? DEFAULT_BASE : stored;
+  } catch {
+    console.warn('[store] 读取服务地址失败');
+    return DEFAULT_BASE;
+  }
 }
 
 export async function setBase(v) {
@@ -25,7 +30,12 @@ export async function setBase(v) {
 }
 
 export async function getPass() {
-  return (await SecureStore.getItemAsync(K.pass)) || '';
+  try {
+    return (await SecureStore.getItemAsync(K.pass)) || '';
+  } catch {
+    console.warn('[store] 读取口令失败');
+    return '';
+  }
 }
 
 export async function setPass(v) {
@@ -33,7 +43,12 @@ export async function setPass(v) {
 }
 
 export async function getSess() {
-  return (await SecureStore.getItemAsync(K.sess)) || '';
+  try {
+    return (await SecureStore.getItemAsync(K.sess)) || '';
+  } catch {
+    console.warn('[store] 读取会话失败');
+    return '';
+  }
 }
 
 export async function setSess(v) {

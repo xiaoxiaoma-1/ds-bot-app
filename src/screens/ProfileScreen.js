@@ -36,7 +36,7 @@ export default function ProfileScreen({ navigation }) {
   const [editing, setEditing] = useState(null); // 'nickname' | 'signature'
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
 
   // 朋友圈
@@ -103,7 +103,7 @@ export default function ProfileScreen({ navigation }) {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,

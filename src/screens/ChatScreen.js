@@ -199,10 +199,12 @@ export default function ChatScreen({ bot, onBack }) {
   const backPress = usePressScale(0.94);
 
   const [draft, setDraft] = useState('');
+  const [inputH, setInputH] = useState(44);
   const [err, setErr] = useState(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
   const [attachHint, setAttachHint] = useState(false);
+  const reconnectCount = useRef(0);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const stopFeed = useRef(null);
@@ -263,6 +265,7 @@ export default function ChatScreen({ bot, onBack }) {
       if (!data) return;
       if (name === 'hello') {
         setMode('live');
+        reconnectCount.current = 0; // 成功连接，重置重连计数
         load();
         return;
       }
@@ -310,9 +313,14 @@ export default function ChatScreen({ bot, onBack }) {
       onError: (e) => {
         if (e && e.step === 'auth') {
           setErr({ step: 'auth', message: e.message });
+          reconnectCount.current = 0;
           return;
         }
-        setMode('reconnecting');
+        reconnectCount.current += 1;
+        // 只在前三次失败后显示重连状态
+        if (reconnectCount.current === 3) {
+          setMode('重连中');
+        }
       },
       onAuthFail: (e) => {
         stopFeed.current && stopFeed.current();
@@ -329,7 +337,7 @@ export default function ChatScreen({ bot, onBack }) {
   const pickImage = useCallback(async (useCamera) => {
     try {
       const options = {
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
         base64: false,
         allowsEditing: false,
@@ -352,12 +360,19 @@ export default function ChatScreen({ bot, onBack }) {
         result = await ImagePicker.launchImageLibraryAsync(options);
       }
 
-      if (!result.canceled && result.assets && result.assets[0]) {
+      if (result.canceled) {
+        // 用户取消选择，确保界面状态正确
+        setAttachHint(false);
+        return;
+      }
+
+      if (result.assets && result.assets[0]) {
         setSelectedImage(result.assets[0]);
         setAttachHint(false);
       }
     } catch (error) {
       setErr({ step: 'pick', message: '选择图片失败: ' + error.message });
+      setAttachHint(false);
     }
   }, []);
 
@@ -429,7 +444,7 @@ export default function ChatScreen({ bot, onBack }) {
           {bot.name}
         </Text>
         <Text style={s.mode} allowFontScaling={false}>
-          {mode === 'live' ? '实时' : mode === 'reconnecting' ? '重连' : ''}
+          {mode === 'live' ? '实时' : mode === '重连中' ? '网络断了，正在重试' : ''}
         </Text>
       </View>
 
@@ -488,12 +503,17 @@ export default function ChatScreen({ bot, onBack }) {
             <Text style={s.attachText}>+</Text>
           </Pressable>
           <TextInput
-            style={s.input}
+            style={[s.input, { height: inputH }]}
             value={draft}
             onChangeText={setDraft}
             placeholder="说点什么"
             placeholderTextColor={C.placeholder}
             multiline
+            scrollEnabled
+            onContentSizeChange={(e) => {
+              const raw = e.nativeEvent.contentSize.height;
+              setInputH(Math.min(120, Math.max(44, raw + 24)));
+            }}
           />
           <Animated.View style={sendPress.scale}>
             <Pressable
@@ -588,9 +608,7 @@ const makeStyles = (C, T, S, R) =>
       paddingTop: S.x3,
     },
     input: {
-      flex: 1,
-      minHeight: 44,
-      maxHeight: 120,
+      flexGrow: 1,
       backgroundColor: C.card,
       borderRadius: R.capsule,
       color: C.ink,

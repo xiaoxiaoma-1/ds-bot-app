@@ -98,12 +98,87 @@ const DocText = memo(function DocText({ segs, style }) {
   );
 });
 
-// 点评流式块：只有正在增长的最后一块重渲染，前面已闭合的块 props 不变、直接跳过
-const Chunk = memo(function Chunk({ text, style }) {
+// 点评 Markdown：只认四种语法——「## 」标题、**加粗**、行首「- 」列表项、\n 换行。
+// 不引第三方库，自己解析。必须按整篇解析：chunks 是按 200 字硬切的，
+// 分块渲染会把 ** 和行首「- 」切在两个块里，标记就渲染不出来。
+const MD_HEAD = /^ {0,3}##[ \t]+(.+)$/;
+const MD_ITEM = /^ {0,3}-[ \t]+(.+)$/;
+const MD_BOLD = /\*\*([^*]+)\*\*/g;
+
+// 行内加粗：返回「纯字符串 / 加粗 Text」混合数组送给外层 Text
+function mdInline(text, style, key) {
+  const out = [];
+  let last = 0;
+  let m;
+  MD_BOLD.lastIndex = 0;
+  while ((m = MD_BOLD.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(
+      <Text key={`${key}-${m.index}`} style={[style, { fontWeight: '600' }]} allowFontScaling={false}>
+        {m[1]}
+      </Text>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+// 逐行定块：h 标题 / li 列表 / p 段落 / sp 空行
+function mdBlocks(text) {
+  return String(text || '')
+    .split('\n')
+    .map((line, i) => {
+      const head = line.match(MD_HEAD);
+      if (head) return { t: 'h', k: i, text: head[1] };
+      const item = line.match(MD_ITEM);
+      if (item) return { t: 'li', k: i, text: item[1] };
+      return line.trim() ? { t: 'p', k: i, text: line.trim() } : { t: 'sp', k: i };
+    });
+}
+
+// 点评渲染：整篇文本变了才重解析（useMemo + memo 双层，流式 flush 不会重复解析同一份文本）
+const MdText = memo(function MdText({ text, style }) {
+  const base = StyleSheet.flatten(style) || {};
+  const blocks = useMemo(() => mdBlocks(text), [text]);
+  const size = base.fontSize || 15;
+  const lh = base.lineHeight || 21;
   return (
-    <Text style={style} allowFontScaling={false}>
-      {text}
-    </Text>
+    <View style={{ gap: 4 }}>
+      {blocks.map((b, idx) => {
+        if (b.t === 'sp') {
+          return idx === blocks.length - 1 ? null : <View key={b.k} style={{ height: 4 }} />;
+        }
+        if (b.t === 'h') {
+          return (
+            <Text
+              key={b.k}
+              style={[style, { fontWeight: '600', fontSize: size * 1.22, lineHeight: lh * 1.35, marginTop: idx > 0 ? 6 : 0 }]}
+              allowFontScaling={false}
+            >
+              {mdInline(b.text, style, b.k)}
+            </Text>
+          );
+        }
+        if (b.t === 'li') {
+          return (
+            <View key={b.k} style={{ flexDirection: 'row', paddingLeft: 2 }}>
+              <Text style={style} allowFontScaling={false}>
+                •{' '}
+              </Text>
+              <Text style={[style, { flex: 1 }]} allowFontScaling={false}>
+                {mdInline(b.text, style, b.k)}
+              </Text>
+            </View>
+          );
+        }
+        return (
+          <Text key={b.k} style={style} allowFontScaling={false}>
+            {mdInline(b.text, style, b.k)}
+          </Text>
+        );
+      })}
+    </View>
   );
 });
 
@@ -125,10 +200,11 @@ export default function ExpressionScreen({ onBack }) {
   // 点评：流式。text 只往后拼，chars 是已收字数，interrupted 表示没等到 done
   const [report, setReport] = useState({ streaming: false, chunks: [], chars: 0, err: null, interrupted: false });
   const [err, setErr] = useState(null);
-  const [rtLines, setRtLines] = useState(null); // realtime 返回（当前只有提示行，没有按句判断）
+  
   const [sentMarks] = useState([]); // 句级标注数据源暂缺，恒为空
   const abortRef = useRef(null);
   const scrollRef = useRef(null);
+  const inputScrollRef = useRef(null);
   const stickRef = useRef(true); // 用户手动往上滚之后置 false，停止自动滚到底
 
   // 流式增量先攒着，每 80ms 刷一次、按 200 字一块切。
@@ -189,11 +265,6 @@ export default function ExpressionScreen({ onBack }) {
       setSegs(parsed.segs);
       setCut(parsed.cut);
       setAnalyzeMs(Date.now() - t0);
-      // 第二层走后台，不阻塞上面的显示
-      expressionApi
-        .realtime(text)
-        .then((r) => setRtLines(Array.isArray(r.lines) ? r.lines : []))
-        .catch(() => setRtLines(null));
     } catch (e) {
       setErr(e.message);
     }
@@ -290,11 +361,14 @@ export default function ExpressionScreen({ onBack }) {
       </View>
 
       {stage === 'input' ? (
-        <View style={s.body}>
+        <Animated.View style={[s.body, { paddingBottom: kbShiftJS }]}>
           <ScrollView
+            ref={inputScrollRef}
             contentContainerStyle={s.inputWrap}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => stickRef.current && inputScrollRef.current && inputScrollRef.current.scrollToEnd({ animated: false })}
           >
             <TextInput
               style={s.input}
@@ -305,9 +379,11 @@ export default function ExpressionScreen({ onBack }) {
               multiline
               textAlignVertical="top"
               allowFontScaling={false}
+              autoComplete="off"
+              textContentType="none"
             />
           </ScrollView>
-          <Animated.View style={{ paddingBottom: kbShiftJS }}>
+          <Animated.View>
             <Text style={s.hint} allowFontScaling={false}>
               按键盘上的麦克风说，说完点讲完了
             </Text>
@@ -321,9 +397,9 @@ export default function ExpressionScreen({ onBack }) {
               </Text>
             </Pressable>
           </Animated.View>
-        </View>
+        </Animated.View>
       ) : (
-        <View style={s.body}>
+        <Animated.View style={[s.body, { paddingBottom: kbShiftJS }]}>
           <ScrollView
             ref={scrollRef}
             contentContainerStyle={s.markedWrap}
@@ -451,9 +527,7 @@ export default function ExpressionScreen({ onBack }) {
                     {report.err}
                   </Text>
                 ) : null}
-                {report.chunks.map((c, i) => (
-                  <Chunk key={i} text={c} style={s.panelText} />
-                ))}
+                <MdText text={report.chunks.join('')} style={s.panelText} />
                 {report.streaming && report.chars === 0 ? (
                   <View style={s.center}>
                     <ActivityIndicator color={C.accent} />
@@ -476,19 +550,6 @@ export default function ExpressionScreen({ onBack }) {
                 ) : null}
               </View>
             ) : null}
-
-            {rtLines && rtLines.length > 0 ? (
-              <View style={s.panel}>
-                <Text style={s.panelTitle} allowFontScaling={false}>
-                  实时提示
-                </Text>
-                {rtLines.map((l, i) => (
-                  <Text key={i} style={s.panelText} allowFontScaling={false}>
-                    {l.text}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
           </ScrollView>
 
           <View style={[s.tabs, { paddingBottom: Math.max(insets.bottom, S.x3) }]}>
@@ -508,7 +569,7 @@ export default function ExpressionScreen({ onBack }) {
               </Text>
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       )}
     </View>
   );

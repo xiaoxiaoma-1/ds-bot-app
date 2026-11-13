@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { login } from '../api';
-import { getBase, setBase, setPass, DEFAULT_BASE } from '../store';
+import { getBase, setBase, setPass, getSess, setSess, DEFAULT_BASE } from '../store';
 
 // 同一屏两用：首次启动=登录页（onBack 不传，无返回）；从列表进=设置页（onBack 传进来，带返回）。
 export default function SetupScreen({ onDone, onBack, onOpenProfile }) {
@@ -24,11 +24,15 @@ export default function SetupScreen({ onDone, onBack, onOpenProfile }) {
   const [pass, setPassText] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
     (async () => {
       // getBase 已经把只能在家用的旧地址换成公网默认值，这里直接显示它
       setBaseText(await getBase());
+      // 检查是否已有会话
+      const sess = await getSess();
+      setHasSession(!!sess);
     })();
   }, []);
 
@@ -48,12 +52,26 @@ export default function SetupScreen({ onDone, onBack, onOpenProfile }) {
       await setBase(b);
       await setPass(pass);
       await login(b, pass);
+      setHasSession(true);
       onDone();
     } catch (e) {
       const msg = e.locked
         ? `试太多次，${Math.ceil((e.left || 0) / 60)} 分钟后再来`
         : e.message || '连不上';
       setErr({ step: e.step === 'login' ? '登录失败' : '连接失败', message: msg });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    setBusy(true);
+    try {
+      await setSess(null); // 清除会话
+      setHasSession(false);
+      setPassText(''); // 清空密码字段
+    } catch {
+      // 登出失败静默处理
     } finally {
       setBusy(false);
     }
@@ -72,74 +90,107 @@ export default function SetupScreen({ onDone, onBack, onOpenProfile }) {
         </Pressable>
       ) : null}
       <ScrollView contentContainerStyle={{ paddingBottom: S.x6 }} keyboardShouldPersistTaps="handled">
-        <Text style={s.title} allowFontScaling={false}>
-          连上你的电脑
-        </Text>
-        <Text style={s.hint} allowFontScaling={false}>
-          地址和口令只存在本机钥匙串，代码里没有它们。
-        </Text>
-
-        <Text style={s.label} allowFontScaling={false}>
-          服务地址
-        </Text>
-        <TextInput
-          style={s.input}
-          value={base}
-          onChangeText={setBaseText}
-          placeholder="https://你的地址"
-          placeholderTextColor={C.placeholder}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          inputMode="url"
-        />
-
-        <Text style={s.label} allowFontScaling={false}>
-          口令
-        </Text>
-        <TextInput
-          style={s.input}
-          value={pass}
-          onChangeText={setPassText}
-          placeholder="口袋口令"
-          placeholderTextColor={C.placeholder}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        {err ? (
-          <View style={s.errBox}>
-            <Text style={s.errTitle} allowFontScaling={false}>
-              {err.step}
+        {hasSession ? (
+          <>
+            <Text style={s.title} allowFontScaling={false}>
+              已登录 · 服务器地址 {base || 'https://你的地址'}
             </Text>
-            <Text style={s.errMsg} allowFontScaling={false}>
-              {err.message}
+            <Text style={s.hint} allowFontScaling={false}>
+              地址和口令只存在本机钥匙串，代码里没有它们。
             </Text>
-          </View>
-        ) : null}
 
-        <Pressable style={[s.btn, busy && s.btnBusy]} onPress={submit} disabled={busy}>
-          {busy ? (
-            <ActivityIndicator color={C.onHero} />
-          ) : (
-            <Text style={s.btnText} allowFontScaling={false}>
-              连接
-            </Text>
-          )}
-        </Pressable>
+            <Pressable 
+              style={[s.btn, s.btnSecondary, busy && s.btnBusy]} 
+              onPress={logout}
+              disabled={busy}
+            >
+              <Text style={s.btnSecondaryText} allowFontScaling={false}>
+                退出登录
+              </Text>
+            </Pressable>
 
-        {/* 已登录时的个人主页入口 */}
-        {onOpenProfile ? (
-          <Pressable
-            style={s.profileLink}
-            onPress={() => onOpenProfile()}
-          >
-            <Text style={s.profileLinkText} allowFontScaling={false}>
-              个人主页 ›
+            <Pressable 
+              style={[s.btn, s.btnSecondary, busy && s.btnBusy]} 
+              onPress={() => setHasSession(false)}
+              disabled={busy}
+            >
+              <Text style={s.btnSecondaryText} allowFontScaling={false}>
+                换服务器
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={s.title} allowFontScaling={false}>
+              连上你的电脑
             </Text>
-          </Pressable>
-        ) : null}
+            <Text style={s.hint} allowFontScaling={false}>
+              地址和口令只存在本机钥匙串，代码里没有它们。
+            </Text>
+
+            <Text style={s.label} allowFontScaling={false}>
+              服务地址
+            </Text>
+            <TextInput
+              style={s.input}
+              value={base}
+              onChangeText={setBaseText}
+              placeholder="https://你的地址"
+              placeholderTextColor={C.placeholder}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              inputMode="url"
+            />
+
+            <Text style={s.label} allowFontScaling={false}>
+              口令
+            </Text>
+            <TextInput
+              style={s.input}
+              value={pass}
+              onChangeText={setPassText}
+              placeholder="口袋口令"
+              placeholderTextColor={C.placeholder}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            {err ? (
+              <View style={s.errBox}>
+                <Text style={s.errTitle} allowFontScaling={false}>
+                  {err.step}
+                </Text>
+                <Text style={s.errMsg} allowFontScaling={false}>
+                  {err.message}
+                </Text>
+              </View>
+            ) : null}
+
+            <Pressable style={[s.btn, busy && s.btnBusy]} onPress={submit} disabled={busy}>
+              {busy ? (
+                <ActivityIndicator color={C.onHero} />
+              ) : (
+                <Text style={s.btnText} allowFontScaling={false}>
+                  连接
+                </Text>
+              )}
+            </Pressable>
+
+            {/* 已登录时的个人主页入口 */}
+            {onOpenProfile ? (
+              <Pressable
+                style={s.profileLink}
+                onPress={() => onOpenProfile()}
+              >
+                <Text style={s.profileLinkText} allowFontScaling={false}>
+                  个人主页 ›
+                </Text>
+              </Pressable>
+            ) : null}
+          </>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -177,8 +228,18 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x4,
       alignItems: 'center',
     },
+    btnSecondary: {
+      backgroundColor: C.card,
+      borderRadius: R.capsule,
+      marginTop: S.x4,
+      paddingVertical: S.x4,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: C.line,
+    },
     btnBusy: { opacity: 0.7 },
     btnText: { color: C.onHero, ...T.title },
+    btnSecondaryText: { color: C.ink, ...T.title },
     profileLink: {
       marginTop: S.x6,
       paddingVertical: S.x3,
