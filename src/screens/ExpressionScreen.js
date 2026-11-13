@@ -181,7 +181,7 @@ export default function ExpressionScreen({ onBack }) {
     setAnalyzeMs(null);
     setSegs([]);
     setPolish({ loading: false, text: '', err: null });
-    setReport({ streaming: false, text: '', chars: 0, err: null, interrupted: false });
+    setReport({ streaming: false, text: '', chars: 0, err: null, interrupted: false, chunks: [] });
     try {
       const d = await expressionApi.analyze(text);
       setA(d);
@@ -216,7 +216,7 @@ export default function ExpressionScreen({ onBack }) {
     const base = await getBase();
     const sess = await getSess();
     if (!base || !sess) {
-      setReport({ streaming: false, text: '', chars: 0, err: '还没有会话凭证，回设置登录', interrupted: false });
+      setReport({ streaming: false, text: '', chars: 0, err: '还没有会话凭证，回设置登录', interrupted: false, chunks: [] });
       return;
     }
     const ctrl = new AbortController();

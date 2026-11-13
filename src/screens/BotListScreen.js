@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DeviceMotion } from 'expo-sensors';
 import { avatarInk, inkOn, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
@@ -19,6 +20,7 @@ import BotMenu from './botMenu';
 import { botApi } from '../botApi';
 import { advisorsFull } from '../api';
 import { groupsUnreadCount, normalizeGroups } from '../groups';
+import { setCached, useCachedResource } from '../cache';
 import GroupSection from './GroupSection';
 
 // Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按弹菜单（移动/编辑/隐藏/删除）。
@@ -32,6 +34,37 @@ const LONG_PRESS_MS = 300;
 // 圆润/有机形状可以加脸，几何类不加
 const FACED_SHAPES = new Set(['gumdrop','squircle','cushion','pebbles','whale','bunny','kitty','acorn','saucer','beacon','peanut','moon']);
 
+
+// 设备倾斜：只取 gamma / beta 两个角度，供头像眼睛跟随。
+// 模拟器、没授权、或模块本身不可用时不抛错，静默退化成「眼睛不动」。
+function useTilt() {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let alive = true;
+    let sub = null;
+    try {
+      DeviceMotion.setUpdateInterval(80);
+      sub = DeviceMotion.addListener(({ rotation }) => {
+        if (!alive || !rotation) return;
+        // rotation.gamma = 左右倾（-1..1 约），rotation.beta = 前后倾
+        setTilt({ x: rotation.gamma || 0, y: rotation.beta || 0 });
+      });
+    } catch (e) {
+      sub = null; // 拿不到传感器就当没这回事
+    }
+    return () => {
+      alive = false;
+      try {
+        sub && sub.remove && sub.remove();
+      } catch (e) {
+        // 卸载时移除失败不影响其它逻辑
+      }
+    };
+  }, []);
+
+  return tilt;
+}
 
 function statusText(item) {
   const st = String(item.status || 'unknown');
@@ -67,6 +100,12 @@ const AdvisorRow = memo(function AdvisorRow({
   const avatar = item.avatar || {};
   const shape = avatar.shape || 'gumdrop';
   const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
+
+  // 眼睛跟着倾斜走：单轴最多 1.2pt（不超过 1.5pt，再大就飞出脸）；嘴不参与
+  const tilt = useTilt();
+  const maxShift = 1.2;
+  const dx = Math.max(-maxShift, Math.min(maxShift, tilt.x * maxShift * 4));
+  const dy = Math.max(-maxShift, Math.min(maxShift, tilt.y * maxShift * 4));
   return (
     <Animated.View
       onLayout={onMeasured}
@@ -86,8 +125,20 @@ const AdvisorRow = memo(function AdvisorRow({
           />
           {FACED_SHAPES.has(shape) ? (
             <>
-              <View style={[s.eye, s.eyeL, { backgroundColor: inkOn(tint) }]} />
-              <View style={[s.eye, s.eyeR, { backgroundColor: inkOn(tint) }]} />
+              <View
+                style={[
+                  s.eye,
+                  s.eyeL,
+                  { backgroundColor: inkOn(tint), transform: [{ translateX: dx }, { translateY: dy }] },
+                ]}
+              />
+              <View
+                style={[
+                  s.eye,
+                  s.eyeR,
+                  { backgroundColor: inkOn(tint), transform: [{ translateX: dx }, { translateY: dy }] },
+                ]}
+              />
               <View style={[s.mouth, { backgroundColor: inkOn(tint), opacity: 0.75 }]} />
             </>
           ) : null}
@@ -146,6 +197,9 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
   const [groups, setGroups] = useState([]);
   const [unreadNote, setUnreadNote] = useState('');
 
+  // 列表首次加载走缓存：有缓存先显示上次的列表，后台静默刷新（key 固定 'advisors'）
+  const cachedAdvisors = useCachedResource('advisors', advisorsFull);
+
   useEffect(() => {
     if (!flash) return undefined;
     const t = setTimeout(() => setFlash(null), 2500);
@@ -162,6 +216,7 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
   // 拿到 advisorsFull 之后的落库动作：首次加载和静默刷新必须走同一段，避免两套逻辑走偏
   const applyFull = (full) => {
     const list = full.advisors;
+    setCached('advisors', full); // 三个入口（首次 / 静默 / 手动）都在这里落缓存
     setGroups(normalizeGroups(full.groups));
     setUnreadNote(full.unreadNote || '');
     setRows(list);
@@ -174,6 +229,11 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
     setHidden(new Set(list.filter((it) => it.hidden || it.deleted).map((it) => String(it.id))));
   };
 
+  // 缓存命中或后台静默刷新回来了：落到列表状态（列表/输入相关 UI 一律不动）
+  useEffect(() => {
+    if (cachedAdvisors.data) applyFull(cachedAdvisors.data);
+  }, [cachedAdvisors.data]);
+
   const load = useCallback(async (isRefresh) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
@@ -181,7 +241,7 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
       applyFull(full);
       setErr(null);
     } catch (e) {
-      setRows([]);
+      // 有缓存时保留旧列表，错误只在完全没有缓存时占整屏
       setErr({ step: e.step || 'list', message: e.message || '未知错误' });
     } finally {
       setLoading(false);
@@ -202,10 +262,9 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
   useEffect(() => {
     if (!active) return;
     if (!loadedRef.current) {
-      // 首次激活：屏幕上什么都没有，走带 loading 的那条
+      // 首次激活：首次拉取交给 useCachedResource（有缓存就不转圈），这里只打标记
       loadedRef.current = true;
       lastFetchRef.current = Date.now();
-      load(false);
       return;
     }
     // 之后再激活：静默刷（未读数会变），1.5 秒内来回切不重复发
@@ -377,6 +436,11 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
 
   const stepLabel = { login: '登录失败', auth: '认证失败', list: '取顾问列表失败' };
 
+  // 有缓存就保留列表、只提示一行小字；没有缓存才占整屏转圈 / 错误态
+  const hasCache = cachedAdvisors.data != null;
+  const fetchErr = err || (cachedAdvisors.error ? { step: 'list', message: cachedAdvisors.error } : null);
+  const showSpinner = !hasCache && (cachedAdvisors.loading || loading);
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       {flash ? (
@@ -418,21 +482,26 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
           {unreadNote}
         </Text>
       ) : null}
+      {fetchErr && hasCache ? (
+        <Text style={s.noteLine} allowFontScaling={false}>
+          {stepLabel[fetchErr.step] || '刷新失败'}，显示的是上次内容
+        </Text>
+      ) : null}
 
-      {loading ? (
+      {showSpinner ? (
         <View style={s.center}>
           <ActivityIndicator color={C.accent} />
           <Text style={s.centerText} allowFontScaling={false}>
             正在取顾问列表
           </Text>
         </View>
-      ) : err ? (
+      ) : !hasCache && fetchErr ? (
         <View style={s.errBox}>
           <Text style={s.errTitle} allowFontScaling={false}>
-            {stepLabel[err.step] || '出错了'}
+            {stepLabel[fetchErr.step] || '出错了'}
           </Text>
           <Text style={s.errMsg} allowFontScaling={false}>
-            {err.message}
+            {fetchErr.message}
           </Text>
           <View style={s.errActions}>
             <Pressable style={s.errBtn} onPress={() => load(false)}>

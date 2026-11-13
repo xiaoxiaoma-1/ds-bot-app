@@ -38,6 +38,7 @@ export default function BookReaderScreen({
   total = 0,
   savedIdx = 0,
   loadingMore = false,
+  initialLoading = false,
   err = null,
   onNeedMore,
   onProgress,
@@ -118,6 +119,10 @@ export default function BookReaderScreen({
         {err ? (
           <Text style={[s.body, { color: C.bad }]} allowFontScaling={false}>
             读不到正文：{err}
+          </Text>
+        ) : initialLoading ? (
+          <Text style={[s.body, { color: C.ink2 }]} allowFontScaling={false}>
+            正在加载…
           </Text>
         ) : null}
 

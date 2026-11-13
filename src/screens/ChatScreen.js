@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
+import { setCached, useCachedResource } from '../cache';
 import { chat, openFeed, send } from '../api';
-import { useKeyboardShift } from '../keyboard';
+import { useKeyboardHeight } from '../keyboard';
 import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
 
 // 会话页（定案稿第二屏）：顶栏 44 高无分割线；消息区 flex:1；输入栏贴底；
@@ -189,40 +190,67 @@ export default function ChatScreen({ bot, onBack }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
-  const keyboardShift = useKeyboardShift();
-  const keyboardMove = useMemo(
-    () => ({ transform: [{ translateY: Animated.multiply(keyboardShift, -1) }] }),
-    [keyboardShift],
-  );
+  const keyboardHeight = useKeyboardHeight();
   const sendPress = usePressScale(0.94);
   const backPress = usePressScale(0.94);
 
-  const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
+  const [attachHint, setAttachHint] = useState(false);
   const stopFeed = useRef(null);
   const liveRef = useRef(null);
   const seqs = useRef(new Set());
   const targetBot = useRef(String(bot.id));
+
+  useEffect(() => {
+    if (attachHint) {
+      const t = setTimeout(() => setAttachHint(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [attachHint]);
 
   const applyMessages = useCallback((msgs) => {
     seqs.current = new Set(msgs.map((m) => m.seq).filter((x) => x !== undefined && x !== null));
     setItems(msgs);
   }, []);
 
+  // 首次拉会话走缓存：有缓存直接渲染上次内容，后台静默刷新；key 按会话分开
+  const chatCacheKey = useMemo(() => 'chat:' + String(bot.id), [bot.id]);
+
+  const chatLoader = useCallback(async () => {
+    try {
+      const msgs = await chat(bot.id);
+      setRefreshFailed(false);
+      return msgs;
+    } catch (e) {
+      setRefreshFailed(true); // 有缓存时只提示一行小字，不整屏报错
+      throw e;
+    }
+  }, [bot.id]);
+
+  const cachedChat = useCachedResource(chatCacheKey, chatLoader);
+
+  // 命中缓存时第一帧就有消息，不再先空一帧再填
+  const [items, setItems] = useState(() => cachedChat.data || []);
+
+  // 缓存命中或后台静默刷新回来了：把消息落到列表（流式追加逻辑不动）
+  useEffect(() => {
+    if (cachedChat.data) applyMessages(cachedChat.data);
+  }, [cachedChat.data, applyMessages]);
+
   const load = useCallback(async () => {
     try {
       const msgs = await chat(bot.id);
+      setCached(chatCacheKey, msgs); // 刷新结果写回缓存，下次点进来直接命中
       applyMessages(msgs);
       setErr(null);
+      setRefreshFailed(false);
     } catch (e) {
       setErr({ step: e.step || 'chat', message: e.message || '读不到对话' });
-    } finally {
-      setLoading(false);
     }
-  }, [bot.id, applyMessages]);
+  }, [bot.id, chatCacheKey, applyMessages]);
 
   const onEvent = useCallback(
     (name, data) => {
@@ -270,7 +298,7 @@ export default function ChatScreen({ bot, onBack }) {
 
   useEffect(() => {
     targetBot.current = String(bot.id);
-    load();
+    // 首次拉取交给 useCachedResource（有缓存就不转圈），这里只负责接流
     stopFeed.current = openFeed({
       onEvent,
       onError: (e) => {
@@ -310,9 +338,15 @@ export default function ChatScreen({ bot, onBack }) {
 
   const stepLabel = { chat: '读会话失败', send: '发送失败', auth: '需要重新登录', feed: '流式断开' };
 
+  // 有缓存就保留内容、只提示一行小字；没有缓存才占整屏错误态
+  const hasCache = cachedChat.data != null;
+  const fetchErr = err || (cachedChat.error ? { step: 'chat', message: cachedChat.error } : null);
+  const showErrBox = fetchErr && !hasCache ? fetchErr : null;
+  const showRefreshHint = Boolean(fetchErr) && hasCache;
+
   return (
-    <View style={s.root}>
-      <View style={[s.head, { paddingTop: insets.top }]}>
+    <View style={[s.root, { paddingBottom: keyboardHeight }]}>
+      <View style={[s.head, { height: insets.top + 44, paddingTop: insets.top }]}>
         <Animated.View style={backPress.scale}>
           <Pressable
             onPress={onBack}
@@ -333,24 +367,39 @@ export default function ChatScreen({ bot, onBack }) {
         </Text>
       </View>
 
-      {err ? (
+      {showErrBox ? (
         <View style={s.errBox}>
           <Text style={s.errTitle} allowFontScaling={false}>
-            {stepLabel[err.step] || '出错了'}
+            {stepLabel[showErrBox.step] || '出错了'}
           </Text>
           <Text style={s.errMsg} allowFontScaling={false}>
-            {err.message}
+            {showErrBox.message}
           </Text>
         </View>
       ) : null}
 
-      <Animated.View style={[s.body, keyboardMove]}>
+      {showRefreshHint ? (
+        <Text
+          style={{ color: C.ink3, fontSize: 12, paddingHorizontal: S.page, paddingBottom: S.x1 }}
+          allowFontScaling={false}
+        >
+          {stepLabel[fetchErr.step] || '刷新失败'}，显示的是上次内容
+        </Text>
+      ) : null}
+
+      <View style={s.body}>
         <View style={s.body}>
-          {loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
+          {cachedChat.loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
         </View>
 
-        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) }]}>
+        <View style={[s.composer, { paddingBottom: insets.bottom }]}>
+          <Pressable
+            style={s.attachBtn}
+            onPress={() => setAttachHint(true)}
+          >
+            <Text style={s.attachText}>+</Text>
+          </Pressable>
           <TextInput
             style={s.input}
             value={draft}
@@ -373,7 +422,12 @@ export default function ChatScreen({ bot, onBack }) {
             </Pressable>
           </Animated.View>
         </View>
-      </Animated.View>
+        {attachHint ? (
+          <View style={{ paddingHorizontal: S.page, paddingTop: S.x2 }}>
+            <Text style={{ color: C.ink3, fontSize: 12 }}>图片功能待接入</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -387,9 +441,7 @@ const makeStyles = (C, T, S, R) =>
     dotsRow: { flexDirection: 'row', gap: 6 },
     dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.ink3 },
     head: {
-      // minHeight 而不是 height：内联还叠了 paddingTop: insets.top（iPhone 47~59），
-      // 写死 height:44 是 border-box，padding 比它还大 → 内容高被算成负数，文字顶到状态栏。
-      minHeight: 44,
+      height: 44, // 头部内容高度固定，总高度由外层 style + paddingTop 构成
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: S.page,
@@ -429,6 +481,7 @@ const makeStyles = (C, T, S, R) =>
     },
     input: {
       flex: 1,
+      minHeight: 44,
       maxHeight: 120,
       backgroundColor: C.card,
       borderRadius: R.capsule,
@@ -444,4 +497,13 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x3,
     },
     sendText: { color: C.onAccent, ...T.body },
+    attachBtn: {
+      backgroundColor: C.card,
+      borderRadius: R.capsule,
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    attachText: { color: C.ink3, ...T.title },
   });

@@ -32,6 +32,7 @@ import {
   delView,
   postVote,
   undoLast,
+  addIdea,
 } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
@@ -40,6 +41,7 @@ import ViewsDetailScreen from './src/screens/workbench/ViewsDetailScreen';
 import ViewsPoolScreen from './src/screens/workbench/ViewsPoolScreen';
 import TopicsPoolScreen from './src/screens/workbench/TopicsPoolScreen';
 import DraftLibraryScreen from './src/screens/workbench/DraftLibraryScreen';
+import IdeaQuickAddScreen from './src/screens/IdeaQuickAddScreen';
 
 // 导航：原生栈（react-native-screens）。
 //   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
@@ -105,6 +107,7 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="ViewsDetail" component={ViewsDetailRoute} />
         <Stack.Screen name="ViewsPool" component={ViewsPoolRoute} />
         <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
+        <Stack.Screen name="IdeaQuickAdd" component={IdeaQuickAddRoute} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -205,6 +208,31 @@ function ExpressionRoute({ navigation }) {
   return <ExpressionScreen onBack={() => navigation.goBack()} />;
 }
 
+function IdeaQuickAddRoute({ navigation }) {
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState(null);
+  const onSave = async (text) => {
+    setSaving(true);
+    setErr(null);
+    try {
+      await addIdea(text);
+      navigation.goBack();
+    } catch (e) {
+      setErr(e.message || '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <IdeaQuickAddScreen
+      onSave={onSave}
+      onClose={() => navigation.goBack()}
+      saving={saving}
+      error={err}
+    />
+  );
+}
+
 function GroupChatRoute({ route, navigation }) {
   const group = route.params?.bot;
   const { C, T, S } = useTheme();
@@ -229,12 +257,13 @@ function GroupChatRoute({ route, navigation }) {
 function DraftLibraryRoute({ route, navigation }) {
   // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
   // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  // draftId（来自 MainTabs 首页「接着写」点击）已接参数，待页面支持定位到指定草稿。
   const p = (route && route.params) || {};
   return (
     <DraftLibraryScreen
       {...p}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -321,7 +350,7 @@ function TopicsPoolRoute({ navigation }) {
       onChangeStatus={onChangeStatus}
       onDelete={onDelete}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -419,7 +448,7 @@ function ViewsPoolRoute({ navigation }) {
       onUndo={onUndo}
       onOpenDetail={(cur) => navigation.navigate('ViewsDetail', { topic: cur })}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -469,7 +498,7 @@ function ViewsDetailRoute({ route, navigation }) {
       onReview={doReview}
       onExplain={doExplain}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -571,7 +600,7 @@ function MyViewsRoute({ navigation }) {
       onReview={onReview}
       onDelete={onDelete}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -598,7 +627,7 @@ function CorpusRoute({ navigation }) {
       rows={rows === null && !err ? undefined : rows}
       onQuery={(kw) => load(kw)}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
     />
   );
 }
@@ -635,7 +664,9 @@ function BooksRoute({ navigation }) {
       onQuery={(kw) => load(verdict, kw)}
       onOpenBook={(item) => navigation.navigate('BookReader', { book: item })}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
+      
+      error={err}
+      onRetry={() => load(verdict, '')}
     />
   );
 }
@@ -651,6 +682,7 @@ function BookReaderRoute({ route, navigation }) {
   const [savedIdx, setSavedIdx] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [err, setErr] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const moreLock = useRef(false);
 
   const pack = (d, off) => (d.blocks || []).map((b, i) => ({ idx: off + i, text: b.text || '', heading: b.heading || '' }));
@@ -658,8 +690,13 @@ function BookReaderRoute({ route, navigation }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      if (!book || !book.id) return;
+      if (!book || !book.id) {
+        setErr('没有传入书籍信息');
+        setInitialLoading(false);
+        return;
+      }
       setErr(null);
+      setInitialLoading(true);
       try {
         const d0 = await getBookRead({ id: book.id, offset: 0, limit: 20 });
         if (!alive) return;
@@ -678,6 +715,8 @@ function BookReaderRoute({ route, navigation }) {
         }
       } catch (e) {
         if (alive) setErr(e.message);
+      } finally {
+        if (alive) setInitialLoading(false);
       }
     })();
     return () => {
@@ -720,6 +759,7 @@ function BookReaderRoute({ route, navigation }) {
       total={total}
       savedIdx={savedIdx}
       loadingMore={loadingMore}
+      initialLoading={initialLoading}
       err={err}
       onNeedMore={onNeedMore}
       onProgress={onProgress}

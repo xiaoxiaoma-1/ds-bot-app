@@ -1,11 +1,12 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily } from '../homeData';
+import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
+import PullGreetingBanner from './PullGreetingBanner';
 
 // 首页（我这边新建的屏）：三块各自独立加载、独立失败。
 // 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
@@ -23,14 +24,23 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
   const hot = useCachedResource('home:hot', loadHotDaily, { refreshOnMount: !manualRefresh.current });
   const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
+  const ideas = useCachedResource('home:ideas', loadIdeas, { refreshOnMount: !manualRefresh.current });
+  const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const pullAnim = useRef(new Animated.Value(0)).current; // 下拉量（负值）
 
   const loadAll = useCallback(async () => {
     manualRefresh.current = true; // 标记主动刷新，避免 hook 后台静默刷新
     try {
-      const [b, h, d] = await Promise.all([loadBoardSummary(), loadHotDaily(), loadDraftResume()]);
+      const [b, h, d, i, t] = await Promise.all([
+        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics()
+      ]);
       setCached('home:board', b);
       setCached('home:hot', h);
       setCached('home:draft', d);
+      setCached('home:ideas', i);
+      setCached('home:topics', t);
     } catch {
       // 失败不更新缓存，保留旧数据，用户状态不变
     }
@@ -38,6 +48,26 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   }, []);
 
   // 静默刷新由 useCachedResource 内部处理，切换 active 时不重复执行
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    const doRefresh = async () => {
+      try {
+        await loadAll();
+      } catch {
+        // 失败保留旧数据
+      } finally {
+        setRefreshing(false);
+      }
+    };
+    doRefresh();
+  }, [loadAll]);
+
+  const scrollHandler = useCallback((e) => {
+    const y = e.nativeEvent.contentOffset.y;
+    // 下拉时 y < 0，设置 pullAnim 为 y 或 -200 的较大者（负值越小下拉越多）
+    pullAnim.setValue(Math.min(0, y));
+  }, []);
 
   const StateLine = ({ st, empty }) => {
     if (st.loading) {
@@ -60,32 +90,41 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   const b = board.data;
   const h = hot.data;
   const d = draft.data;
+  const i = ideas.data;
+  const tp = topics.data;
   const hotTitle = h ? (h.isToday ? '今日热点' : (h.date ? h.date + ' 热点' : '热点')) : '今日热点';
 
+  // 米白条的高度插值已随组件迁到 PullGreetingBanner，这里不再自己算。
+
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: C.bg }}
-      contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: 0, paddingBottom: dockPadding(insets, S) }}
-    >
-      {/* ① 顶部：丁香形状 + 问候 + 日期 + 破边圆点/白圆（H01–H07） */}
-      {/* 整块左右各出屏 20，所以下面的圆点坐标可以按屏幕坐标写，不用再减页面边距 */}
-      <View style={s.heroBlock}>
-        <View style={s.shape} />
-        <View style={[s.greetWrap, { top: insets.top + S.x5 }]}>
-          <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>
-            {greeting}
-          </Text>
-          <Text style={s.date} numberOfLines={1} allowFontScaling={false}>
-            {dateText}
-          </Text>
-        </View>
-        {/* 三个破边点：位置按圆心折算左上角（cx − d/2, cy − d/2） */}
-        <View style={[s.dot, { left: 55, top: 181, width: 10, height: 10 }]} pointerEvents="none" />
-        <View style={[s.dot, { left: 93, top: 190, width: 6, height: 6 }]} pointerEvents="none" />
-        <View style={[s.dot, { left: 323, top: 173, width: 14, height: 14 }]} pointerEvents="none" />
-        {/* 白圆：H07 写的是纯白两模式通用，压的是紫形状，所以写死 #FFFFFF 而不走令牌 */}
-        <View style={s.whiteDot} pointerEvents="none" />
-      </View>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      {/* 下拉时出现的米白条（固定位置在顶部，交 PullGreetingBanner 渲染） */}
+      <PullGreetingBanner pullProgress={pullAnim} greeting={greeting} dateText={dateText} insetsTop={insets.top} />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: 0, paddingBottom: dockPadding(insets, S) }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={C.ink2}
+            progressViewOffset={218} // 转圈不被米白遮住（固定为最大高度）
+          />
+        }
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
+        {/* ① 顶部：丁香形状 + 破边圆点/白圆（H01–H07） */}
+        {/* 整块左右各出屏 20，所以下面的圆点坐标可以按屏幕坐标写，不用再减页面边距 */}
+        <View style={s.heroBlock}>
+            <View style={s.shape} />
+            {/* 三个破边点：位置按圆心折算左上角（cx − d/2, cy − d/2） */}
+            <View style={[s.dot, { left: 55, top: 181, width: 10, height: 10 }]} pointerEvents="none" />
+            <View style={[s.dot, { left: 93, top: 190, width: 6, height: 6 }]} pointerEvents="none" />
+            <View style={[s.dot, { left: 323, top: 173, width: 14, height: 14 }]} pointerEvents="none" />
+            {/* 白圆：H07 写的是纯白两模式通用，压的是紫形状，所以写死 #FFFFFF 而不走令牌 */}
+            <View style={s.whiteDot} pointerEvents="none" />
+          </View>
 
       {/* ① 今天动哪件 */}
       <View style={s.card}>
@@ -194,7 +233,71 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
           </Pressable>
         )}
       </View>
+
+      {/* ④ 今日灵感 */}
+      <View style={s.card}>
+        <View style={s.cardHead}>
+          <Text style={s.cardTitle} allowFontScaling={false}>
+            今日灵感
+          </Text>
+          {i && i.total ? (
+            <Text style={s.cardMeta} allowFontScaling={false}>
+              {i.total} 条
+            </Text>
+          ) : null}
+        </View>
+        {!i ? (
+          <StateLine st={ideas} empty="还没有灵感" />
+        ) : i.items.length === 0 ? (
+          <Text style={s.stateText} allowFontScaling={false}>
+            今天没有灵感可抓
+          </Text>
+        ) : (
+          i.items.slice(0, 3).map((idea) => (
+            <View key={idea.id} style={s.row}>
+              <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                {idea.content || '（无内容）'}
+              </Text>
+            </View>
+          ))
+        )}
+      </View>
+
+      {/* ⑤ 选题池 */}
+      <View style={s.card}>
+        <View style={s.cardHead}>
+          <Text style={s.cardTitle} allowFontScaling={false}>
+            选题池
+          </Text>
+          {tp && tp.total ? (
+            <Text style={s.cardMeta} allowFontScaling={false}>
+              {tp.total} 条
+            </Text>
+          ) : null}
+        </View>
+        {!tp ? (
+          <StateLine st={topics} empty="选题池空的" />
+        ) : tp.items.length === 0 ? (
+          <Text style={s.stateText} allowFontScaling={false}>
+            没有待挖的选题
+          </Text>
+        ) : (
+          tp.items.slice(0, 3).map((topic) => (
+            <View key={topic.id} style={s.row}>
+              <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                {topic.title || '（无标题）'}
+              </Text>
+              {topic.board ? (
+                <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                  {topic.board}
+                </Text>
+              ) : null}
+            </View>
+          ))
+        )}
+      </View>
     </ScrollView>
+  </View>
   );
 }
 
@@ -218,14 +321,14 @@ const makeStyles = (C, T, S, R, scheme) =>
       top: 0,
       height: 196,
       // 深色下 C.accent 接近纯白，这块 196 高会变成刺眼大白块（老板：「上面那一块白色的太突兀了」）。
-      // 换 C.card2：深 #2E2E38 / 浅 #EFE7F2。浅色下与页底 #F5EFF7 很接近，块感几乎消失——这是有意的。
+      // 换 C.card2：浅色与页底 #F5EFF7 很接近，块感几乎消失——这是有意的。
       backgroundColor: C.card2,
       borderBottomLeftRadius: R.big * 2,
       borderBottomRightRadius: R.big * 2,
     },
-    greetWrap: { position: 'absolute', left: S.page, right: S.page, gap: S.x1 },
-    // 底色已从 C.accent（深色近白 #F0EDF4）换成 C.card2（深色 #2E2E38）。
-    // 深色下必须同时换浅字，否则 #151518 压在 #2E2E38 上只有 1.36:1，问候语看不见。
+    greetWrap: { position: 'absolute', left: S.page * 2, right: S.page * 2, gap: S.x1 },
+    // 底色已从 C.accent（原深色近白）换成 C.card2（深色）。
+    // 深色下必须同时换浅字，否则深底色压着深字会看不清问候语。
     // 浅色仍用 onAccent（#302636 on #EFE7F2 = 11.94:1）。
     greet: { color: scheme === 'light' ? C.onAccent : C.ink, fontSize: 34, lineHeight: 41, fontWeight: '700' },
     date: { color: scheme === 'light' ? C.onAccent : C.ink, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },

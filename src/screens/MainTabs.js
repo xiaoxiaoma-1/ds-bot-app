@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
@@ -236,8 +237,8 @@ export default function MainTabs({ navigation }) {
     (key, active) => {
       if (key === 'home') {
         // 首页三块（看板 / 热点 / 接着写）各自独立加载，数据层在 src/homeData.js
-        // onOpenDraft 等 DraftLibrary 路由接上再传
-        return <HomeScreen active={active} />;
+        
+        return <HomeScreen active={active} onOpenDraft={(draftId) => navigation.navigate('DraftLibrary', draftId ? { draftId } : undefined)} />;
       }
       if (key === 'workbench') {
         // 工作台：功能总入口 + 数据概览。activeTab/onTabPress 只是让它「有 dock 的那条路」成立，
@@ -251,6 +252,8 @@ export default function MainTabs({ navigation }) {
               switchTab(k === 'me' ? 'mine' : k === 'advisor' ? 'advisors' : k);
             }}
             onOpenFeature={openFeature}
+            onPressInspiration={() => navigation.navigate('IdeaQuickAdd')}
+            onPressPill={() => navigation.navigate('IdeaQuickAdd')}
             features={FEATURE_CARDS}
             greeting={greeting}
             dateText={dateText}
@@ -290,8 +293,24 @@ export default function MainTabs({ navigation }) {
         </View>
       </View>
 
-      <View
-        style={[s.dock, { backgroundColor: C.hero, bottom: dockBottom, borderRadius: R.capsule }]}
+      <BlurView
+        intensity={60}
+        tint="dark"
+        style={[
+          s.dock,
+          {
+            bottom: dockBottom,
+            borderRadius: R.capsule,
+            overflow: 'hidden',
+            // Android 兜底：毛玻璃没生效也不会变全透明
+            backgroundColor: 'rgba(40,40,40,0.72)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.5,
+            shadowRadius: 16,
+            elevation: 8,
+          },
+        ]}
         accessibilityRole="tablist"
       >
         <Animated.View
@@ -313,7 +332,7 @@ export default function MainTabs({ navigation }) {
             />
           ))}
         </View>
-      </View>
+      </BlurView>
     </View>
   );
 }
@@ -325,13 +344,15 @@ const s = StyleSheet.create({
     position: 'absolute',
     left: DOCK_INSET,
     right: DOCK_INSET,
-    height: IND_H + 20, // 胶囊外还有上下各 10 的呼吸位
+    height: IND_H + 28, // 胶囊外还有上下各 14 的呼吸位
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 0,
+    // BlurView 靠它裁圆角；也由此去掉 dock 与页面之间的硬边（不加任何 border / 分割线）
+    overflow: 'hidden',
   },
-  indicator: { position: 'absolute', height: IND_H, top: 10 },
+  indicator: { position: 'absolute', height: IND_H, top: 14 },
   items: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  item: { flex: 1, height: IND_H + 20, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 15, lineHeight: 20, textAlign: 'center' },
+  item: { flex: 1, height: IND_H + 28, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  label: { fontSize: 15, lineHeight: 20, textAlign: 'center', marginHorizontal: 2 },
 });

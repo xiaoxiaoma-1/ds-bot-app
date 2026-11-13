@@ -9,23 +9,30 @@ import React, { createContext, useContext, useMemo } from 'react';
 //   不要线：无边框、无分割线、无投影
 
 export const darkPalette = {
-  bg: '#151518',
-  card: '#26262F',
-  card2: '#2E2E38',
+  bg: '#2B2B2B',
+  card: '#363636',
+  card2: '#3C3C3C',
+  input: '#232323',
   line: 'transparent',
+  hairline: '#4A4A4A',
   ink: '#FFFFFF',
-  ink2: '#8D8D95', // 原 #8B8B94 (4.44) → 4.55:1（深卡 #26262F）/ 5.53:1（页底 #151518）
-  ink3: '#6E6E78',
-  placeholder: '#8D8D96', // 占位符专用色：比正文弱半档，但对输入框底色仍 ≥4.5:1（WCAG 正文标准）
-  accent: '#F0EDF4',
-  accentCoral: '#D99478',
-  brandHi: '#D4B0DE',
+  ink2: '#A0A0A0',
+  ink3: '#959595',
+  placeholder: '#959595',
+  accent: '#F5F1E8',
+  accentCoral: '#CE9EDB',
+  brandHi: '#F5F1E8',
   good: '#67D3A0',
   bad: '#FF7A70',
-  onHero: '#FFFFFF',
-  onAccent: '#151518',
-  me: '#3A3F4A',
-  hero: '#3A3F4A',
+  onHero: '#2B2B2B',
+  onAccent: '#2B2B2B',
+  me: '#3C3C3C',
+  hero: '#3C3C3C',
+};
+
+export const shadow = {
+  card: { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 7, elevation: 3 },
+  float: { shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.55, shadowRadius: 16, elevation: 6 },
 };
 
 export const lightPalette = {
@@ -49,11 +56,11 @@ export const lightPalette = {
 };
 
 export const type = {
-  display: { fontSize: 34, lineHeight: 41, fontWeight: '700' },
-  section: { fontSize: 24, lineHeight: 30, fontWeight: '600' },
-  title: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
-  body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },
-  meta: { fontSize: 11, lineHeight: 15, fontWeight: '400' },
+  display: { fontSize: 34, lineHeight: 41, fontWeight: '700', letterSpacing: -0.5 },
+  section: { fontSize: 24, lineHeight: 30, fontWeight: '600', letterSpacing: -0.3 },
+  title:   { fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.2 },
+  body:    { fontSize: 15, lineHeight: 21, fontWeight: '400', letterSpacing: 0 },
+  meta:    { fontSize: 11, lineHeight: 15, fontWeight: '400', letterSpacing: 0.2 },
 };
 
 export const space = {
@@ -122,6 +129,7 @@ const ThemeContext = createContext({
   T: type,
   S: space,
   R: radius,
+  H: shadow,
 });
 
 export function ThemeProvider({ scheme, children }) {
@@ -133,6 +141,7 @@ export function ThemeProvider({ scheme, children }) {
       T: type,
       S: space,
       R: radius,
+      H: shadow,
     };
   }, [scheme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

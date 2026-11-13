@@ -62,6 +62,27 @@ export async function loadDraftResume() {
   };
 }
 
+// ④ 今日灵感
+export async function loadIdeas() {
+  const d = await get('/api/ideas');
+  const items = Array.isArray(d.items) ? d.items : [];
+  return {
+    newest: items.length > 0 ? items[0] : null,
+    total: items.length,
+    items: items.slice(0, 5), // 首页显示最多 5 条
+  };
+}
+
+// ⑤ 选题池
+export async function loadTopics() {
+  const d = await get('/api/topics');
+  const items = Array.isArray(d.items) ? d.items : [];
+  return {
+    total: Number(d.total) || 0,
+    items: items.slice(0, 5), // 首页显示最近 5 条
+  };
+}
+
 // 上报「打开了哪一篇」：失败静默，不许因此弹错误
 export async function reportDraftOpen(id) {
   try {

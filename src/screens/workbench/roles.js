@@ -8,16 +8,16 @@ import { useTheme } from '../../theme';
 //   八块工作台页面全部通过 useRoles() 取值，改这里一处即全线生效；别去各页面里找硬引用。
 //
 // 令牌 → theme.js 现状（2026-11-13 核对）：
-//   brand    → C.accent（浅 丁香紫 #CE9EDB / 深 近白 #F0EDF4）
-//   hero     → C.hero  （浅 #1A1A1A / 深 #3A3F4A）
+//   brand    → 浅色 C.accent（丁香紫 #CE9EDB）/ 深色 C.card2（#3C3C3C）——注：21 行实际代码
+//   hero     → C.hero  （浅 #1A1A1A / 深 #3C3C3C）
 //   card     → C.card
-//   brandHi  → C.brandHi（浅 #EAD2EE / 深 #D4B0DE）
-//   coral    → C.accentCoral（浅 #FFAB96 / 深 #D99478）——「+1 条」这类增量药丸用它
+//   brandHi  → C.brandHi（浅 #EAD2EE / 深 #F5F1E8）
+//   coral    → C.accentCoral（浅 #FFAB96 / 深 #CE9EDB）——「+1 条」这类增量药丸用它
 export function roleOf(C, scheme) {
   const light = scheme === 'light';
   return {
-    // 深色模式下 C.accent 是近白 #F0EDF4，用来铺顶部整块形状会变成一大片刺眼白（老板：「上面那一块白色的太突兀了」）。
-    // 浅色仍用丁香紫品牌色，不动。
+    // 深色模式下 C.accent 现在是米白 #F5F1E8，用来铺顶部整块形状会变成一大片刺眼白（老板：「上面那一块白色的太突兀了」）。
+    // 米白现在只准用在三处——小标签、主按钮、进度条填充；不许铺大面积。浅色仍用丁香紫品牌色，不动。
     brand: light ? C.accent : C.card2,
     onBrand: light ? C.onAccent : C.ink,
     brandHi: C.brandHi,

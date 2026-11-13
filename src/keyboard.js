@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, Keyboard, Platform } from 'react-native';
 
 // 键盘同步位移。
@@ -60,6 +60,8 @@ export function useKeyboardShift() {
   return shift;
 }
 
+
+
 export function useKeyboardShiftJS() {
   const shift = useRef(new Animated.Value(0)).current;
 
@@ -94,4 +96,35 @@ export function useKeyboardShiftJS() {
   }, [shift]);
 
   return shift;
+}
+
+
+
+// 纯数字键盘高度，供布局 paddingBottom 使用
+export function useKeyboardHeight() {
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const subscriptions = Platform.select({
+      ios: [
+        Keyboard.addListener('keyboardWillChangeFrame', (e) => {
+          const winHeight = Dimensions.get('window').height;
+          const h = Math.max(0, winHeight - e.endCoordinates.screenY);
+          setHeight(h);
+        }),
+        Keyboard.addListener('keyboardWillHide', () => setHeight(0)),
+      ],
+      android: [
+        Keyboard.addListener('keyboardDidShow', (e) => {
+          // Android 使用系统提供的精确键盘高度，比自己计算更可靠
+          setHeight(e.endCoordinates.height);
+        }),
+        Keyboard.addListener('keyboardDidHide', () => setHeight(0)),
+      ],
+    });
+
+    return () => subscriptions.forEach((s) => s && s.remove && s.remove());
+  }, []);
+
+  return height;
 }

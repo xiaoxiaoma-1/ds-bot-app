@@ -23,8 +23,8 @@ import Dock, { dockPadding } from './Dock';
 //   onTabPress(key)                 dock 四项点击
 //
 // 颜色一律从 theme.js 取，本文件零硬编码色值。角色→键的对应见 roles()：
-//   令牌 brand  → C.accent（浅 丁香紫 #CE9EDB / 深 近白 #F0EDF4）
-//   令牌 hero   → C.hero  （浅 #1A1A1A / 深 #3A3F4A，深色下比底亮）
+//   令牌 brand  → 浅色 C.accent（#CE9EDB）/ 深色 C.card2（#3C3C3C）——roles.js 实际代码
+//   令牌 hero   → C.hero  （浅 #1A1A1A / 深 #3C3C3C，深色下比底亮）
 //   令牌 card   → C.card
 //   令牌 ink/ink2 → C.ink / C.ink2
 //   令牌 brandHi → theme.js 无此键，浅色用 C.me(#E8D9EE，≈令牌 #EAD2EE)、深色用 C.ink2(#8B8B94)
@@ -33,8 +33,6 @@ import Dock, { dockPadding } from './Dock';
 //
 // 令牌硬约束在本文件的落点：零边框零投影（line 一律不引）、字号只 34/24/17/15/11、
 // 间距只 4 的倍数、圆角只 32(R.big)/24(R.small)/胶囊(R.capsule)。
-
-const SHAPE_H = 196; // H01 顶部形状高（宽 = 屏宽 + 左右各出 20）
 
 const DEFAULT_INSPIRATION = {
   tag: '每日灵感',
@@ -110,9 +108,7 @@ export default function WorkbenchHomeScreen({
       >
         {/* ── 顶部块：形状 + 问候 + 每日灵感 + 破边装饰（H01–H12） ── */}
         <View style={s.top}>
-          <View style={s.shape} />
-
-          <View style={[s.greetWrap, { top: insets.top + S.x5 }]}>
+          <View style={[s.greetWrap, { paddingTop: insets.top + S.x5 }]}>
             <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>
               {greeting}
             </Text>
@@ -162,18 +158,13 @@ export default function WorkbenchHomeScreen({
             </Pressable>
           </Pressable>
 
-          {/* 破边装饰层：绘在主卡之后，白圆骑形状下沿并压住主卡顶 6pt（3.3 第 2 条） */}
-          <View style={[s.bd, { left: 55, top: 181, width: 10, height: 10 }]} pointerEvents="none" />
-          <View style={[s.bd, { left: 93, top: 190, width: 6, height: 6 }]} pointerEvents="none" />
-          <View style={[s.bd, { left: 323, top: 173, width: 14, height: 14 }]} pointerEvents="none" />
-          <View style={s.edgeCircle} pointerEvents="none" />
         </View>
 
         {/* ── 采集台：整块不可点，无按下态、无箭头（H13–H16） ── */}
         <Text style={s.section}>采集台</Text>
         <View style={s.statsRow}>
           <View style={[s.stat, s.statBrand, s.statA]}>
-            <Text style={[s.statNum, s.statNumDark]} allowFontScaling={false}>
+            <Text style={[s.statNum, s.statNumDark]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
               {stats[0] ? stats[0].value : ''}
             </Text>
             <Text style={[s.statLabel, s.statNumDark]} numberOfLines={1} allowFontScaling={false}>
@@ -181,7 +172,7 @@ export default function WorkbenchHomeScreen({
             </Text>
           </View>
           <View style={[s.stat, s.statBrand, s.statB]}>
-            <Text style={[s.statNum, s.statNumDark]} allowFontScaling={false}>
+            <Text style={[s.statNum, s.statNumDark]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
               {stats[1] ? stats[1].value : ''}
             </Text>
             <Text style={[s.statLabel, s.statNumDark]} numberOfLines={1} allowFontScaling={false}>
@@ -189,7 +180,7 @@ export default function WorkbenchHomeScreen({
             </Text>
           </View>
           <View style={[s.stat, s.statPlain, s.statC]}>
-            <Text style={[s.statNum, { color: C.ink }]} allowFontScaling={false}>
+            <Text style={[s.statNum, { color: C.ink }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
               {stats[2] ? stats[2].value : ''}
             </Text>
             <Text style={[s.statLabel, { color: C.ink }]} numberOfLines={1} allowFontScaling={false}>
@@ -262,24 +253,17 @@ export default function WorkbenchHomeScreen({
 const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
-    scroll: { flex: 1, backgroundColor: K.brand },
+    scroll: { flex: 1 },
 
     // 顶部块：内容从屏顶 y=0 起，形状盖住灵动岛
     top: { paddingBottom: 0 },
-    shape: {
-      height: SHAPE_H,
-      marginHorizontal: -S.page, // H01：左右各出屏 20
-      backgroundColor: K.brand,
-      borderBottomLeftRadius: R.big * 2, // H01 下沿左右各 64 弧（= 令牌大卡 32 的两倍）
-      borderBottomRightRadius: R.big * 2,
-    },
-    greetWrap: { position: 'absolute', left: S.page, right: S.page },
-    greet: { color: K.onBrand, ...T.display },
-    date: { marginTop: S.x1, color: K.onBrand, ...T.meta, fontWeight: '500', opacity: 0.78 },
+    greetWrap: { paddingHorizontal: S.page },
+    greet: { color: C.ink, ...T.display },
+    date: { marginTop: S.x1, color: C.ink2, ...T.body },
 
     // H08 主卡：距形状 16，宽满内容（353 @393）
     hero: {
-      marginTop: S.x4,
+      marginTop: S.x6,
       marginHorizontal: S.page,
       height: 168,
       borderRadius: R.big,
@@ -315,18 +299,6 @@ const makeStyles = (C, T, S, R, K) =>
     },
     pillText: { color: K.onPill, ...T.meta, fontWeight: '500', lineHeight: 15 },
 
-    // 破边装饰（H04–H07）：坐标相对内容顶 y=0
-    bd: { position: 'absolute', borderRadius: R.capsule, backgroundColor: K.brandHi },
-    edgeCircle: {
-      position: 'absolute',
-      left: 280,
-      top: 174,
-      width: 44,
-      height: 44,
-      borderRadius: R.capsule,
-      backgroundColor: K.edge,
-    },
-
     // 区块标题：采集台距主卡 20（H13），全部功能距数字块 24（H17 坐标 574 − 550）
     section: { marginTop: S.x5, marginHorizontal: S.page, color: C.ink, ...T.section },
     sectionAll: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink, ...T.section },
@@ -335,8 +307,8 @@ const makeStyles = (C, T, S, R, K) =>
     stat: { height: 96, borderRadius: R.small, paddingHorizontal: S.x4, paddingTop: S.x4, paddingBottom: S.x3, justifyContent: 'space-between' },
     statBrand: { backgroundColor: K.brand },
     statPlain: { backgroundColor: C.card },
-    statA: { width: 115 },
-    statB: { width: 133, marginLeft: S.x2 }, // ①↔② 缝 8（6.5：同色不调）
+    statA: { flex: 1 },
+    statB: { flex: 1, marginLeft: S.x2 }, // ①↔② 缝 8（6.5：同色不调）
     statC: { flex: 1, marginLeft: S.x3 }, // ②↔③ 缝 12（6.5 补偿 +4）
     statNum: { ...T.display },
     statNumDark: { color: K.onBrand },

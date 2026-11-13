@@ -9,7 +9,7 @@ import Dock, { dockPadding } from './Dock';
 // 总经理已批：① 翻页用纵向连续滚动（番茄默认形态）② 保留 全部/精读/翻翻/跳过 三筛 + 搜索（**400ms 防抖**，
 // 桌面端每敲一个字查一次是它的毛病，不照抄）③ 一次拉 10 块、剩 3 块补。
 //
-// 真实数据（直读 workbench.db）：803 本；verdict 分布 精读 184 / 翻翻 613 / 跳过 6；
+// 真实数据（直读 workbench.db）：通过接口拉取统计数据；
 //   进度表 book_progress(book_id, chunk_idx, total)。
 // 接口：GET /api/dsh-media/sp/books?limit=120&verdict=&q=  → {items, stat, total}
 //       GET /api/dsh-media/book/progress/all → {items:[{bookId, chunkIdx, total, updatedAt}]}
@@ -19,7 +19,7 @@ import Dock, { dockPadding } from './Dock';
 // props
 //   books   [{ id, title, gist, verdict }]
 //   prog    { [bookId]: { chunkIdx, total } }
-//   stat    { 精读:184, 翻翻:613, 跳过:6 }
+//   stat    { 精读:count, 翻翻:count, 跳过:count }
 //   verdict 当前筛选（'' = 全部）
 //   onFilter(v) / onQuery(kw)（已防抖）/ onOpenBook(book) / onBack / activeTab / onTabPress
 
@@ -28,21 +28,16 @@ const ROW_H = 112;
 const DEBOUNCE = 400;
 const VERDICTS = ['', '精读', '翻翻', '跳过'];
 
-const DEFAULT_STAT = { 精读: 184, 翻翻: 613, 跳过: 6 };
 
-const DEFAULT_BOOKS = [
-  { id: 'book_51980f58fc', title: '毛选·矛盾论', gist: '讲矛盾的普遍性与特殊性，为什么抓主要矛盾。', verdict: '精读' },
-  { id: 'book_764647617721', title: '系统思考与辩证法的核心', gist: '把变化的原因讲成结构与关系，而不是意志。', verdict: '精读' },
-  { id: 'book_88a1', title: '强关系没用，弱关系有用', gist: '机会来自弱连接，不是熟人圈。', verdict: '翻翻' },
-  { id: 'book_c02f', title: '某本 OCR 失败的旧书', gist: '正文提取不完整，先跳过。', verdict: '跳过' },
-];
 
-const DEFAULT_PROG = { book_51980f58fc: { chunkIdx: 160, total: 260 }, book_88a1: { chunkIdx: 15, total: 215 } };
+
+
+
 
 export default function BooksScreen({
-  books = DEFAULT_BOOKS,
-  prog = DEFAULT_PROG,
-  stat = DEFAULT_STAT,
+  books = [],
+  prog = {},
+  stat = {},
   verdict = '',
   onFilter,
   onQuery,

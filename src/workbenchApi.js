@@ -349,3 +349,13 @@ export async function getMyViews() {
   }));
   return { total: Number(d.total) || 0, items };
 }
+
+/**
+ * 存灵感（POST /api/idea_add）
+ * 契约：mobile_server.py:320
+ */
+export async function addIdea(content) {
+  const d = await request('/api/idea_add', { method: 'POST', body: { content } });
+  if (!d || d.ok !== true) throw new Error((d && d.error) || '保存失败');
+  return d.id;
+}
