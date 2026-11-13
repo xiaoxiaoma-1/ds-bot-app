@@ -127,7 +127,7 @@ export default function BookReaderScreen({
           <Text style={[s.body, { color: C.bad }]} allowFontScaling={false}>
             读不到正文：{err}
           </Text>
-        ) : initialLoading ? (
+        ) : initialLoading && blocks.length === 0 ? (
           <Text style={[s.body, { color: C.ink2 }]} allowFontScaling={false}>
             正在加载…
           </Text>
