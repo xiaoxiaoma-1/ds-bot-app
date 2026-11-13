@@ -11,7 +11,7 @@ import { dockPadding } from './workbench/Dock';
 // active=false 时不发请求（沿用 MainTabs 的门控）。
 export default function HomeScreen({ active = true, onOpenDraft }) {
   const { C, T, S, R, scheme } = useTheme();
-  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
+  const s = useMemo(() => makeStyles(C, T, S, R, scheme), [C, T, S, R, scheme]);
   const insets = useSafeAreaInsets();
 
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
@@ -107,18 +107,23 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
             今天没有在等你的
           </Text>
         ) : (
-          b.waiting.map((it) => (
-            <View key={String(it.id)} style={s.row}>
-              <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-                {it.title || '（无标题）'}
-              </Text>
-              {it.nextStep ? (
-                <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                  {it.nextStep}
+          b.waiting.map((it, i) => {
+            // 后端 waiting 目前给对象；这里挡一下非对象元素，免得一个 null 把整页打死。
+            // 纯防御，没有实测到接口会给 null。
+            if (!it || typeof it !== 'object') return null;
+            return (
+              <View key={String(it.id != null ? it.id : 'w' + i)} style={s.row}>
+                <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
+                  {it.title || '（无标题）'}
                 </Text>
-              ) : null}
-            </View>
-          ))
+                {it.nextStep ? (
+                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                    {it.nextStep}
+                  </Text>
+                ) : null}
+              </View>
+            );
+          })
         )}
       </View>
 
@@ -200,7 +205,9 @@ function useRefFlag() {
   return box;
 }
 
-const makeStyles = (C, T, S, R) =>
+// scheme 必须作为参数进来：它是组件内的局部变量，模块级函数取不到。
+// 少传这一个参数，渲染到 dot 这行就是 ReferenceError，release 包直接闪退（2026-11-13 真机踩到）。
+const makeStyles = (C, T, S, R, scheme) =>
   StyleSheet.create({
     // 顶部块：左右各出屏 20（所以块内坐标 = 屏幕坐标），高度 218 = 形状 196 + 白圆下沿 218
     heroBlock: { height: 218, marginHorizontal: -S.page, marginTop: 0, marginBottom: S.x4 },
