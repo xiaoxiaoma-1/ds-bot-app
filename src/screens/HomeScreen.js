@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
+import { setCached, useCachedResource } from '../cache';
 
 // 首页（我这边新建的屏）：三块各自独立加载、独立失败。
 // 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
@@ -16,29 +17,27 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
 
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
 
-  const [board, setBoard] = useState({ loading: true, error: null, data: null });
-  const [hot, setHot] = useState({ loading: true, error: null, data: null });
-  const [draft, setDraft] = useState({ loading: true, error: null, data: null });
   const startedRef = useRefFlag();
+  const manualRefresh = useRef(false); // 标记主动刷新，跳过缓存静默更新
+
+  const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
+  const hot = useCachedResource('home:hot', loadHotDaily, { refreshOnMount: !manualRefresh.current });
+  const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
 
   const loadAll = useCallback(async () => {
-    setBoard((p) => ({ ...p, loading: true, error: null }));
-    setHot((p) => ({ ...p, loading: true, error: null }));
-    setDraft((p) => ({ ...p, loading: true, error: null }));
-
-    // 三块并行、各自落地：allSettled 保证一块失败不影响另外两块
-    const [b, h, d] = await Promise.allSettled([loadBoardSummary(), loadHotDaily(), loadDraftResume()]);
-    setBoard((p) => ({ ...p, loading: false, data: b.status === 'fulfilled' ? b.value : null, error: b.status === 'rejected' ? String(b.reason && b.reason.message ? b.reason.message : b.reason) : null }));
-    setHot((p) => ({ ...p, loading: false, data: h.status === 'fulfilled' ? h.value : null, error: h.status === 'rejected' ? String(h.reason && h.reason.message ? h.reason.message : h.reason) : null }));
-    setDraft((p) => ({ ...p, loading: false, data: d.status === 'fulfilled' ? d.value : null, error: d.status === 'rejected' ? String(d.reason && d.reason.message ? d.reason.message : d.reason) : null }));
+    manualRefresh.current = true; // 标记主动刷新，避免 hook 后台静默刷新
+    try {
+      const [b, h, d] = await Promise.all([loadBoardSummary(), loadHotDaily(), loadDraftResume()]);
+      setCached('home:board', b);
+      setCached('home:hot', h);
+      setCached('home:draft', d);
+    } catch {
+      // 失败不更新缓存，保留旧数据，用户状态不变
+    }
+    manualRefresh.current = false;
   }, []);
 
-  useEffect(() => {
-    if (!active) return;
-    if (startedRef.value) return; // 只在首次激活时拉；刷新走下拉/手动
-    startedRef.value = true;
-    loadAll();
-  }, [active, loadAll, startedRef]);
+  // 静默刷新由 useCachedResource 内部处理，切换 active 时不重复执行
 
   const StateLine = ({ st, empty }) => {
     if (st.loading) {

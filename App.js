@@ -6,6 +6,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, useTheme } from './src/theme';
 import { isConfigured } from './src/store';
+import { warmCache } from './src/cache';
 import SetupScreen from './src/screens/SetupScreen';
 import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
@@ -117,6 +118,14 @@ function BootScreen({ navigation }) {
 
   const boot = useCallback(async () => {
     const ok = await isConfigured();
+    // 无感加载：把磁盘缓存读进内存，必须在 replace 之前完成。
+    // replace 之后 MainTabs 立刻挂载当前 tab（首页），晚一步就赶不上第一帧，
+    // 首页会拿不到缓存 → 先转圈再显示，等于没做。
+    try {
+      await warmCache();
+    } catch {
+      // 预热失败不挡启动，退化成「冷启动首屏要请求一次」
+    }
     navigation.replace(ok ? 'BotList' : 'Setup');
     setChecked(true);
   }, [navigation]);
