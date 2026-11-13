@@ -110,6 +110,9 @@ const AdvisorRow = memo(function AdvisorRow({
   );
 });
 
+// 切回顾问页时的静默刷新：1.5 秒内来回切不重复发（未读数会变，但不值得为此连发）
+const SILENT_REFRESH_MIN_MS = 1500;
+
 export default function BotListScreen({ onOpen, onSettings, active = true }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
@@ -121,6 +124,7 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(true);
   const loadedRef = useRef(false); // 只首次激活时拉一次，避免每次切回来都请求
+  const lastFetchRef = useRef(0); // 上次拉取时间戳，静默刷新的防抖依据
   const [refreshing, setRefreshing] = useState(false);
   const [menuFor, setMenuFor] = useState(null);
   const [dragMode, setDragMode] = useState(false);
@@ -143,22 +147,27 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
     loadOrder().then(setOrder);
   }, []);
 
+  // 拿到 advisorsFull 之后的落库动作：首次加载和静默刷新必须走同一段，避免两套逻辑走偏
+  const applyFull = (full) => {
+    const list = full.advisors;
+    setGroups(normalizeGroups(full.groups));
+    setUnreadNote(full.unreadNote || '');
+    setRows(list);
+    const m = {};
+    list.forEach((it) => {
+      m[String(it.id)] = Number(it.unread) || 0;
+    });
+    setUnread(m);
+    // 服务端已隐藏 / 已标记删除的，进列表就不显示（恢复入口在「已隐藏」）
+    setHidden(new Set(list.filter((it) => it.hidden || it.deleted).map((it) => String(it.id))));
+  };
+
   const load = useCallback(async (isRefresh) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
       const full = await advisorsFull();
-      const list = full.advisors;
-      setGroups(normalizeGroups(full.groups));
-      setUnreadNote(full.unreadNote || '');
-      setRows(list);
+      applyFull(full);
       setErr(null);
-      const m = {};
-      list.forEach((it) => {
-        m[String(it.id)] = Number(it.unread) || 0;
-      });
-      setUnread(m);
-      // 服务端已隐藏 / 已标记删除的，进列表就不显示（恢复入口在「已隐藏」）
-      setHidden(new Set(list.filter((it) => it.hidden || it.deleted).map((it) => String(it.id))));
     } catch (e) {
       setRows([]);
       setErr({ step: e.step || 'list', message: e.message || '未知错误' });
@@ -168,12 +177,31 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (active && !loadedRef.current) {
-      loadedRef.current = true;
-      load(false);
+  // 静默刷新：不显示 loading、不动现有列表、失败当没发生（切回来看到旧列表，好过看到一个红字报错）
+  const refreshQuiet = useCallback(async () => {
+    try {
+      const full = await advisorsFull();
+      applyFull(full);
+    } catch (e) {
+      // 故意吞掉
     }
-  }, [active, load]);
+  }, []);
+
+  useEffect(() => {
+    if (!active) return;
+    if (!loadedRef.current) {
+      // 首次激活：屏幕上什么都没有，走带 loading 的那条
+      loadedRef.current = true;
+      lastFetchRef.current = Date.now();
+      load(false);
+      return;
+    }
+    // 之后再激活：静默刷（未读数会变），1.5 秒内来回切不重复发
+    const now = Date.now();
+    if (now - lastFetchRef.current < SILENT_REFRESH_MIN_MS) return;
+    lastFetchRef.current = now;
+    refreshQuiet();
+  }, [active, load, refreshQuiet]);
 
   const visible = useMemo(() => rows.filter((it) => !hidden.has(String(it.id))), [rows, hidden]);
   const sorted = useMemo(() => applyOrder(visible, order), [visible, order]);
