@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics } from '../homeData';
+import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics, loadTrainToday } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
@@ -11,7 +11,7 @@ import PullGreetingBanner from './PullGreetingBanner';
 // 首页（我这边新建的屏）：三块各自独立加载、独立失败。
 // 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
 // active=false 时不发请求（沿用 MainTabs 的门控）。
-export default function HomeScreen({ active = true, onOpenDraft }) {
+export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R, scheme), [C, T, S, R, scheme]);
   const insets = useSafeAreaInsets();
@@ -26,6 +26,7 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
   const ideas = useCachedResource('home:ideas', loadIdeas, { refreshOnMount: !manualRefresh.current });
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
+  const train = useCachedResource('home:train', loadTrainToday, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
   const pullAnim = useRef(new Animated.Value(0)).current; // 下拉量（负值）
@@ -33,14 +34,15 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   const loadAll = useCallback(async () => {
     manualRefresh.current = true; // 标记主动刷新，避免 hook 后台静默刷新
     try {
-      const [b, h, d, i, t] = await Promise.all([
-        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics()
+      const [b, h, d, i, t, tr] = await Promise.all([
+        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics(), loadTrainToday()
       ]);
       setCached('home:board', b);
       setCached('home:hot', h);
       setCached('home:draft', d);
       setCached('home:ideas', i);
       setCached('home:topics', t);
+      setCached('home:train', tr);
     } catch {
       // 失败不更新缓存，保留旧数据，用户状态不变
     }
@@ -246,13 +248,26 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
             </Text>
           ) : null}
         </View>
-        {!i ? (
-          <StateLine st={ideas} empty="还没有灵感" />
-        ) : i.items.length === 0 ? (
-          <Text style={s.stateText} allowFontScaling={false}>
-            今天没有灵感可抓
+        {ideas.loading ? (
+          <Text style={[s.stateText, { textAlign: 'center', paddingVertical: S.x4 }]} allowFontScaling={false}>
+            正在载入…
           </Text>
-        ) : (
+        ) : ideas.error ? (
+          <View style={{ alignItems: 'center', paddingVertical: S.x4 }}>
+            <Text style={s.stateText} allowFontScaling={false}>
+              灵感没取到
+            </Text>
+            <Pressable onPress={loadAll} style={{ marginTop: S.x2 }}>
+              <Text style={[s.stateText, { color: C.accent }]} allowFontScaling={false}>
+                重试
+              </Text>
+            </Pressable>
+          </View>
+        ) : i && i.items.length === 0 ? (
+          <Text style={[s.stateText, { textAlign: 'center', paddingVertical: S.x4 }]} allowFontScaling={false}>
+            还没有灵感，点右下角 +1 记一条。
+          </Text>
+        ) : i ? (
           i.items.slice(0, 3).map((idea) => (
             <View key={idea.id} style={s.row}>
               <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
@@ -260,7 +275,63 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
               </Text>
             </View>
           ))
-        )}
+        ) : null}
+      </View>
+
+      {/* ⑥ 四个大按钮 (2×2) */}
+      <View style={s.card}>
+        <View style={s.cardHead}>
+          <Text style={s.cardTitle} allowFontScaling={false}>
+            快速开始
+          </Text>
+        </View>
+        <View style={s.buttonGrid}>
+          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('DraftLibrary')}>
+            <Text style={s.bigButtonText} allowFontScaling={false}>写新稿</Text>
+          </Pressable>
+          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('Expression')}>
+            <Text style={s.bigButtonText} allowFontScaling={false}>练表达</Text>
+          </Pressable>
+          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('Books')}>
+            <Text style={s.bigButtonText} allowFontScaling={false}>翻书</Text>
+          </Pressable>
+          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('BotList')}>
+            <Text style={s.bigButtonText} allowFontScaling={false}>问顾问</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* ⑦ 今日进度 */}
+      <View style={s.card}>
+        <View style={s.cardHead}>
+          <Text style={s.cardTitle} allowFontScaling={false}>
+            今日进度
+          </Text>
+        </View>
+        <View style={s.progressGrid}>
+          {/* 练了几次 */}
+          <View style={s.progressCell}>
+            <Text style={s.progressCount} allowFontScaling={false}>
+              {train.data?.count ?? '—'}
+            </Text>
+            <Text style={s.progressLabel} allowFontScaling={false}>练了几次</Text>
+            {train.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
+          </View>
+          
+          {/* 写了几字 */}
+          <View style={s.progressCell}>
+            <Text style={s.progressCount} allowFontScaling={false}>—</Text>
+            <Text style={s.progressLabel} allowFontScaling={false}>写了几字</Text>
+            <Text style={s.progressHint} allowFontScaling={false}>数据还没接</Text>
+          </View>
+          
+          {/* 看了几页 */}
+          <View style={s.progressCell}>
+            <Text style={s.progressCount} allowFontScaling={false}>—</Text>
+            <Text style={s.progressLabel} allowFontScaling={false}>看了几页</Text>
+            <Text style={s.progressHint} allowFontScaling={false}>数据还没接</Text>
+          </View>
+        </View>
       </View>
 
       {/* ⑤ 选题池 */}
@@ -350,4 +421,27 @@ const makeStyles = (C, T, S, R, scheme) =>
     rowHint: { color: C.ink3, ...T.meta },
     stateRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingVertical: S.x2 },
     stateText: { color: C.ink3, ...T.meta },
+    buttonGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: S.x3 },
+    bigButton: {
+      width: '48%',
+      height: 88, // 至少 88pt 高
+      backgroundColor: C.card2,
+      borderRadius: R.small,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: S.x3,
+    },
+    bigButtonText: { color: C.ink, ...T.title },
+    progressGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: S.x2 },
+    progressCell: {
+      flex: 1,
+      backgroundColor: C.card2,
+      borderRadius: R.small,
+      padding: S.x3,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    progressCount: { color: C.ink, fontSize: 28, fontWeight: '700', marginBottom: S.x1 },
+    progressLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
+    progressHint: { color: C.ink3, ...T.meta, fontSize: 10, marginTop: 2, opacity: 0.7 },
   });

@@ -8,3 +8,5 @@ dist/
 Payload/
 .DS_Store
 *.log
+*.bak
+*.bak-*

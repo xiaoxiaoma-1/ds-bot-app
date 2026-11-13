@@ -15,6 +15,7 @@ import { useTheme } from '../theme';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import { buildGreetingAndDate } from '../greeting';
+import { loadWorkbenchStats } from '../homeData';
 import BotListScreen from './BotListScreen';
 import HomeScreen from './HomeScreen';
 import WorkbenchHomeScreen from './workbench/WorkbenchHomeScreen';
@@ -117,6 +118,9 @@ export default function MainTabs({ navigation }) {
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
   
   const [reduceMotion, setReduceMotion] = useState(false);
+  
+  // 工作台七张卡的数据
+  const [workbenchStats, setWorkbenchStats] = useState(null);
 
   const dockBottom = Math.max(insets?.bottom ?? 0, S.x2) + S.x2;
   const innerWidth = Math.max(0, winWidth - DOCK_INSET * 2);
@@ -142,6 +146,28 @@ export default function MainTabs({ navigation }) {
     return () => {
       alive = false;
       if (sub && sub.remove) sub.remove();
+    };
+  }, []);
+
+  // 加载工作台七张卡数据
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      try {
+        const stats = await loadWorkbenchStats();
+        if (alive) {
+          setWorkbenchStats(stats);
+        }
+      } catch (error) {
+        console.warn('加载工作台数据失败:', error.message);
+        if (alive) {
+          setWorkbenchStats(null);
+        }
+      }
+    }
+    load();
+    return () => {
+      alive = false;
     };
   }, []);
 
@@ -238,11 +264,25 @@ export default function MainTabs({ navigation }) {
       if (key === 'home') {
         // 首页三块（看板 / 热点 / 接着写）各自独立加载，数据层在 src/homeData.js
         
-        return <HomeScreen active={active} onOpenDraft={(draftId) => navigation.navigate('DraftLibrary', draftId ? { draftId } : undefined)} />;
+        return <HomeScreen
+          active={active}
+          navigation={navigation}
+          onOpenDraft={(draftId) => navigation.navigate('DraftLibrary', draftId ? { draftId } : undefined)}
+        />;
       }
       if (key === 'workbench') {
         // 工作台：功能总入口 + 数据概览。activeTab/onTabPress 只是让它「有 dock 的那条路」成立，
         // 工作台工程师把自带 Dock 改成条件渲染后，这条就不再画出第二条 dock。
+        
+        // 根据统计数据更新 features
+        const features = FEATURE_CARDS.map(card => {
+          const sub = workbenchStats ? workbenchStats[card.key] : '—';
+          return {
+            ...card,
+            sub,
+          };
+        });
+
         return (
           <WorkbenchHomeScreen
             activeTab="workbench"
@@ -254,7 +294,7 @@ export default function MainTabs({ navigation }) {
             onOpenFeature={openFeature}
             onPressInspiration={() => navigation.navigate('IdeaQuickAdd')}
             onPressPill={() => navigation.navigate('IdeaQuickAdd')}
-            features={FEATURE_CARDS}
+            features={features}
             greeting={greeting}
             dateText={dateText}
             embedded={true}

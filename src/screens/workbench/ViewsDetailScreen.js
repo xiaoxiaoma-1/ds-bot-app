@@ -106,14 +106,8 @@ export default function ViewsDetailScreen({
           <Text style={s.author} allowFontScaling={false}>
             @{topic && topic.author ? topic.author : '来源未标'}
           </Text>
-          <Text style={s.meta} allowFontScaling={false}>
-            {[topic && topic.type, topic && topic.confidence === 'high' ? '高可信' : '中可信'].filter(Boolean).join(' · ')}
-          </Text>
-          {topic && topic.url ? (
-            <Text style={s.link} numberOfLines={1} allowFontScaling={false}>
-              原始出处 {String(topic.url).slice(0, 40)}
-            </Text>
-          ) : null}
+          
+          
         </View>
 
         {/* ② AI 怎么看（评的是这段原文，不是你自己写的观点——语义已变，已报备） */}

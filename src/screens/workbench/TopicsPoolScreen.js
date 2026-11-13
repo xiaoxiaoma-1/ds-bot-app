@@ -293,7 +293,7 @@ export default function TopicsPoolScreen({
 
         {open ? (
           <View style={s.detail}>
-            {t.angle ? <Text style={s.detailBody} allowFontScaling={false}>{t.angle}</Text> : null}
+            {t.note ? <Text style={s.detailBody} allowFontScaling={false}>{t.note}</Text> : null}
             {t.hook ? (
               <Text style={s.detailHook} allowFontScaling={false}>
                 <Text style={{ color: K.brand }}>开头 · </Text>
@@ -303,9 +303,6 @@ export default function TopicsPoolScreen({
 
             <Text style={s.dims} allowFontScaling={false}>
               {top3(t.dims).map(([k, v], i) => `${i ? ' · ' : ''}${k.slice(0, 3)} ${v}`).join('')}
-            </Text>
-            <Text style={s.source} allowFontScaling={false}>
-              来源 {t.source_kind || '未知'} · {String(t.source_ref || '').slice(0, 18)}
             </Text>
 
             <View style={s.actions}>

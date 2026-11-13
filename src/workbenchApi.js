@@ -215,6 +215,22 @@ export async function postBookProgress({ id, chunkIdx, total }) {
   return true;
 }
 
+/* GET /api/book/progress/all → {items:[{bookId, chunkIdx, total, updatedAt}]}
+ * BooksScreen 需要转成 { [bookId]: { chunkIdx, total } }
+ */
+export async function getBookProgressAll() {
+  const d = await request('/api/book/progress/all');
+  const prog = {};
+  if (Array.isArray(d.items)) {
+    for (const it of d.items) {
+      if (it.bookId) {
+        prog[it.bookId] = { chunkIdx: it.chunkIdx || 0, total: it.total || 0 };
+      }
+    }
+  }
+  return prog;
+}
+
 /* ───────────────────── 写稿（轮询，没有百分比） ─────────────────────
  * POST /api/draft {id, rewrite?} → 1ms 返回 {ok, task:"t…"}（task 形如 ^t\d{11}$）
  * GET  /api/draft_status?task=t… （★ 下划线；/api/draft/status 是 404）

@@ -9,7 +9,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.jinyu.dsbot"
+      "bundleIdentifier": "com.jinyu.dsbot",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "选一张照片发送给 AI，或设为你的头像",
+        "NSPhotoLibraryAddUsageDescription": "保存图片到你的相册",
+        "NSCameraUsageDescription": "拍一张照片发送给 AI"
+      }
     }
   }
 }

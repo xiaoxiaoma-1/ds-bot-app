@@ -243,3 +243,58 @@ export function openFeed({ onEvent, onError, onAuthFail }) {
     handle = null;
   };
 }
+
+// ---- 个人主页（新接口 2026‑11‑13）----
+export async function fetchMe() {
+  const d = await request('/api/dsbot/me', { step: 'me' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '获取个人资料失败', 'me');
+  return {
+    nickname: d.nickname || '',
+    avatarUrl: d.avatar_url || '',
+    signature: d.signature || '',
+  };
+}
+
+export async function updateMe(patch) {
+  const d = await request('/api/dsbot/me', {
+    method: 'POST',
+    body: patch,
+    step: 'update_me',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '更新个人资料失败', 'update_me');
+  return d;
+}
+
+export async function uploadImage(fileUri) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: fileUri,
+    type: 'image/jpeg',
+    name: 'avatar.jpg',
+  });
+  // 使用 multipart/form-data 上传（mobile_server.py 会识别）
+  const d = await request('/api/dsbot/upload', {
+    method: 'POST',
+    body: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    step: 'upload',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '上传图片失败', 'upload');
+  return d; // { ok: true, path: '...', url: '/api/dsbot/uploads/...' }
+}
+
+export async function fetchMoments() {
+  const d = await request('/api/dsbot/me/moments', { step: 'moments' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '获取朋友圈失败', 'moments');
+  return d.items || [];
+}
+
+export async function postMoment(text) {
+  const d = await request('/api/dsbot/me/moment', {
+    method: 'POST',
+    body: { text },
+    step: 'post_moment',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '发送朋友圈失败', 'post_moment');
+  return d;
+}

@@ -1,8 +1,11 @@
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -12,7 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { setCached, useCachedResource } from '../cache';
-import { chat, openFeed, send } from '../api';
+import { chat, openFeed, send, uploadImage } from '../api';
+import { getBase } from '../store';
 import { useKeyboardHeight } from '../keyboard';
 import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
 
@@ -199,6 +203,8 @@ export default function ChatScreen({ bot, onBack }) {
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
   const [attachHint, setAttachHint] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const stopFeed = useRef(null);
   const liveRef = useRef(null);
   const seqs = useRef(new Set());
@@ -320,16 +326,76 @@ export default function ChatScreen({ bot, onBack }) {
     };
   }, [bot.id, load, onEvent]);
 
+  const pickImage = useCallback(async (useCamera) => {
+    try {
+      const options = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        base64: false,
+        allowsEditing: false,
+      };
+
+      let result;
+      if (useCamera) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          setErr({ step: 'camera', message: '没有相机权限' });
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync(options);
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          setErr({ step: 'gallery', message: '没有相册权限' });
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync(options);
+      }
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setSelectedImage(result.assets[0]);
+        setAttachHint(false);
+      }
+    } catch (error) {
+      setErr({ step: 'pick', message: '选择图片失败: ' + error.message });
+    }
+  }, []);
+
   async function onSend() {
-    const text = draft.trim();
-    if (!text) return;
+    let finalText = draft.trim();
+    
+    // 如果有图片，先上传
+    if (selectedImage) {
+      setUploading(true);
+      try {
+        const uploadResult = await uploadImage(selectedImage.uri);
+        const base = await getBase();
+        const imageUrl = base.replace(/\/$/, '') + uploadResult.url;
+        // 将图片URL附加到文本中
+        if (finalText) {
+          finalText = finalText + '\n' + imageUrl;
+        } else {
+          finalText = imageUrl;
+        }
+        // 上传成功后清除图片
+        setSelectedImage(null);
+      } catch (e) {
+        setUploading(false);
+        setErr({ step: 'upload', message: '图片没传上去，再试一次' });
+        return;
+      }
+      setUploading(false);
+    }
+    
+    if (!finalText) return;
+    
     setDraft('');
     setErr(null);
     liveRef.current && liveRef.current.clear();
-    const local = { who: '我', text, local: true };
+    const local = { who: '我', text: finalText, local: true };
     setItems((prev) => [...prev, local]);
     try {
-      await send(bot.id, text);
+      await send(bot.id, finalText);
     } catch (e) {
       setErr({ step: e.step || 'send', message: e.message || '发送失败' });
       setItems((prev) => prev.filter((m) => m !== local));
@@ -393,10 +459,31 @@ export default function ChatScreen({ bot, onBack }) {
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
         </View>
 
+        {selectedImage && (
+          <View style={{ paddingHorizontal: S.page, paddingBottom: S.x2, alignItems: 'center' }}>
+            <View style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={{ width: 60, height: 60, borderRadius: 8 }}
+              />
+              <Pressable
+                style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, backgroundColor: C.bad, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}
+                onPress={() => setSelectedImage(null)}
+              >
+                <Text style={{ color: C.onBad, fontSize: 12 }}>×</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+        
         <View style={[s.composer, { paddingBottom: insets.bottom }]}>
           <Pressable
             style={s.attachBtn}
-            onPress={() => setAttachHint(true)}
+            onPress={() => {
+              // 显示简单的选择菜单
+              setErr(null);
+              setAttachHint(true);
+            }}
           >
             <Text style={s.attachText}>+</Text>
           </Pressable>
@@ -410,21 +497,42 @@ export default function ChatScreen({ bot, onBack }) {
           />
           <Animated.View style={sendPress.scale}>
             <Pressable
-              style={s.sendBtn}
+              style={[s.sendBtn, uploading && { opacity: 0.7 }]}
               onPress={onSend}
               onPressIn={sendPress.onPressIn}
               onPressOut={sendPress.onPressOut}
-              disabled={!draft.trim()}
+              disabled={(!draft.trim() && !selectedImage) || uploading}
             >
-              <Text style={s.sendText} allowFontScaling={false}>
-                发送
-              </Text>
+              {uploading ? (
+                <ActivityIndicator size="small" color={C.onAccent} />
+              ) : (
+                <Text style={s.sendText} allowFontScaling={false}>
+                  发送
+                </Text>
+              )}
             </Pressable>
           </Animated.View>
         </View>
         {attachHint ? (
-          <View style={{ paddingHorizontal: S.page, paddingTop: S.x2 }}>
-            <Text style={{ color: C.ink3, fontSize: 12 }}>图片功能待接入</Text>
+          <View style={{ paddingHorizontal: S.page, paddingTop: S.x2, flexDirection: 'row', gap: S.x2 }}>
+            <Pressable
+              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              onPress={() => pickImage(false)}
+            >
+              <Text style={{ color: C.ink, fontSize: 12 }}>从相册选</Text>
+            </Pressable>
+            <Pressable
+              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              onPress={() => pickImage(true)}
+            >
+              <Text style={{ color: C.ink, fontSize: 12 }}>拍照</Text>
+            </Pressable>
+            <Pressable
+              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              onPress={() => setAttachHint(false)}
+            >
+              <Text style={{ color: C.ink, fontSize: 12 }}>取消</Text>
+            </Pressable>
           </View>
         ) : null}
       </View>

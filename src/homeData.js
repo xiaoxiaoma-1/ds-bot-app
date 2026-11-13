@@ -65,7 +65,7 @@ export async function loadDraftResume() {
 // ④ 今日灵感
 export async function loadIdeas() {
   const d = await get('/api/ideas');
-  const items = Array.isArray(d.items) ? d.items : [];
+  const items = Array.isArray(d.ideas) ? d.ideas : [];
   return {
     newest: items.length > 0 ? items[0] : null,
     total: items.length,
@@ -106,4 +106,105 @@ export function charsLabel(n) {
   const v = Number(n) || 0;
   if (v >= 10000) return (v / 10000).toFixed(1) + ' 万字';
   return v + ' 字';
+}
+
+// ⑥ 今日训练次数
+export async function loadTrainToday() {
+  const d = await get('/api/train/week');
+  const doneToday = Array.isArray(d.done) ? d.done : [];
+  return {
+    count: doneToday.length,
+  };
+}
+
+// ⑦ 工作台七张功能卡数字
+export async function loadWorkbenchStats() {
+  try {
+    // 用 Promise.all 并发四个接口
+    const [statsRes, topicsRes, corpusRes, libraryRes] = await Promise.all([
+      get('/api/stats'),
+      get('/api/topics?limit=1'), // 只要总数，不需要列表
+      get('/api/corpus?limit=1'), // 只要总数，不需要列表
+      get('/api/library/stats'),
+    ]);
+
+    // 稿库篇数
+    const draftsCount = Number(statsRes.posts) || 0;
+    const draftsText = `${draftsCount} 篇`;
+
+    // 选题池
+    const topicsCount = Number(topicsRes.total) || 0;
+    const topicsText = `${topicsCount} 条待写`;
+
+    // 观点库（超过1万用「x.x 万条」）
+    const opinionsCount = Number(statsRes.views) || 0;
+    let opinionsText;
+    if (opinionsCount >= 10000) {
+      opinionsText = `${(opinionsCount / 10000).toFixed(1)} 万条`;
+    } else {
+      opinionsText = `${opinionsCount} 条`;
+    }
+
+    // 我的观点 - 需等待后端在 /api/stats 中加 myviews 字段
+    const myOpinionsCount = statsRes && statsRes.myviews !== undefined ? Number(statsRes.myviews) || 0 : null;
+    const myOpinionsText = myOpinionsCount === null ? '—' : `${myOpinionsCount} 条`;
+
+    // 语料库
+    const corpusCount = Number(corpusRes.total) || 0;
+    const corpusText = corpusCount > 0 ? `${corpusCount} 条` : '0 条';
+
+    // 书库 - 从 library/stats 的 items 中找
+    let booksCount = 0;
+    if (Array.isArray(libraryRes.items)) {
+      const bookItem = libraryRes.items.find(item => item.k && item.k.includes('书'));
+      if (bookItem && bookItem.n) {
+        const match = bookItem.n.match(/(\d+)\s*本/);
+        if (match) booksCount = Number(match[1]) || 0;
+      }
+    }
+    const booksText = booksCount > 0 ? `${booksCount} 本` : '0 本';
+
+    // 能力表达 - 无现成统计接口
+    const abilityText = '—';
+
+    return {
+      drafts: draftsText,
+      topics: topicsText,
+      opinions: opinionsText,
+      myOpinions: myOpinionsText,
+      corpus: corpusText,
+      books: booksText,
+      ability: abilityText,
+      raw: {
+        drafts: draftsCount,
+        topics: topicsCount,
+        opinions: opinionsCount,
+        myOpinions: myOpinionsCount,
+        corpus: corpusCount,
+        books: booksCount,
+        ability: 0,
+      },
+    };
+  } catch (error) {
+    // 任何接口失败都返回默认值
+    console.warn('加载工作台数据失败:', error.message);
+    return {
+      drafts: '—',
+      topics: '—',
+      opinions: '—',
+      myOpinions: '—',
+      corpus: '—',
+      books: '—',
+      ability: '—',
+      raw: {
+        drafts: 0,
+        topics: 0,
+        opinions: 0,
+        myOpinions: 0,
+        corpus: 0,
+        books: 0,
+        ability: 0,
+      },
+    };
+  }
 }

@@ -16,7 +16,7 @@ import { login } from '../api';
 import { getBase, setBase, setPass, DEFAULT_BASE } from '../store';
 
 // 同一屏两用：首次启动=登录页（onBack 不传，无返回）；从列表进=设置页（onBack 传进来，带返回）。
-export default function SetupScreen({ onDone, onBack }) {
+export default function SetupScreen({ onDone, onBack, onOpenProfile }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -128,6 +128,18 @@ export default function SetupScreen({ onDone, onBack }) {
             </Text>
           )}
         </Pressable>
+
+        {/* 已登录时的个人主页入口 */}
+        {onOpenProfile ? (
+          <Pressable
+            style={s.profileLink}
+            onPress={() => onOpenProfile()}
+          >
+            <Text style={s.profileLinkText} allowFontScaling={false}>
+              个人主页 ›
+            </Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -167,4 +179,13 @@ const makeStyles = (C, T, S, R) =>
     },
     btnBusy: { opacity: 0.7 },
     btnText: { color: C.onHero, ...T.title },
+    profileLink: {
+      marginTop: S.x6,
+      paddingVertical: S.x3,
+      alignItems: 'center',
+    },
+    profileLinkText: {
+      color: C.accentCoral,
+      ...T.body,
+    },
   });

@@ -109,6 +109,13 @@ export default function BookReaderScreen({
         </Text>
       </View>
 
+      {/* 临时调试条，定位黑屏用，查完删除 */}
+      <View style={{ backgroundColor: '#FF6B6B', paddingHorizontal: S.page, paddingVertical: 4, height: 20, justifyContent: 'center' }}>
+        <Text style={{ color: '#FFFFFF', fontSize: 11, lineHeight: 13, fontFamily: 'monospace' }} allowFontScaling={false}>
+          {`${book?.id || '(no id)'} | blk=${blocks.length} | load=${initialLoading} | err=${err ? 'yes' : 'no'} | total=${total}`}
+        </Text>
+      </View>
+
       <ScrollView
         style={s.scroll}
         contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: S.x4, paddingBottom: insets.bottom + 96 }}

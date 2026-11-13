@@ -254,9 +254,6 @@ export default function ViewsPoolScreen({
                 ]}
               >
                 <View style={s.cardHead}>
-                  <Text style={s.cardMetaText} allowFontScaling={false}>
-                    {cur.type || '观点'} · {cur.confidence === 'high' ? '高可信' : '中可信'}
-                  </Text>
                   <Pressable onPress={() => setManual((v) => !v)} hitSlop={8} accessibilityRole="button" accessibilityLabel="用按钮代替滑动">
                     <Text style={s.manualLink} allowFontScaling={false}>
                       {manual ? '收起按钮' : '用按钮代替滑动'}

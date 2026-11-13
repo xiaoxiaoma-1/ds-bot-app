@@ -12,10 +12,10 @@ import ReviewBlock from './ReviewBlock';
 //
 // 数据源：GET /views/list?limit&q（content 已截 400 字）、GET /views/get?id（全文）、
 //         POST /views/review{id}、POST /views/del{ids}、GET /match（稿库语义匹配，本版不接）
-// my_views 行：id / kind('topic'|'free'|'clash') / title / content / ai_review / created_at / tags
+// my_views 行：id / kind('topic'|'free'|'clash') / title / content / review / created_at / tags
 //
 // props
-//   views   [{ id, kind, title, content, ai_review, created_at }]
+//   views   [{ id, kind, title, content, review, created_at }]
 //   detail  { id, loading, error, view } | null   展开中/已展开的那条
 //   onOpen(id) / onClose() / onDelete(view) / onReview(id)
 //   onBack / activeTab / onTabPress
@@ -87,7 +87,7 @@ export default function MyViewsScreen({
 
         {views.map((v) => {
           const open = openId === v.id;
-          const score = v.ai_review && v.ai_review.score;
+          const score = v.review && v.review.score;
           return (
             <View key={v.id} style={s.cardWrap}>
               <Pressable
@@ -113,9 +113,7 @@ export default function MyViewsScreen({
                     {score == null ? '未评' : score}
                   </Text>
                 </View>
-                <Text style={s.rowBody} numberOfLines={2} allowFontScaling={false}>
-                  {String(v.content || '').replace(/\n/g, ' ').slice(0, 90)}
-                </Text>
+                
               </Pressable>
 
               {open ? (
@@ -143,7 +141,7 @@ export default function MyViewsScreen({
                       </Text>
 
                       <View style={s.reviewWrap}>
-                        <ReviewBlock review={detail.view.ai_review} onRetry={() => onReview && onReview(v.id)} />
+                        <ReviewBlock review={detail.view.review} onRetry={() => onReview && onReview(v.id)} />
                       </View>
 
                       <View style={s.acts}>

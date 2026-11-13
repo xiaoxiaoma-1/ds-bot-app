@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from './src/theme';
 import { isConfigured } from './src/store';
 import { warmCache } from './src/cache';
 import SetupScreen from './src/screens/SetupScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
@@ -33,6 +34,7 @@ import {
   postVote,
   undoLast,
   addIdea,
+  getBookProgressAll,
 } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
@@ -96,6 +98,7 @@ function NavRoot({ scheme }) {
       >
         <Stack.Screen name="Boot" component={BootScreen} options={{ animation: 'none' }} />
         <Stack.Screen name="Setup" component={SetupRoute} />
+        <Stack.Screen name="Profile" component={ProfileRoute} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="BotList" component={BotListRoute} />
         <Stack.Screen name="Chat" component={ChatRoute} />
         <Stack.Screen name="GroupChat" component={GroupChatRoute} />
@@ -160,8 +163,13 @@ function SetupRoute({ navigation }) {
         if (navigation.canGoBack()) navigation.goBack();
         else navigation.replace('BotList');
       }}
+      onOpenProfile={canGoBack ? () => navigation.navigate('Profile') : undefined}
     />
   );
+}
+
+function ProfileRoute({ navigation }) {
+  return <ProfileScreen onBack={() => navigation.goBack()} />;
 }
 
 function BotListRoute({ navigation }) {
@@ -638,7 +646,9 @@ function BooksRoute({ navigation }) {
   const [stat, setStat] = useState({});
   const [verdict, setVerdict] = useState('');
   const [err, setErr] = useState(null);
-  const load = useCallback(async (v, kw) => {
+  const [prog, setProg] = useState({}); // { [bookId]: { chunkIdx, total } }
+  
+  const loadBooks = useCallback(async (v, kw) => {
     setErr(null);
     try {
       const d = await getBookCards({ verdict: v || undefined, q: kw || undefined, limit: 120 });
@@ -649,24 +659,51 @@ function BooksRoute({ navigation }) {
       setErr(e.message);
     }
   }, []);
+  
+  const loadProgress = useCallback(async () => {
+    try {
+      const progress = await getBookProgressAll();
+      setProg(progress);
+    } catch (e) {
+      // 进度取不到就传空，不阻塞页面
+      setProg({});
+    }
+  }, []);
+  
+  const loadAll = useCallback(async (v, kw) => {
+    await Promise.all([loadBooks(v, kw), loadProgress()]);
+  }, [loadBooks, loadProgress]);
+  
   useEffect(() => {
-    load('', '');
-  }, [load]);
+    loadAll('', '');
+  }, [loadAll]);
+  
+  const handleFilter = useCallback((v) => {
+    setVerdict(v);
+    loadBooks(v, ''); // 只重新加载书籍，进度不需要重新加载
+  }, [loadBooks]);
+  
+  const handleQuery = useCallback((kw) => {
+    loadBooks(verdict, kw); // 只重新加载书籍，进度不需要重新加载
+  }, [loadBooks, verdict]);
+  
+  const handleRetry = useCallback(() => {
+    loadAll(verdict, '');
+  }, [loadAll, verdict]);
+  
   return (
     <BooksScreen
       books={books === null && !err ? undefined : books}
+      prog={prog}
       stat={Object.keys(stat).length ? stat : undefined}
       verdict={verdict}
-      onFilter={(v) => {
-        setVerdict(v);
-        load(v, '');
-      }}
-      onQuery={(kw) => load(verdict, kw)}
+      onFilter={handleFilter}
+      onQuery={handleQuery}
       onOpenBook={(item) => navigation.navigate('BookReader', { book: item })}
       onBack={() => navigation.goBack()}
       
       error={err}
-      onRetry={() => load(verdict, '')}
+      onRetry={handleRetry}
     />
   );
 }
