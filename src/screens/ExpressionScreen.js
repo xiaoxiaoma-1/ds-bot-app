@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { useKeyboardShift } from '../keyboard';
+import { useKeyboardShift, useKeyboardShiftJS } from '../keyboard';
 import { expressionApi } from '../botApi';
 import { readEventStream } from '../sse';
 import { getBase, getSess } from '../store';
@@ -112,7 +112,7 @@ export default function ExpressionScreen({ onBack }) {
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
   const kbShift = useKeyboardShift();
-  const kbMove = useMemo(() => ({ transform: [{ translateY: Animated.multiply(kbShift, -1) }] }), [kbShift]);
+  const kbShiftJS = useKeyboardShiftJS();
 
   const [stage, setStage] = useState('input'); // input | marked
   const [draft, setDraft] = useState('');
@@ -307,7 +307,7 @@ export default function ExpressionScreen({ onBack }) {
               allowFontScaling={false}
             />
           </ScrollView>
-          <Animated.View style={kbMove}>
+          <Animated.View style={{ paddingBottom: kbShiftJS }}>
             <Text style={s.hint} allowFontScaling={false}>
               按键盘上的麦克风说，说完点讲完了
             </Text>

@@ -59,3 +59,39 @@ export function useKeyboardShift() {
 
   return shift;
 }
+
+export function useKeyboardShiftJS() {
+  const shift = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const run = (event, closing) => {
+      let height = 0;
+      if (!closing && event && event.endCoordinates) {
+        const winHeight = Dimensions.get('window').height;
+        height = Math.max(0, winHeight - event.endCoordinates.screenY);
+      }
+      const duration = Math.max(10, (event && event.duration) || 250);
+      Animated.timing(shift, {
+        toValue: height,
+        duration,
+        easing: easingFor(event && event.easing),
+        useNativeDriver: false,
+      }).start();
+    };
+
+    const subscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', (e) => run(e, false)),
+            Keyboard.addListener('keyboardWillHide', (e) => run(e, true)),
+          ]
+        : [
+            Keyboard.addListener('keyboardDidShow', (e) => run(e, false)),
+            Keyboard.addListener('keyboardDidHide', (e) => run(e, true)),
+          ];
+
+    return () => subscriptions.forEach((s) => s && s.remove && s.remove());
+  }, [shift]);
+
+  return shift;
+}
