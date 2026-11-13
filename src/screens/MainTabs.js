@@ -109,12 +109,12 @@ export default function MainTabs({ navigation }) {
   const insets = useSafeAreaInsets();
   const { width: winWidth } = useWindowDimensions();
 
-  const [tab, setTab] = useState('advisors');
+  const [tab, setTab] = useState('home');
 
   // 问候与日期按当天算（不许写死「11月12日」——老板每天都会看见它）
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
   // 懒挂载：只装已经点开过的页；顾问是初始页，一开始就装
-  const [mounted, setMounted] = useState({ advisors: true });
+  const [mounted, setMounted] = useState({ home: true });
   const [reduceMotion, setReduceMotion] = useState(false);
 
   const dockBottom = Math.max(insets.bottom, S.x2) + S.x2;
@@ -124,7 +124,7 @@ export default function MainTabs({ navigation }) {
   // 每页一个不透明度值，常驻挂载、只切 opacity
   const opacities = useRef({});
   const getOpacity = useCallback((key) => {
-    if (!opacities.current[key]) opacities.current[key] = new Animated.Value(key === 'advisors' ? 1 : 0);
+    if (!opacities.current[key]) opacities.current[key] = new Animated.Value(key === 'home' ? 1 : 0);
     return opacities.current[key];
   }, []);
 
@@ -223,21 +223,9 @@ export default function MainTabs({ navigation }) {
       // 第一次点开才挂载；之后一直留着
       setMounted((m) => (m[key] ? m : { ...m, [key]: true }));
 
-      const inOp = getOpacity(key);
-      const outOp = getOpacity(tab);
-      inOp.setValue(0);
-      Animated.timing(inOp, {
-        toValue: 1,
-        duration: reduceMotion ? PAGE_FADE_REDUCED_MS : PAGE_FADE_MS,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }).start();
-      Animated.timing(outOp, {
-        toValue: 0,
-        duration: reduceMotion ? PAGE_FADE_REDUCED_MS : PAGE_FADE_MS,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }).start();
+      // opacity 直接给值，不要动画（否则 setMounted 异步、动画启动时 View 还没挂载 → opacity 停在 0）
+      getOpacity(key).setValue(1);
+      getOpacity(tab).setValue(0);
 
       moveDot(toIndex);
       setTab(key);
