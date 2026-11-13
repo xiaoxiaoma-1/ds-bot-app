@@ -290,7 +290,7 @@ export default function ExpressionScreen({ onBack }) {
       </View>
 
       {stage === 'input' ? (
-        <Animated.View style={[s.body, kbMove]}>
+        <View style={s.body}>
           <ScrollView
             contentContainerStyle={s.inputWrap}
             keyboardDismissMode="interactive"
@@ -307,19 +307,21 @@ export default function ExpressionScreen({ onBack }) {
               allowFontScaling={false}
             />
           </ScrollView>
-          <Text style={s.hint} allowFontScaling={false}>
-            按键盘上的麦克风说，说完点讲完了
-          </Text>
-          <Pressable
-            style={[s.primary, canFinish ? null : s.primaryOff, { marginBottom: Math.max(insets.bottom, S.x4) }]}
-            onPress={finish}
-            disabled={!canFinish}
-          >
-            <Text style={[s.primaryText, canFinish ? null : s.primaryTextOff]} allowFontScaling={false}>
-              讲完了
+          <Animated.View style={kbMove}>
+            <Text style={s.hint} allowFontScaling={false}>
+              按键盘上的麦克风说，说完点讲完了
             </Text>
-          </Pressable>
-        </Animated.View>
+            <Pressable
+              style={[s.primary, canFinish ? null : s.primaryOff, { marginBottom: Math.max(insets.bottom, S.x4) }]}
+              onPress={finish}
+              disabled={!canFinish}
+            >
+              <Text style={[s.primaryText, canFinish ? null : s.primaryTextOff]} allowFontScaling={false}>
+                讲完了
+              </Text>
+            </Pressable>
+          </Animated.View>
+        </View>
       ) : (
         <View style={s.body}>
           <ScrollView
