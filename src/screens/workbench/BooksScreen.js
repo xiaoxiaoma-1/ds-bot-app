@@ -46,6 +46,8 @@ export default function BooksScreen({
   verdict = '',
   onFilter,
   onQuery,
+  error = null, // 有值就盖在空态之上：先让用户看到「加载失败」，不是「没数据」
+  onRetry,
   onOpenBook,
   onBack,
   activeTab = 'workbench',
@@ -146,7 +148,20 @@ export default function BooksScreen({
         </View>
       </View>
 
-      {books.length === 0 ? (
+      {error ? (
+        <View style={s.errorBox}>
+          <Text style={s.errorText} allowFontScaling={false}>
+            {error}
+          </Text>
+          {onRetry ? (
+            <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button">
+              <Text style={s.retryText} allowFontScaling={false}>
+                重试
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : books.length === 0 ? (
         <Text style={s.empty} allowFontScaling={false}>
           {q.trim() ? '没搜到这本书。' : '书库还是空的。'}
         </Text>
@@ -231,4 +246,14 @@ const makeStyles = (C, T, S, R, K) =>
     progText: { marginTop: S.x1, color: K.brand, ...T.meta },
 
     empty: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink2, ...T.body },
+    errorBox: {
+      marginTop: S.x6,
+      marginHorizontal: S.page,
+      backgroundColor: C.card,
+      borderRadius: R.small,
+      padding: S.x4,
+      gap: S.x2,
+    },
+    errorText: { color: C.bad, ...T.body },
+    retryText: { color: K.brand, ...T.meta, fontWeight: '500' },
   });

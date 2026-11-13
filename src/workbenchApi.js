@@ -281,3 +281,52 @@ export async function getCorpusViews({ q, limit = 120 } = {}) {
     })),
   };
 }
+
+/* ───────── 选题池的写操作（后端 2026-11-13 改成 rowcount 判定，不再假成功） ─────────
+ * POST /api/topic_status {id, status}  → {ok:true}；缺参 {ok:false, error:"缺参数"}；status 不校验枚举
+ * POST /api/topic_del    {id}          → 成功 {ok:true, deleted:1}；不存在 {ok:false, error:"找不到这个选题"}
+ * ★ 用 rowcount 判定，不存在就报错，不是以前那种假 ok:true。
+ */
+export async function setTopicStatus(id, status) {
+  await request('/api/topic_status', { method: 'POST', body: { id, status } });
+  return true;
+}
+
+export async function delTopic(id) {
+  try {
+    const d = await request('/api/topic_del', { method: 'POST', body: { id } });
+    return { ok: true, deleted: Number(d.deleted) || 0, gone: false };
+  } catch (e) {
+    // 「找不到」说明别处已删 → 调用方应当本地也移除，不弹错误
+    if (String(e.message || '').indexOf('找不到') >= 0) return { ok: false, deleted: 0, gone: true };
+    throw e;
+  }
+}
+
+/* ───────── 观点库/我的观点的写操作 ─────────
+ * POST /api/vote {atomId, verdict, why} → 成功 {ok:true, view_id}；不存在 {ok:false, error:"这条观点不存在"}
+ *   verdict 只认 agree / disagree；why 必填
+ *   ★ 没有防重复：投完必须重拉 /api/list（列表用 not in my_views 过滤，投过的自然消失）
+ * POST /api/view_del {id} → 成功 {ok:true, deleted:1}；不存在 {ok:false, error:"找不到这条观点"}
+ */
+export async function postVote({ atomId, verdict, why }) {
+  try {
+    const d = await request('/api/vote', { method: 'POST', body: { atomId, verdict, why } });
+    return { ok: true, viewId: d.view_id || '', gone: false };
+  } catch (e) {
+    if (String(e.message || '').indexOf('找不到') >= 0 || String(e.message || '').indexOf('不存在') >= 0) {
+      return { ok: false, viewId: '', gone: true };
+    }
+    throw e;
+  }
+}
+
+export async function delView(id) {
+  try {
+    const d = await request('/api/view_del', { method: 'POST', body: { id } });
+    return { ok: true, deleted: Number(d.deleted) || 0, gone: false };
+  } catch (e) {
+    if (String(e.message || '').indexOf('找不到') >= 0) return { ok: false, deleted: 0, gone: true };
+    throw e;
+  }
+}

@@ -46,7 +46,16 @@ const DEFAULT_ROWS = [
   },
 ];
 
-export default function CorpusScreen({ rows = DEFAULT_ROWS, onQuery, onBack, activeTab = 'workbench', onTabPress }) {
+export default function CorpusScreen({
+  rows = DEFAULT_ROWS,
+  onQuery,
+  onRefresh,
+  onBack,
+  error = null, // 有值就盖在空态之上：先让用户看到「加载失败」，不是「没数据」
+  onRetry,
+  activeTab = 'workbench',
+  onTabPress,
+}) {
   const { C, T, S, R } = useTheme();
   const insets = useSafeAreaInsets();
   const K = useRoles();
@@ -104,7 +113,20 @@ export default function CorpusScreen({ rows = DEFAULT_ROWS, onQuery, onBack, act
           allowFontScaling={false}
         />
 
-        {total === 0 ? (
+        {error ? (
+          <View style={s.errorBox}>
+            <Text style={s.errorText} allowFontScaling={false}>
+              {error}
+            </Text>
+            {onRetry ? (
+              <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button">
+                <Text style={s.retryText} allowFontScaling={false}>
+                  重试
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : total === 0 ? (
           <Text style={s.empty} allowFontScaling={false}>
             {q.trim() ? '没搜到这条。' : '语料库还是空的。去「我的观点」写第一条。'}
           </Text>
@@ -180,4 +202,14 @@ const makeStyles = (C, T, S, R, K) =>
     cardBody: { marginTop: S.x2, color: C.ink2, ...T.meta },
 
     empty: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink2, ...T.body },
+    errorBox: {
+      marginTop: S.x6,
+      marginHorizontal: S.page,
+      backgroundColor: C.card,
+      borderRadius: R.small,
+      padding: S.x4,
+      gap: S.x2,
+    },
+    errorText: { color: C.bad, ...T.body },
+    retryText: { color: K.brand, ...T.meta, fontWeight: '500' },
   });

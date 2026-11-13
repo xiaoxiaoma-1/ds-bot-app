@@ -12,7 +12,19 @@ import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
 import ExpressionScreen from './src/screens/ExpressionScreen';
 import BookReaderScreen from './src/screens/workbench/BookReaderScreen';
-import { getBookCards, getBookRead, getCorpusViews, postAtomReview, postBookProgress, postExplain } from './src/workbenchApi';
+import {
+  delTopic,
+  getBookCards,
+  getBookRead,
+  getCorpusViews,
+  getTopics,
+  postAtomReview,
+  postBookProgress,
+  postExplain,
+  setTopicStatus,
+  startDraft,
+  waitDraft,
+} from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
 import MyViewsScreen from './src/screens/workbench/MyViewsScreen';
@@ -211,13 +223,87 @@ function DraftLibraryRoute({ route, navigation }) {
   );
 }
 
-function TopicsPoolRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+function TopicsPoolRoute({ navigation }) {
+  // 选题池：/api/topics 的筛选参数全被服务端忽略（total 恒 112、items 恒 30），
+  // 所以 boards 的条数只能拿这 30 条自己数，minScore 也交给页面本地筛。
+  const [topics, setTopics] = useState(null);
+  const [err, setErr] = useState(null);
+
+  const [boards, setBoards] = useState(null);
+
+  const load = useCallback(async () => {
+    setErr(null);
+    try {
+      const d = await getTopics();
+      setTopics(d.items);
+      // 板块条数：只能按拿到的 items 数（服务端不做聚合）
+      const n = {};
+      for (const it of d.items) if (it.board) n[it.board] = (n[it.board] || 0) + 1;
+      setBoards(Object.keys(n).map((b) => ({ board: b, n: n[b] })));
+    } catch (e) {
+      setTopics([]);
+      setErr(e.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // 「刷新全部」：服务端没有这接口，就重拉一次 /api/topics，并用 onProgress 报真实进度
+  const onRefreshAll = useCallback(
+    async ({ onProgress } = {}) => {
+      if (onProgress) onProgress({ done: 0, total: 1, current: '读取选题' });
+      await load();
+      if (onProgress) onProgress({ done: 1, total: 1, current: '完成' });
+    },
+    [load],
+  );
+
+  // 写稿：POST /api/draft 拿 task → 2 秒一轮轮询 draft_status → done 的整段 text 一次性喂 onChunk
+  const onWriteDraft = useCallback(async (topic, { rewrite, onChunk } = {}) => {
+    const task = await startDraft(topic.id, { rewrite: !!rewrite });
+    const { text } = await waitDraft(task, {
+      intervalMs: 2000,
+      timeoutMs: 90000,
+    });
+    if (onChunk) onChunk(text || '');
+    return text;
+  }, []);
+
+  const onChangeStatus = useCallback(
+    async (topic, next) => {
+      try {
+        await setTopicStatus(topic.id, next);
+        setTopics((prev) => (prev || []).map((x) => (x.id === topic.id ? { ...x, status: next } : x)));
+      } catch (e) {
+        setErr(e.message);
+      }
+    },
+    [],
+  );
+
+  const onDelete = useCallback(async (topic) => {
+    try {
+      const r = await delTopic(topic.id);
+      // 「找不到」= 别处已删，本地也移除，不弹错误
+      setTopics((prev) => (prev || []).filter((x) => x.id !== topic.id));
+      if (!r.ok && !r.gone) setErr('删不掉');
+    } catch (e) {
+      setErr(e.message);
+    }
+  }, []);
+
   return (
     <TopicsPoolScreen
-      {...p}
+      topics={topics === null && !err ? undefined : topics}
+      boards={boards || undefined}
+      error={err || undefined}
+      onRetry={() => load()}
+      onRefreshAll={onRefreshAll}
+      onWriteDraft={onWriteDraft}
+      onChangeStatus={onChangeStatus}
+      onDelete={onDelete}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />
