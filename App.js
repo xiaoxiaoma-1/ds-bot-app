@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -12,7 +12,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
 import ExpressionScreen from './src/screens/ExpressionScreen';
 import BookReaderScreen from './src/screens/workbench/BookReaderScreen';
-import { getBookCards, getCorpusViews } from './src/workbenchApi';
+import { getBookCards, getBookRead, getCorpusViews, postAtomReview, postBookProgress, postExplain } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
 import MyViewsScreen from './src/screens/workbench/MyViewsScreen';
@@ -238,12 +238,49 @@ function ViewsPoolRoute({ route, navigation }) {
 }
 
 function ViewsDetailRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+  // 观点详情：两条都是慢接口（atom/review 实测 9.4s、讲透 5.4s，客户端给 90s）。
+  // review 的形态照 ReviewBlock 要的字段给：{loading} / {error} / {score,verdict,pros,gaps,questions,one_line}
+  const topic = (route && route.params && route.params.topic) || null;
+  const [review, setReview] = useState(null);
+  const [explain, setExplain] = useState(null);
+  const lockReview = useRef(false);
+  const lockExplain = useRef(false);
+
+  const doReview = useCallback(async () => {
+    if (!topic || !topic.id || lockReview.current) return;
+    lockReview.current = true;
+    setReview({ loading: true });
+    try {
+      const d = await postAtomReview(topic.id);
+      setReview(d.review || { error: '评审没有返回内容' });
+    } catch (e) {
+      setReview({ error: e.message });
+    } finally {
+      lockReview.current = false;
+    }
+  }, [topic]);
+
+  const doExplain = useCallback(async () => {
+    if (!topic || lockExplain.current) return;
+    lockExplain.current = true;
+    setExplain({ loading: true });
+    try {
+      const text = await postExplain(topic.claim || '');
+      setExplain({ text: text || '', loading: false });
+    } catch (e) {
+      setExplain({ error: e.message });
+    } finally {
+      lockExplain.current = false;
+    }
+  }, [topic]);
+
   return (
     <ViewsDetailScreen
-      {...p}
+      topic={topic}
+      review={review}
+      explain={explain}
+      onReview={doReview}
+      onExplain={doExplain}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />
@@ -328,14 +365,89 @@ function BooksRoute({ navigation }) {
 }
 
 function BookReaderRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+  // 阅读器：进书先拿 savedIdx，再直接跳到上次位置（不让用户自己翻回去）。
+  // 页面要的 blocks 是 [{idx,text,heading}]；后端给的是 [{id,from,to,heading,text,chars,junk}]，
+  // idx 在容器里按「本次 offset + 序号」算出来。
+  const book = (route && route.params && route.params.book) || null;
+  const [blocks, setBlocks] = useState([]);
+  const [base, setBase] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [savedIdx, setSavedIdx] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [err, setErr] = useState(null);
+  const moreLock = useRef(false);
+
+  const pack = (d, off) => (d.blocks || []).map((b, i) => ({ idx: off + i, text: b.text || '', heading: b.heading || '' }));
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!book || !book.id) return;
+      setErr(null);
+      try {
+        const d0 = await getBookRead({ id: book.id, offset: 0, limit: 20 });
+        if (!alive) return;
+        setTotal(d0.total);
+        const jump = d0.savedIdx || 0;
+        setSavedIdx(jump);
+        if (jump > 0) {
+          // 直接定位到上次读到的块（不再从第一块开始）
+          const d1 = await getBookRead({ id: book.id, offset: jump, limit: 20 });
+          if (!alive) return;
+          setBlocks(pack(d1, jump));
+          setBase(jump);
+        } else {
+          setBlocks(pack(d0, 0));
+          setBase(0);
+        }
+      } catch (e) {
+        if (alive) setErr(e.message);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [book]);
+
+  const onNeedMore = useCallback(
+    async (nextOffset) => {
+      if (!book || moreLock.current) return;
+      moreLock.current = true;
+      setLoadingMore(true);
+      try {
+        const d = await getBookRead({ id: book.id, offset: nextOffset, limit: 20 });
+        setBlocks((prev) => prev.concat(pack(d, nextOffset)));
+      } catch (e) {
+        setErr(e.message);
+      } finally {
+        setLoadingMore(false);
+        moreLock.current = false;
+      }
+    },
+    [book],
+  );
+
+  // 页面已防抖 500ms 才会叫到这里；失败静默（记进度不该打扰阅读）
+  const onProgress = useCallback(
+    (chunkIdx) => {
+      if (!book || !book.id) return;
+      postBookProgress({ id: book.id, chunkIdx, total }).catch(() => {});
+    },
+    [book, total],
+  );
+
   return (
     <BookReaderScreen
-      {...p}
+      book={book}
+      blocks={blocks}
+      base={base}
+      total={total}
+      savedIdx={savedIdx}
+      loadingMore={loadingMore}
+      err={err}
+      onNeedMore={onNeedMore}
+      onProgress={onProgress}
       onBack={() => navigation.goBack()}
-      onTabPress={() => navigation.navigate('BotList')}
     />
   );
 }
