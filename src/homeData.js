@@ -117,6 +117,24 @@ export async function loadTrainToday() {
   };
 }
 
+// ⑦ 今日字数
+export async function loadTodayWords() {
+  const d = await get('/api/stats/today');
+  const words = Number(d.words) || 0;
+  return {
+    words,
+  };
+}
+
+// ⑧ 今日书块
+export async function loadTodayBlocks() {
+  const d = await get('/api/book/progress/today');
+  const blocks = Number(d.blocks) || 0;
+  return {
+    blocks,
+  };
+}
+
 // ⑦ 工作台七张功能卡数字
 export async function loadWorkbenchStats() {
   try {

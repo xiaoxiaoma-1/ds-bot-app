@@ -60,10 +60,12 @@ export default function ProfileScreen({ navigation }) {
         };
         setMe(meData);
         // 朋友圈的图片也要转换
-        const momentsWithFullUrls = items.map(item => ({
-          ...item,
-          imageUrl: item.image_url ? await toFullUrl(item.image_url) : '',
-        }));
+        const momentsWithFullUrls = await Promise.all(
+          items.map(async (item) => ({
+            ...item,
+            imageUrl: item.image_url ? await toFullUrl(item.image_url) : '',
+          }))
+        );
         setMoments(momentsWithFullUrls);
       } catch (e) {
         setErr({ step: '加载失败', message: e.message || '未知错误' });

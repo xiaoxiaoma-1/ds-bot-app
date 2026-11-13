@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics, loadTrainToday } from '../homeData';
+import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics, loadTrainToday, loadTodayWords, loadTodayBlocks } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
@@ -27,6 +27,8 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const ideas = useCachedResource('home:ideas', loadIdeas, { refreshOnMount: !manualRefresh.current });
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
   const train = useCachedResource('home:train', loadTrainToday, { refreshOnMount: !manualRefresh.current });
+  const words = useCachedResource('home:words', loadTodayWords, { refreshOnMount: !manualRefresh.current });
+  const blocks = useCachedResource('home:blocks', loadTodayBlocks, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
   const pullAnim = useRef(new Animated.Value(0)).current; // 下拉量（负值）
@@ -34,8 +36,9 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const loadAll = useCallback(async () => {
     manualRefresh.current = true; // 标记主动刷新，避免 hook 后台静默刷新
     try {
-      const [b, h, d, i, t, tr] = await Promise.all([
-        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics(), loadTrainToday()
+      const [b, h, d, i, t, tr, w, bl] = await Promise.all([
+        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics(), loadTrainToday(),
+        loadTodayWords(), loadTodayBlocks()
       ]);
       setCached('home:board', b);
       setCached('home:hot', h);
@@ -43,6 +46,8 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
       setCached('home:ideas', i);
       setCached('home:topics', t);
       setCached('home:train', tr);
+      setCached('home:words', w);
+      setCached('home:blocks', bl);
     } catch {
       // 失败不更新缓存，保留旧数据，用户状态不变
     }
@@ -318,18 +323,36 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
             {train.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
           </View>
           
-          {/* 写了几字 */}
+          {/* 今日采集 */}
           <View style={s.progressCell}>
-            <Text style={s.progressCount} allowFontScaling={false}>—</Text>
-            <Text style={s.progressLabel} allowFontScaling={false}>写了几字</Text>
-            <Text style={s.progressHint} allowFontScaling={false}>数据还没接</Text>
+            <Text style={s.progressCount} allowFontScaling={false}>
+              {(() => {
+                const wordsNum = words.data?.words;
+                if (wordsNum === undefined || wordsNum === null) return '—';
+                const n = Number(wordsNum);
+                if (n >= 10000) return (n / 10000).toFixed(1) + ' 万字';
+                if (n >= 1000) return Math.round(n / 1000) + ' 千字';
+                if (n > 0) return n + ' 字';
+                return '0 字';
+              })()}
+            </Text>
+            <Text style={s.progressLabel} allowFontScaling={false}>今日采集</Text>
+            {words.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
           </View>
           
-          {/* 看了几页 */}
+          {/* 看了几块 */}
           <View style={s.progressCell}>
-            <Text style={s.progressCount} allowFontScaling={false}>—</Text>
-            <Text style={s.progressLabel} allowFontScaling={false}>看了几页</Text>
-            <Text style={s.progressHint} allowFontScaling={false}>数据还没接</Text>
+            <Text style={s.progressCount} allowFontScaling={false}>
+              {(() => {
+                const blocksNum = blocks.data?.blocks;
+                if (blocksNum === undefined || blocksNum === null) return '—';
+                const n = Number(blocksNum);
+                const intBlocks = Math.round(n);
+                return intBlocks + ' 块';
+              })()}
+            </Text>
+            <Text style={s.progressLabel} allowFontScaling={false}>看了几块</Text>
+            {blocks.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
           </View>
         </View>
       </View>
