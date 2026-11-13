@@ -25,6 +25,10 @@ import {
   startDraft,
   waitDraft,
   getList,
+  getMyView,
+  getMyViews,
+  postViewReview,
+  delView,
   postVote,
   undoLast,
 } from './src/workbenchApi';
@@ -461,13 +465,102 @@ function ViewsDetailRoute({ route, navigation }) {
   );
 }
 
-function MyViewsRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+function MyViewsRoute({ navigation }) {
+  // 我的观点：列表 /api/myviews（固定 30 条，含 review 对象）；
+  // 展开某条再 GET /api/myview?id= 拿正文；评审 POST /api/view_review（90s）；删除 POST /api/view_del。
+  // 页面要的 detail 形态照它自己的注释：{ id, loading, error, view:{content, created_at, ai_review} }
+  const [views, setViews] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [err, setErr] = useState(null);
+  const reviewLock = useRef(false);
+
+  const load = useCallback(async () => {
+    setErr(null);
+    try {
+      const d = await getMyViews();
+      setViews(d.items);
+    } catch (e) {
+      setViews([]);
+      setErr(e.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onOpen = useCallback(async (id) => {
+    const seed = (views || []).find((v) => v.id === id);
+    setDetail({ id, loading: true });
+    try {
+      const d = await getMyView(id);
+      setDetail({
+        id,
+        loading: false,
+        // ai_review 从列表那条带过来（/api/myview 只给 content/at，不含评审）
+        view: {
+          id: d.id,
+          title: d.title,
+          content: d.content,
+          created_at: d.at,
+          ai_review: seed && seed.review && Object.keys(seed.review).length ? seed.review : null,
+        },
+      });
+    } catch (e) {
+      setDetail({ id, loading: false, error: '读不到这条：' + e.message });
+    }
+  }, [views]);
+
+  const onClose = useCallback(() => setDetail(null), []);
+
+  const onReview = useCallback(
+    async (id) => {
+      if (reviewLock.current) return;
+      reviewLock.current = true;
+      try {
+        const d = await postViewReview(id);
+        setDetail((prev) =>
+          prev && prev.id === id && prev.view ? { ...prev, view: { ...prev.view, ai_review: d.review } } : prev,
+        );
+        await load();
+      } catch (e) {
+        setDetail((prev) => (prev && prev.id === id ? { ...prev, error: '评审失败：' + e.message } : prev));
+      } finally {
+        reviewLock.current = false;
+      }
+    },
+    [load],
+  );
+
+  const onDelete = useCallback(
+    async (v) => {
+      try {
+        const r = await delView(v.id);
+        // 「找不到这条观点」= 别处已删，本地也移除，不弹错
+        if (!r.ok && !r.gone) setErr('删不掉这条');
+      } catch (e) {
+        setErr(e.message);
+        return;
+      }
+      setViews((prev) => (prev || []).filter((x) => x.id !== v.id));
+      setDetail((prev) => (prev && prev.id === v.id ? null : prev));
+    },
+    [],
+  );
+
   return (
     <MyViewsScreen
-      {...p}
+      views={views === null && !err ? undefined : views}
+      detail={detail}
+      error={err ? '加载失败：' + err : null}
+      onRetry={() => {
+        setErr(null);
+        load();
+      }}
+      onOpen={onOpen}
+      onClose={onClose}
+      onReview={onReview}
+      onDelete={onDelete}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />

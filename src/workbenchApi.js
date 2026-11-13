@@ -330,3 +330,22 @@ export async function delView(id) {
     throw e;
   }
 }
+
+/* ───────────────────── 我的观点：列表 ─────────────────────
+ * GET /api/myviews  （mobile_server.py:509 api_myviews，路由 3347）
+ *   参数: limit 默认 30（路由层不读 query，固定 30）
+ *   成功: {ok, total, items:[{id, title, kind, at, review:{...}|{}}]}
+ *        review 是 ai_review 字段解析出来的对象，没评过就是 {}
+ *   失败: {ok:false, error:<sqlite 原文>}
+ */
+export async function getMyViews() {
+  const d = await request('/api/myviews');
+  const items = (Array.isArray(d.items) ? d.items : []).map((v) => ({
+    id: v.id,
+    title: v.title || '',
+    kind: v.kind || '',
+    at: v.at || '',
+    review: v.review && typeof v.review === 'object' ? v.review : {},
+  }));
+  return { total: Number(d.total) || 0, items };
+}
