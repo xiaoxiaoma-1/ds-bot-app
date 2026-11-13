@@ -26,10 +26,9 @@ export default function SetupScreen({ onDone, onBack }) {
   const [err, setErr] = useState(null);
 
   useEffect(() => {
-    // 挂载时异步加载已存的地址，若没存过就预填默认地址
     (async () => {
-      const storedBase = await getBase();
-      setBaseText(storedBase || DEFAULT_BASE);
+      // getBase 已经把只能在家用的旧地址换成公网默认值，这里直接显示它
+      setBaseText(await getBase());
     })();
   }, []);
 

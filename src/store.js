@@ -10,8 +10,14 @@ const K = {
 
 export const DEFAULT_BASE = 'https://user-20260813ol.tail1bd429.ts.net';
 
+// 局域网/本机地址出门一律用不了（老板明确要求外部可用），碰到就换公网默认值。
+// 原值仍留在 SecureStore 里不删，只改返回值。
+const LOCAL_BASE_RE = /^https?:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i;
+
 export async function getBase() {
-  return (await SecureStore.getItemAsync(K.base)) || DEFAULT_BASE;
+  const stored = await SecureStore.getItemAsync(K.base);
+  if (!stored) return DEFAULT_BASE;
+  return LOCAL_BASE_RE.test(stored) ? DEFAULT_BASE : stored;
 }
 
 export async function setBase(v) {
