@@ -93,7 +93,6 @@ export default function TopicsPoolScreen({
   onBack,
   onTabPress,
   onRefreshAll,
-  onRefreshBoard,
   onWriteDraft,
   onChangeStatus,
   onDelete,

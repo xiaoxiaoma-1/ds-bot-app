@@ -46,7 +46,7 @@ const DEFAULT_ROWS = [
   },
 ];
 
-export default function CorpusScreen({ rows = DEFAULT_ROWS, onQuery, onRefresh, onBack, activeTab = 'workbench', onTabPress }) {
+export default function CorpusScreen({ rows = DEFAULT_ROWS, onQuery, onBack, activeTab = 'workbench', onTabPress }) {
   const { C, T, S, R } = useTheme();
   const insets = useSafeAreaInsets();
   const K = useRoles();

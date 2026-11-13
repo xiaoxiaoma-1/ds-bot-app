@@ -120,10 +120,10 @@ export default function ViewsDetailScreen({
         <View style={s.block}>
           {onReview ? null : (
             <Text style={s.notice} allowFontScaling={false}>
-              这个功能要重启电脑端才生效（后端接口已加，等重启）
+              评审还没接上（接上后这里自动显示）
             </Text>
           )}
-          <ReviewBlock review={review} onRetry={onReview ? onReview : () => setNotice('这个功能要重启电脑端才生效')} />
+          <ReviewBlock review={review} onRetry={onReview ? onReview : () => setNotice('评审还没接上')} />
         </View>
 
         {/* ③ 让 AI 讲透 */}
