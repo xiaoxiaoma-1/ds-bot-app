@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -15,6 +15,7 @@ import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import BotListScreen from './BotListScreen';
 import HomeScreen from './HomeScreen';
+import WorkbenchHomeScreen from './workbench/WorkbenchHomeScreen';
 import SetupScreen from './SetupScreen';
 
 // 底部 dock（定案）：黑胶囊、四项、选中标识「圆 → 胶囊 → 圆」形变滑动（老板 2026-11-13 定）。
@@ -33,12 +34,43 @@ const PHASE2_MS = 150; // 缩回圆
 const PAGE_FADE_MS = 250; // 页面淡入淡出：盖过 dock 前 250ms，看起来是一件事
 const PAGE_FADE_REDUCED_MS = 150; // 开了 Reduce Motion 也保留页面淡入淡出
 
+// 工作台七块功能卡：只传 key + title，不传 sub ——
+// 副标题里那批假数（186 / 512 / 62 …）在真数接进来之前一个字都不显示。
+const FEATURE_CARDS = [
+  { key: 'drafts', title: '稿库' },
+  { key: 'topics', title: '选题池' },
+  { key: 'opinions', title: '观点库' },
+  { key: 'myOpinions', title: '我的观点' },
+  { key: 'corpus', title: '语料库' },
+  { key: 'books', title: '书库' },
+  { key: 'ability', title: '能力表达' },
+];
+
+// 七张卡 → 路由名（九条路由里 ViewsDetail / BookReader 由列表页自己进，不在这张表里）
+const FEATURE_ROUTE = {
+  drafts: 'DraftLibrary',
+  topics: 'TopicsPool',
+  opinions: 'ViewsPool',
+  myOpinions: 'MyViews',
+  corpus: 'Corpus',
+  books: 'Books',
+  ability: 'Expression',
+};
+
 const TABS = [
   { key: 'home', label: '首页' },
   { key: 'workbench', label: '工作台' },
   { key: 'advisors', label: '顾问' },
   { key: 'mine', label: '我的' },
 ];
+
+function buildGreetingAndDate() {
+  const d = new Date();
+  const h = d.getHours();
+  const greeting = h < 6 ? '凌晨好' : h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+  return { greeting, dateText: `${d.getMonth() + 1}月${d.getDate()}日 周${week}` };
+}
 
 function Placeholder({ name, C, T, S }) {
   return (
@@ -83,6 +115,9 @@ export default function MainTabs({ navigation }) {
   const { width: winWidth } = useWindowDimensions();
 
   const [tab, setTab] = useState('advisors');
+
+  // 问候与日期按当天算（不许写死「11月12日」——老板每天都会看见它）
+  const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
   // 懒挂载：只装已经点开过的页；顾问是初始页，一开始就装
   const [mounted, setMounted] = useState({ advisors: true });
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -215,12 +250,35 @@ export default function MainTabs({ navigation }) {
     [tab, getOpacity, moveDot, reduceMotion],
   );
 
+  // 七张功能卡 → 栈内页面
+  const openFeature = useCallback(
+    (key) => {
+      const route = FEATURE_ROUTE[key];
+      if (route) navigation.navigate(route);
+    },
+    [navigation],
+  );
+
   const renderPage = useCallback(
     (key, active) => {
       if (key === 'home') {
         // 首页三块（看板 / 热点 / 接着写）各自独立加载，数据层在 src/homeData.js
         // onOpenDraft 等 DraftLibrary 路由接上再传
         return <HomeScreen active={active} />;
+      }
+      if (key === 'workbench') {
+        // 工作台：功能总入口 + 数据概览。activeTab/onTabPress 只是让它「有 dock 的那条路」成立，
+        // 工作台工程师把自带 Dock 改成条件渲染后，这条就不再画出第二条 dock。
+        return (
+          <WorkbenchHomeScreen
+            activeTab="workbench"
+            onTabPress={(k) => switchTab(k === 'me' ? 'mine' : k)}
+            onOpenFeature={openFeature}
+            features={FEATURE_CARDS}
+            greeting={greeting}
+            dateText={dateText}
+          />
+        );
       }
       if (key === 'advisors') {
         return (

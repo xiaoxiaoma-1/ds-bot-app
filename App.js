@@ -11,6 +11,14 @@ import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
 import ExpressionScreen from './src/screens/ExpressionScreen';
+import BookReaderScreen from './src/screens/workbench/BookReaderScreen';
+import BooksScreen from './src/screens/workbench/BooksScreen';
+import CorpusScreen from './src/screens/workbench/CorpusScreen';
+import MyViewsScreen from './src/screens/workbench/MyViewsScreen';
+import ViewsDetailScreen from './src/screens/workbench/ViewsDetailScreen';
+import ViewsPoolScreen from './src/screens/workbench/ViewsPoolScreen';
+import TopicsPoolScreen from './src/screens/workbench/TopicsPoolScreen';
+import DraftLibraryScreen from './src/screens/workbench/DraftLibraryScreen';
 
 // 导航：原生栈（react-native-screens）。
 //   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
@@ -69,6 +77,14 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="Chat" component={ChatRoute} />
         <Stack.Screen name="GroupChat" component={GroupChatRoute} />
         <Stack.Screen name="Expression" component={ExpressionRoute} />
+        <Stack.Screen name="BookReader" component={BookReaderRoute} />
+        <Stack.Screen name="Books" component={BooksRoute} />
+        <Stack.Screen name="Corpus" component={CorpusRoute} />
+        <Stack.Screen name="MyViews" component={MyViewsRoute} />
+        <Stack.Screen name="ViewsDetail" component={ViewsDetailRoute} />
+        <Stack.Screen name="ViewsPool" component={ViewsPoolRoute} />
+        <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
+        <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -179,6 +195,110 @@ function GroupChatRoute({ route, navigation }) {
     );
   }
   return <GroupChatScreen group={group} onBack={() => navigation.goBack()} />;
+}
+
+function DraftLibraryRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <DraftLibraryScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function TopicsPoolRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <TopicsPoolScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function ViewsPoolRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <ViewsPoolScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function ViewsDetailRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <ViewsDetailScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function MyViewsRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <MyViewsScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function CorpusRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <CorpusScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function BooksRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <BooksScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
+}
+
+function BookReaderRoute({ route, navigation }) {
+  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
+  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
+  const p = (route && route.params) || {};
+  return (
+    <BookReaderScreen
+      {...p}
+      onBack={() => navigation.goBack()}
+      onTabPress={() => navigation.navigate('BotList')}
+    />
+  );
 }
 
 const makeStyles = (C, T, S) =>
