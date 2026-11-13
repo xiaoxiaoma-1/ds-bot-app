@@ -14,8 +14,9 @@ export const darkPalette = {
   card2: '#2E2E38',
   line: 'transparent',
   ink: '#FFFFFF',
-  ink2: '#8B8B94',
+  ink2: '#8D8D95', // 原 #8B8B94 (4.44) → 4.55:1（深卡 #26262F）/ 5.53:1（页底 #151518）
   ink3: '#6E6E78',
+  placeholder: '#8D8D96', // 占位符专用色：比正文弱半档，但对输入框底色仍 ≥4.5:1（WCAG 正文标准）
   accent: '#F0EDF4',
   accentCoral: '#D99478',
   brandHi: '#D4B0DE',
@@ -33,8 +34,9 @@ export const lightPalette = {
   card2: '#EFE7F2',
   line: 'transparent',
   ink: '#302636',
-  ink2: '#9A8C9E',
+  ink2: '#78697D', // 原 #9A8C9E (3.17) → 5.10:1（白卡）/ 4.51:1（页底）
   ink3: '#B6A9BA',
+  placeholder: '#817186', // 占位符专用色：比正文弱半档，但对输入框底色仍 ≥4.5:1（WCAG 正文标准）
   accent: '#CE9EDB',
   accentCoral: '#FFAB96',
   brandHi: '#EAD2EE',

@@ -129,7 +129,7 @@ export default function BooksScreen({
           value={q}
           onChangeText={setQ}
           placeholder="搜书名或一句话概括"
-          placeholderTextColor={C.ink3}
+          placeholderTextColor={C.placeholder}
           returnKeyType="search"
           allowFontScaling={false}
         />
