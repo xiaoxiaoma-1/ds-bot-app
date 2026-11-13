@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { login } from '../api';
-import { setBase, setPass } from '../store';
+import { getBase, setBase, setPass, DEFAULT_BASE } from '../store';
 
 // 同一屏两用：首次启动=登录页（onBack 不传，无返回）；从列表进=设置页（onBack 传进来，带返回）。
 export default function SetupScreen({ onDone, onBack }) {
@@ -24,6 +24,14 @@ export default function SetupScreen({ onDone, onBack }) {
   const [pass, setPassText] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    // 挂载时异步加载已存的地址，若没存过就预填默认地址
+    (async () => {
+      const storedBase = await getBase();
+      setBaseText(storedBase || DEFAULT_BASE);
+    })();
+  }, []);
 
   async function submit() {
     setErr(null);

@@ -8,8 +8,10 @@ const K = {
   sess: 'dsbot.sess',
 };
 
+export const DEFAULT_BASE = 'https://user-20260813ol.tail1bd429.ts.net';
+
 export async function getBase() {
-  return (await SecureStore.getItemAsync(K.base)) || '';
+  return (await SecureStore.getItemAsync(K.base)) || DEFAULT_BASE;
 }
 
 export async function setBase(v) {
