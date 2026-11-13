@@ -24,6 +24,9 @@ import {
   setTopicStatus,
   startDraft,
   waitDraft,
+  getList,
+  postVote,
+  undoLast,
 } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
@@ -310,13 +313,98 @@ function TopicsPoolRoute({ navigation }) {
   );
 }
 
-function ViewsPoolRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+function ViewsPoolRoute({ navigation }) {
+  // 观点库：一条平铺流。后端 /api/list 用 `not in (my_views where kind='clash')` 过滤，
+  // 所以「投过的自然消失」——投票成功后必须**重拉**，不本地删。
+  const [topics, setTopics] = useState(null);
+  const [left, setLeft] = useState(0);
+  const [done, setDone] = useState(0);
+  const [err, setErr] = useState(null);
+  const offsetRef = useRef(null);
+  const voteLock = useRef(false);
+  const lastVoteAt = useRef(0);
+
+  const reload = useCallback(async () => {
+    setErr(null);
+    try {
+      const d = await getList({ offset: 0, limit: 20 });
+      setTopics(d.items);
+      setLeft(d.left);
+      setDone(d.done);
+      offsetRef.current = d.nextOffset;
+    } catch (e) {
+      setTopics([]);
+      setErr(e.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const onNeedMore = useCallback(async () => {
+    try {
+      const d = await getList({ offset: offsetRef.current || 0, limit: 20 });
+      setTopics((prev) => (prev || []).concat(d.items));
+      setLeft(d.left);
+      setDone(d.done);
+      offsetRef.current = d.nextOffset;
+    } catch (e) {
+      setErr(e.message);
+    }
+  }, []);
+
+  // 表态：1 秒防抖（created_at 秒级）+ 成功后重拉
+  const onAnswer = useCallback(
+    async (cur, verdict, why) => {
+      if (voteLock.current) return;
+      const now = Date.now();
+      if (now - lastVoteAt.current < 1000) return;
+      voteLock.current = true;
+      lastVoteAt.current = now;
+      try {
+        const r = await postVote({ atomId: cur.id, verdict, why });
+        if (r.gone) {
+          // 这条观点已经不存在 → 重拉即可，不弹错误
+          await reload();
+          return;
+        }
+        await reload();
+      } catch (e) {
+        setErr(e.message);
+      } finally {
+        voteLock.current = false;
+      }
+    },
+    [reload],
+  );
+
+  // 撤销：后端撤的是「最近一次表态」，不是屏幕上这条 → 必须重拉
+  const onUndo = useCallback(async () => {
+    try {
+      await undoLast();
+    } catch (e) {
+      // 「还没有表态过，撤不回」也走这里，原样给页面（它自己决定怎么提示）
+      throw e;
+    } finally {
+      await reload();
+    }
+  }, [reload]);
+
   return (
     <ViewsPoolScreen
-      {...p}
+      topics={topics === null && !err ? undefined : topics}
+      left={left}
+      done={done}
+      error={err ? '加载失败：' + err : null}
+      onRetry={() => {
+        setErr(null);
+        reload();
+      }}
+      onAnswer={onAnswer}
+      onNeedMore={onNeedMore}
+      onUndo={onUndo}
+      onOpenDetail={(cur) => navigation.navigate('ViewsDetail', { topic: cur })}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />
