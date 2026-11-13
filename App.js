@@ -12,6 +12,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
 import ExpressionScreen from './src/screens/ExpressionScreen';
 import BookReaderScreen from './src/screens/workbench/BookReaderScreen';
+import { getBookCards, getCorpusViews } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
 import MyViewsScreen from './src/screens/workbench/MyViewsScreen';
@@ -262,26 +263,64 @@ function MyViewsRoute({ route, navigation }) {
   );
 }
 
-function CorpusRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+function CorpusRoute({ navigation }) {
+  // 语料库：纯读。onQuery 由页面自己防抖 400ms 后调用。
+  const [rows, setRows] = useState(null);
+  const [err, setErr] = useState(null);
+  const load = useCallback(async (kw) => {
+    setErr(null);
+    try {
+      const d = await getCorpusViews({ q: kw, limit: 120 });
+      setRows(d.rows);
+    } catch (e) {
+      setRows([]);
+      setErr(e.message);
+    }
+  }, []);
+  useEffect(() => {
+    load('');
+  }, [load]);
   return (
     <CorpusScreen
-      {...p}
+      rows={rows === null && !err ? undefined : rows}
+      onQuery={(kw) => load(kw)}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />
   );
 }
 
-function BooksRoute({ route, navigation }) {
-  // 业务回调（onRefreshAll / onAnswer / onQuery …）等后端对照表，这里不塞空函数。
-  // 数据入参（ViewsDetail 的 topic、BookReader 的 book）从 route.params 取，不给就显示提示而不再往下崩。
-  const p = (route && route.params) || {};
+function BooksRoute({ navigation }) {
+  // 书库：纯读 + 客户端筛选。verdict 是中文（精读/翻翻/跳过），服务端按它过滤。
+  const [books, setBooks] = useState(null);
+  const [stat, setStat] = useState({});
+  const [verdict, setVerdict] = useState('');
+  const [err, setErr] = useState(null);
+  const load = useCallback(async (v, kw) => {
+    setErr(null);
+    try {
+      const d = await getBookCards({ verdict: v || undefined, q: kw || undefined, limit: 120 });
+      setBooks(d.items);
+      setStat(d.stat);
+    } catch (e) {
+      setBooks([]);
+      setErr(e.message);
+    }
+  }, []);
+  useEffect(() => {
+    load('', '');
+  }, [load]);
   return (
     <BooksScreen
-      {...p}
+      books={books === null && !err ? undefined : books}
+      stat={Object.keys(stat).length ? stat : undefined}
+      verdict={verdict}
+      onFilter={(v) => {
+        setVerdict(v);
+        load(v, '');
+      }}
+      onQuery={(kw) => load(verdict, kw)}
+      onOpenBook={(item) => navigation.navigate('BookReader', { book: item })}
       onBack={() => navigation.goBack()}
       onTabPress={() => navigation.navigate('BotList')}
     />

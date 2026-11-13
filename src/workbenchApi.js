@@ -257,3 +257,27 @@ export async function undoLast() {
   const d = await request('/api/undo');
   return { item: d.item || null, left: Number(d.left) || 0, done: Number(d.done) || 0 };
 }
+
+/* ───────────────────── 语料库列表（走插件代理，带正文预览） ─────────────────────
+ * GET /api/dsh-media/views/list?limit=&q=
+ *   为什么不用 /api/corpus：那条返回 {id,title,kind,chars,at}，**没有 content**，
+ *   而语料库卡片要显示正文前两行；views/list 返回 views:[{id,kind,title,content,chars,created_at}]。
+ *   成功: {ok, total, views[]}
+ *   失败: {ok:false,error} 或非 2xx
+ */
+export async function getCorpusViews({ q, limit = 120 } = {}) {
+  const qs = ['limit=' + encodeURIComponent(String(limit))];
+  if (q) qs.push('q=' + encodeURIComponent(q));
+  const d = await request('/api/dsh-media/views/list?' + qs.join('&'));
+  return {
+    total: Number(d.total) || 0,
+    rows: (Array.isArray(d.views) ? d.views : []).map((v) => ({
+      id: v.id,
+      kind: v.kind || '',
+      title: v.title || '',
+      content: v.content || '',
+      chars: Number(v.chars) || 0,
+      created_at: v.created_at || v.at || '',
+    })),
+  };
+}
