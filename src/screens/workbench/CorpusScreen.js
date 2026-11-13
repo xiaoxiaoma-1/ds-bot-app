@@ -108,7 +108,7 @@ export default function CorpusScreen({
           value={q}
           onChangeText={setQ}
           placeholder="搜你说过的话…"
-          placeholderTextColor={C.ink3}
+          placeholderTextColor={C.placeholder}
           returnKeyType="search"
           allowFontScaling={false}
         />

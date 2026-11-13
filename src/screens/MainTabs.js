@@ -14,6 +14,7 @@ import { useTheme } from '../theme';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import { buildGreetingAndDate } from '../greeting';
+import CharacterIcon, { TAB_ICONS } from '../components/CharacterIcon';
 import BotListScreen from './BotListScreen';
 import HomeScreen from './HomeScreen';
 import WorkbenchHomeScreen from './workbench/WorkbenchHomeScreen';
@@ -59,10 +60,10 @@ const FEATURE_ROUTE = {
 };
 
 const TABS = [
-  { key: 'home', label: '首页' },
-  { key: 'workbench', label: '工作台' },
-  { key: 'advisors', label: '顾问' },
-  { key: 'mine', label: '我的' },
+  { key: 'home', label: '首页', ...TAB_ICONS.home },
+  { key: 'workbench', label: '工作台', ...TAB_ICONS.workbench },
+  { key: 'advisors', label: '顾问', ...TAB_ICONS.advisors },
+  { key: 'mine', label: '我的', ...TAB_ICONS.mine },
 ];
 
 
@@ -80,7 +81,7 @@ function Placeholder({ name, C, T, S }) {
   );
 }
 
-function DockItem({ tab, active, onPress, C, T }) {
+function DockItem({ tab, active, onPress, C, T, scheme }) {
   const press = usePressScale(0.94);
   return (
     <Pressable
@@ -91,7 +92,17 @@ function DockItem({ tab, active, onPress, C, T }) {
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
     >
-      <Animated.View style={press.scale}>
+      <Animated.View style={[press.scale, s.itemInner]}>
+        {/* 图标：未选中单色 C.ink3，选中用各自的 ink 色；眼睛用 C.bg 镂空（规格 §2.1）。
+            颜色在这里按 scheme 算，不传进模块级 makeStyles。 */}
+        <CharacterIcon
+          shape={tab.shape}
+          ink={tab.ink}
+          size={24}
+          scheme={scheme}
+          color={active ? undefined : C.ink3}
+          eyeColor={C.bg}
+        />
         <Text
           style={[s.label, { color: active ? C.hero : C.ink3 }, active ? T.body : null]}
           allowFontScaling={false}
@@ -105,7 +116,7 @@ function DockItem({ tab, active, onPress, C, T }) {
 }
 
 export default function MainTabs({ navigation }) {
-  const { C, T, S, R } = useTheme();
+  const { C, T, S, R, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: winWidth } = useWindowDimensions();
 
@@ -309,6 +320,7 @@ export default function MainTabs({ navigation }) {
               onPress={() => switchTab(t.key)}
               C={C}
               T={T}
+              scheme={scheme}
             />
           ))}
         </View>
@@ -332,5 +344,7 @@ const s = StyleSheet.create({
   indicator: { position: 'absolute', height: IND_H, top: 10 },
   items: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   item: { flex: 1, height: IND_H + 20, alignItems: 'center', justifyContent: 'center' },
+  // 图标 24 + 间距 4 + 文字 20 = 48，容在 IND_H + 20 = 64 里
+  itemInner: { alignItems: 'center', gap: 4 },
   label: { fontSize: 15, lineHeight: 20, textAlign: 'center' },
 });

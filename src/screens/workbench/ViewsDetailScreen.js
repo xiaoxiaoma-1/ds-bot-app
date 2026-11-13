@@ -203,7 +203,7 @@ export default function ViewsDetailScreen({
               if (err) setErr(null);
             }}
             placeholder={verdict === 'disagree' ? '为什么反对？写一句' : verdict === 'unsure' ? '为什么说不清？写一句' : '为什么认同？写一句'}
-            placeholderTextColor={C.ink3}
+            placeholderTextColor={C.placeholder}
             multiline
             textAlignVertical="top"
             allowFontScaling={false}

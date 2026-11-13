@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
+import CharacterIcon, { CARD_ICONS } from '../../components/CharacterIcon';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
 
@@ -196,7 +197,12 @@ export default function WorkbenchHomeScreen({
                   accessibilityRole="button"
                   accessibilityLabel={`${f.title}，${f.sub}`}
                 >
-                  <View style={s.sticker} />
+                  <CharacterIcon
+                    shape={(CARD_ICONS[f.key] || CARD_ICONS.drafts).shape}
+                    ink={(CARD_ICONS[f.key] || CARD_ICONS.drafts).ink}
+                    size={32}
+                    scheme={scheme}
+                  />
                   <View style={s.cardText}>
                     <Text style={s.cardTitle} numberOfLines={1} allowFontScaling={false}>
                       {f.title}
@@ -220,7 +226,12 @@ export default function WorkbenchHomeScreen({
             accessibilityRole="button"
             accessibilityLabel={`${wide.title}，${wide.sub}`}
           >
-            <View style={s.sticker} />
+            <CharacterIcon
+              shape={(CARD_ICONS[wide.key] || CARD_ICONS.ability).shape}
+              ink={(CARD_ICONS[wide.key] || CARD_ICONS.ability).ink}
+              size={32}
+              scheme={scheme}
+            />
             <View style={s.cardText}>
               <Text style={s.wideTitle} numberOfLines={1} allowFontScaling={false}>
                 {wide.title}
@@ -333,7 +344,7 @@ const makeStyles = (C, T, S, R, K) =>
       alignItems: 'center',
       gap: S.x3,
     },
-    sticker: { width: 40, height: 40, borderRadius: R.capsule, backgroundColor: K.brandHi, top: -2 }, // 6.1 补偿 −2
+    sticker: { width: 40, height: 40, borderRadius: R.capsule, backgroundColor: K.brandHi, top: -2 }, // 停用：换 CharacterIcon（2026-11-13）
     cardText: { flex: 1 },
     cardTitle: { color: C.ink, ...T.title },
     cardSub: { marginTop: S.x1, color: C.ink2, ...T.meta },

@@ -316,7 +316,7 @@ export default function ViewsPoolScreen({
               if (err) setErr(null);
             }}
             placeholder="写一句为什么，它跟你有什么关系"
-            placeholderTextColor={C.ink3}
+            placeholderTextColor={C.placeholder}
             multiline
             autoFocus
             textAlignVertical="top"

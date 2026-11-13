@@ -301,7 +301,7 @@ export default function ExpressionScreen({ onBack }) {
               value={draft}
               onChangeText={setDraft}
               placeholder="点这里，然后按键盘上的麦克风说话"
-              placeholderTextColor={C.ink3}
+              placeholderTextColor={C.placeholder}
               multiline
               textAlignVertical="top"
               allowFontScaling={false}

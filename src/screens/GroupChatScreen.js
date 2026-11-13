@@ -207,7 +207,7 @@ export default function GroupChatScreen({ group, onBack }) {
               value={draft}
               onChangeText={setDraft}
               placeholder="说点什么"
-              placeholderTextColor={C.ink3}
+              placeholderTextColor={C.placeholder}
               multiline
               editable={!sending}
               allowFontScaling={false}

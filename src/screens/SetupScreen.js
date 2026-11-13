@@ -87,7 +87,7 @@ export default function SetupScreen({ onDone, onBack }) {
           value={base}
           onChangeText={setBaseText}
           placeholder="https://你的地址"
-          placeholderTextColor={C.ink3}
+          placeholderTextColor={C.placeholder}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
@@ -102,7 +102,7 @@ export default function SetupScreen({ onDone, onBack }) {
           value={pass}
           onChangeText={setPassText}
           placeholder="口袋口令"
-          placeholderTextColor={C.ink3}
+          placeholderTextColor={C.placeholder}
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}

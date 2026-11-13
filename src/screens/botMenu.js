@@ -156,7 +156,7 @@ export default function BotMenu({ bot, onClose, onPatch, onFail, onMove }) {
           }}
           autoFocus
           placeholder={field === 'name' ? '给这个 Bot 起个名字' : '一句话说明它负责什么'}
-          placeholderTextColor={C.ink3}
+          placeholderTextColor={C.placeholder}
           returnKeyType="done"
           onSubmitEditing={() => submitText(field)}
           editable={!busy}
