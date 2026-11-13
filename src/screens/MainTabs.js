@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
+import { buildGreetingAndDate } from '../greeting';
 import BotListScreen from './BotListScreen';
 import HomeScreen from './HomeScreen';
 import WorkbenchHomeScreen from './workbench/WorkbenchHomeScreen';
@@ -64,13 +65,7 @@ const TABS = [
   { key: 'mine', label: '我的' },
 ];
 
-function buildGreetingAndDate() {
-  const d = new Date();
-  const h = d.getHours();
-  const greeting = h < 6 ? '凌晨好' : h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-  return { greeting, dateText: `${d.getMonth() + 1}月${d.getDate()}日 周${week}` };
-}
+
 
 function Placeholder({ name, C, T, S }) {
   return (

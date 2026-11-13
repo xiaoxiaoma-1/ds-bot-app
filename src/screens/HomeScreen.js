@@ -3,6 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily } from '../homeData';
+import { buildGreetingAndDate } from '../greeting';
+import { dockPadding } from './workbench/Dock';
 
 // 首页（我这边新建的屏）：三块各自独立加载、独立失败。
 // 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
@@ -11,6 +13,8 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+
+  const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
 
   const [board, setBoard] = useState({ loading: true, error: null, data: null });
   const [hot, setHot] = useState({ loading: true, error: null, data: null });
@@ -62,8 +66,28 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: C.bg }}
-      contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: insets.top + S.x3, paddingBottom: S.x6 }}
+      contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: 0, paddingBottom: dockPadding(insets, S) }}
     >
+      {/* ① 顶部：丁香形状 + 问候 + 日期 + 破边圆点/白圆（H01–H07） */}
+      {/* 整块左右各出屏 20，所以下面的圆点坐标可以按屏幕坐标写，不用再减页面边距 */}
+      <View style={s.heroBlock}>
+        <View style={s.shape} />
+        <View style={[s.greetWrap, { top: insets.top + S.x5 }]}>
+          <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>
+            {greeting}
+          </Text>
+          <Text style={s.date} numberOfLines={1} allowFontScaling={false}>
+            {dateText}
+          </Text>
+        </View>
+        {/* 三个破边点：位置按圆心折算左上角（cx − d/2, cy − d/2） */}
+        <View style={[s.dot, { left: 55, top: 181, width: 10, height: 10 }]} pointerEvents="none" />
+        <View style={[s.dot, { left: 93, top: 190, width: 6, height: 6 }]} pointerEvents="none" />
+        <View style={[s.dot, { left: 323, top: 173, width: 14, height: 14 }]} pointerEvents="none" />
+        {/* 白圆：H07 写的是纯白两模式通用，压的是紫形状，所以写死 #FFFFFF 而不走令牌 */}
+        <View style={s.whiteDot} pointerEvents="none" />
+      </View>
+
       {/* ① 今天动哪件 */}
       <View style={s.card}>
         <View style={s.cardHead}>
@@ -178,6 +202,25 @@ function useRefFlag() {
 
 const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
+    // 顶部块：左右各出屏 20（所以块内坐标 = 屏幕坐标），高度 218 = 形状 196 + 白圆下沿 218
+    heroBlock: { height: 218, marginHorizontal: -S.page, marginTop: 0, marginBottom: S.x4 },
+    // H01：高 196、下沿左右各 64 弧、底色取品牌色（不是 C.hero —— 那是每日灵感主卡的颜色）
+    shape: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
+      height: 196,
+      backgroundColor: C.accent,
+      borderBottomLeftRadius: R.big * 2,
+      borderBottomRightRadius: R.big * 2,
+    },
+    greetWrap: { position: 'absolute', left: S.page, right: S.page, gap: S.x1 },
+    // 紫底/近白底都要能读，所以两种模式都用 C.onAccent，不用白字
+    greet: { color: C.onAccent, fontSize: 34, lineHeight: 41, fontWeight: '700' },
+    date: { color: C.onAccent, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },
+    dot: { position: 'absolute', borderRadius: R.capsule, backgroundColor: C.brandHi },
+    whiteDot: { position: 'absolute', left: 280, top: 174, width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF' },
     card: { backgroundColor: C.card, borderRadius: R.small, padding: S.x4, marginBottom: S.x3, gap: S.x2 },
     cardHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
     cardTitle: { color: C.ink, ...T.title },
