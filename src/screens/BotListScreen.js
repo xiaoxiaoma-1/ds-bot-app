@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { avatarInk, useTheme } from '../theme';
+import { avatarInk, inkOn, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
@@ -28,6 +28,9 @@ import GroupSection from './GroupSection';
 const ROW_H = 84;
 const ROW_GAP = 12;
 const LONG_PRESS_MS = 300;
+
+// 圆润/有机形状可以加脸，几何类不加
+const FACED_SHAPES = new Set(['gumdrop','squircle','cushion','pebbles','whale','bunny','kitty','acorn','saucer','beacon','peanut','moon']);
 
 
 function statusText(item) {
@@ -75,11 +78,20 @@ const AdvisorRow = memo(function AdvisorRow({
         onLongPress={dragMode ? undefined : onLongPress}
         delayLongPress={LONG_PRESS_MS}
       >
-        <Animated.Image
-          source={{ uri: maskFor(shape) }}
-          style={[s.mark, { tintColor: tint }]}
-          resizeMode="contain"
-        />
+        <View style={s.markWrap}>
+          <Animated.Image
+            source={{ uri: maskFor(shape) }}
+            style={[s.mark, { tintColor: tint }]}
+            resizeMode="contain"
+          />
+          {FACED_SHAPES.has(shape) ? (
+            <>
+              <View style={[s.eye, s.eyeL, { backgroundColor: inkOn(tint) }]} />
+              <View style={[s.eye, s.eyeR, { backgroundColor: inkOn(tint) }]} />
+              <View style={[s.mouth, { backgroundColor: inkOn(tint), opacity: 0.75 }]} />
+            </>
+          ) : null}
+        </View>
         <View style={s.rowBody}>
           <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
             {item.name}
@@ -530,6 +542,11 @@ const makeStyles = (C, T, S, R) =>
       gap: S.x4,
     },
     mark: { width: 40, height: 40 },
+    markWrap: { width: 40, height: 40, position: 'relative' },
+    eye: { width: 6.5, height: 6.5, borderRadius: 3.25, position: 'absolute' },
+    eyeL: { left: 9.75, top: 11.75 },
+    eyeR: { right: 9.75, top: 11.75 },
+    mouth: { width: 10, height: 2.5, borderRadius: 1.25, position: 'absolute', left: 15, top: 24.75 },
     rowBody: { flex: 1 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
     dot: { width: 6, height: 6, borderRadius: 3 },
