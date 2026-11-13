@@ -10,6 +10,7 @@ import SetupScreen from './src/screens/SetupScreen';
 import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
+import ExpressionScreen from './src/screens/ExpressionScreen';
 
 // 导航：原生栈（react-native-screens）。
 //   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
@@ -67,6 +68,7 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="BotList" component={BotListRoute} />
         <Stack.Screen name="Chat" component={ChatRoute} />
         <Stack.Screen name="GroupChat" component={GroupChatRoute} />
+        <Stack.Screen name="Expression" component={ExpressionRoute} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -151,6 +153,11 @@ function ChatRoute({ route, navigation }) {
     );
   }
   return <ChatScreen bot={bot} onBack={() => navigation.goBack()} />;
+}
+
+function ExpressionRoute({ navigation }) {
+  // 能力表达整屏（三阶段 + 流式点评）；点评走 sse.js 的 readEventStream，可被 AbortController 中止
+  return <ExpressionScreen onBack={() => navigation.goBack()} />;
 }
 
 function GroupChatRoute({ route, navigation }) {

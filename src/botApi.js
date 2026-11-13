@@ -3,7 +3,7 @@ import { getBase, getPass, getSess } from './store';
 // Bot 写接口层（11 项）。单独成文件，避免动 api.js 的现有调用面。
 // 约定：全部带 Authorization: Bearer；失败体是 {ok:false,error:"中文原因"}，原样抛给 UI 显示。
 
-async function call(path, { method = 'POST', body } = {}) {
+async function call(path, { method = 'POST', body, signal } = {}) {
   const base = await getBase();
   if (!base) throw new Error('还没填服务地址');
   const sess = await getSess();
@@ -19,8 +19,10 @@ async function call(path, { method = 'POST', body } = {}) {
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials: 'include',
+      signal,
     });
   } catch (e) {
+    if (e && e.name === 'AbortError') throw e;
     throw new Error('网络不通：' + (e.message || '请求失败'));
   }
 
@@ -35,7 +37,7 @@ async function call(path, { method = 'POST', body } = {}) {
     });
     const j = await r.json().catch(() => ({}));
     if (!j || !j.ok || typeof j.session !== 'string') throw new Error('自动重登失败，请回设置重新登录');
-    return call(path, { method, body });
+    return call(path, { method, body, signal });
   }
 
   const data = await res.json().catch(() => null);
@@ -88,4 +90,12 @@ export const groupApi = {
 // 语音整理（口头文字 → 书面语）。<4 字后端原样返回且 changed=false；>4000 字直接报错。
 export const speechApi = {
   tidy: (text) => call('/api/speech/tidy', { body: { text } }),
+};
+
+// 表达训练（说完再标）：analyze 本地 12ms 出四数 + highlight；realtime/polish/report 走模型。
+export const expressionApi = {
+  analyze: (text) => call('/api/expression/analyze', { body: { text } }),
+  realtime: (text) => call('/api/expression/realtime', { body: { text } }),
+  polish: (text) => call('/api/expression/polish', { body: { text } }),
+  report: (fullText, stats, signal) => call('/api/expression/report', { body: { fullText, stats }, signal }),
 };
