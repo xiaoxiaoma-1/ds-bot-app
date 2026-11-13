@@ -10,7 +10,7 @@ import { dockPadding } from './workbench/Dock';
 // 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
 // active=false 时不发请求（沿用 MainTabs 的门控）。
 export default function HomeScreen({ active = true, onOpenDraft }) {
-  const { C, T, S, R } = useTheme();
+  const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
 
@@ -219,7 +219,13 @@ const makeStyles = (C, T, S, R) =>
     // 紫底/近白底都要能读，所以两种模式都用 C.onAccent，不用白字
     greet: { color: C.onAccent, fontSize: 34, lineHeight: 41, fontWeight: '700' },
     date: { color: C.onAccent, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },
-    dot: { position: 'absolute', borderRadius: R.capsule, backgroundColor: C.brandHi },
+    // 破边点：设计稿写 brandHi，但浅紫压浅紫看不清（EAD2EE on CE9EDB）。
+    // 改成「与白圆同族但有主次」：浅色白 55% / 深色近黑 40%（形状深色是近白，白点会消失）。
+    dot: {
+      position: 'absolute',
+      borderRadius: R.capsule,
+      backgroundColor: scheme === 'light' ? 'rgba(255,255,255,0.55)' : 'rgba(21,21,24,0.4)',
+    },
     whiteDot: { position: 'absolute', left: 280, top: 174, width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF' },
     card: { backgroundColor: C.card, borderRadius: R.small, padding: S.x4, marginBottom: S.x3, gap: S.x2 },
     cardHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
