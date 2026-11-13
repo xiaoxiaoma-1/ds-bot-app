@@ -14,6 +14,7 @@ import { useTheme } from '../theme';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import BotListScreen from './BotListScreen';
+import HomeScreen from './HomeScreen';
 import SetupScreen from './SetupScreen';
 
 // 底部 dock（定案）：黑胶囊、四项、选中标识「圆 → 胶囊 → 圆」形变滑动（老板 2026-11-13 定）。
@@ -216,6 +217,11 @@ export default function MainTabs({ navigation }) {
 
   const renderPage = useCallback(
     (key, active) => {
+      if (key === 'home') {
+        // 首页三块（看板 / 热点 / 接着写）各自独立加载，数据层在 src/homeData.js
+        // onOpenDraft 等 DraftLibrary 路由接上再传
+        return <HomeScreen active={active} />;
+      }
       if (key === 'advisors') {
         return (
           <BotListScreen
