@@ -272,7 +272,11 @@ export default function MainTabs({ navigation }) {
         return (
           <WorkbenchHomeScreen
             activeTab="workbench"
-            onTabPress={(k) => switchTab(k === 'me' ? 'mine' : k)}
+            onTabPress={(k) => {
+              // 门控生效后它自带的 dock 不再渲染，这个 prop 只负责「让条件成立」；
+              // 万一将来又把 dock 打开，这里把它的 advisor/me 映射回本文件的 advisors/mine。
+              switchTab(k === 'me' ? 'mine' : k === 'advisor' ? 'advisors' : k);
+            }}
             onOpenFeature={openFeature}
             features={FEATURE_CARDS}
             greeting={greeting}
