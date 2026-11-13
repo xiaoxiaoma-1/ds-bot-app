@@ -160,12 +160,12 @@ export default function BooksScreen({
           maxToRenderPerBatch={8}
           windowSize={7}
           removeClippedSubviews
-          contentContainerStyle={{ paddingTop: S.x3, paddingBottom: dockPadding(insets, S) }}
+          contentContainerStyle={{ paddingTop: S.x3, paddingBottom: onTabPress ? dockPadding(insets, S) : S.x3 + insets.bottom }}
           showsVerticalScrollIndicator={false}
         />
       )}
 
-      <Dock activeTab={activeTab} onTabPress={onTabPress} />
+      {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
     </View>
   );
 }

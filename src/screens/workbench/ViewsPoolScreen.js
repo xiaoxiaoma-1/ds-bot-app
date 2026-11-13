@@ -358,8 +358,8 @@ export default function ViewsPoolScreen({
         <View style={{ height: insets.bottom + S.x2 }} />
       ) : (
         <>
-          <View style={{ height: dockPadding(insets, S) }} />
-          <Dock activeTab={activeTab} onTabPress={onTabPress} />
+          <View style={{ height: onTabPress ? dockPadding(insets, S) : S.x3 + insets.bottom }} />
+          {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
         </>
       )}
     </KeyboardAvoidingView>

@@ -102,7 +102,7 @@ export default function DraftLibraryScreen({ summary = DEFAULT_SUMMARY, onBack, 
     <View style={s.root}>
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={{ paddingBottom: dockPadding(insets, S) }}
+        contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         <View style={s.top}>
@@ -205,7 +205,7 @@ export default function DraftLibraryScreen({ summary = DEFAULT_SUMMARY, onBack, 
         </Text>
       </ScrollView>
 
-      <Dock activeTab={activeTab} onTabPress={onTabPress} />
+      {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
     </View>
   );
 }

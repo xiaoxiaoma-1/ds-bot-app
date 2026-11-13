@@ -372,7 +372,7 @@ export default function TopicsPoolScreen({
       <ScrollView
         ref={scrollRef}
         style={s.scroll}
-        contentContainerStyle={{ paddingBottom: dockPadding(insets, S) }}
+        contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -513,7 +513,7 @@ export default function TopicsPoolScreen({
         </Pressable>
       ) : null}
 
-      <Dock activeTab={activeTab} onTabPress={onTabPress} />
+      {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
     </View>
   );
 }

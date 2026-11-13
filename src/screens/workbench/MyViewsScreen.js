@@ -61,7 +61,7 @@ export default function MyViewsScreen({
 
   return (
     <View style={s.root}>
-      <ScrollView contentContainerStyle={{ paddingBottom: dockPadding(insets, S) }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }} showsVerticalScrollIndicator={false}>
         <View style={s.top}>
           <View style={s.shape} />
           <Pressable style={[s.back, { top: insets.top }]} onPress={onBack} accessibilityRole="button" accessibilityLabel="返回">
@@ -167,7 +167,7 @@ export default function MyViewsScreen({
         })}
       </ScrollView>
 
-      <Dock activeTab={activeTab} onTabPress={onTabPress} />
+      {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
     </View>
   );
 }
