@@ -3,6 +3,7 @@ ios/
 android/
 .expo/
 build/
+dist/
 *.ipa
 Payload/
 .DS_Store
