@@ -110,7 +110,7 @@ const AdvisorRow = memo(function AdvisorRow({
   );
 });
 
-export default function BotListScreen({ onOpen, onSettings }) {
+export default function BotListScreen({ onOpen, onSettings, active = true }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -120,6 +120,7 @@ export default function BotListScreen({ onOpen, onSettings }) {
   const [hidden, setHidden] = useState(() => new Set());
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(true);
+  const loadedRef = useRef(false); // 只首次激活时拉一次，避免每次切回来都请求
   const [refreshing, setRefreshing] = useState(false);
   const [menuFor, setMenuFor] = useState(null);
   const [dragMode, setDragMode] = useState(false);
@@ -168,8 +169,11 @@ export default function BotListScreen({ onOpen, onSettings }) {
   }, []);
 
   useEffect(() => {
-    load(false);
-  }, [load]);
+    if (active && !loadedRef.current) {
+      loadedRef.current = true;
+      load(false);
+    }
+  }, [active, load]);
 
   const visible = useMemo(() => rows.filter((it) => !hidden.has(String(it.id))), [rows, hidden]);
   const sorted = useMemo(() => applyOrder(visible, order), [visible, order]);
