@@ -253,6 +253,7 @@ export default function MainTabs({ navigation }) {
             features={FEATURE_CARDS}
             greeting={greeting}
             dateText={dateText}
+            embedded={true}
           />
         );
       }

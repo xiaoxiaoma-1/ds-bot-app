@@ -68,6 +68,7 @@ export default function WorkbenchHomeScreen({
   onPressPill,
   onOpenFeature,
   onTabPress,
+  embedded = false,
 }) {
   const { C, T, S, R, scheme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -230,7 +231,7 @@ export default function WorkbenchHomeScreen({
         ) : null}
       </ScrollView>
 
-      {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
+      {onTabPress && !embedded ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
     </View>
   );
 }
