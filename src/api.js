@@ -180,6 +180,18 @@ export async function advisors() {
   return d.advisors || [];
 }
 
+// 一次拿全：advisors() 只回 advisors 数组，把 groups 和 unreadNote 丢了，
+// 而顾问列表页需要 groups（群组区）和 unreadNote（「电脑端看过的这里仍显示未读」那句）。
+export async function advisorsFull() {
+  const d = await request('/api/dsbot/advisors', { step: 'list' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '读不到顾问列表', 'list');
+  return {
+    advisors: d.advisors || [],
+    groups: Array.isArray(d.groups) ? d.groups : [],
+    unreadNote: typeof d.unreadNote === 'string' ? d.unreadNote : '',
+  };
+}
+
 export async function chat(botId) {
   const d = await request('/api/dsbot/chat?bot=' + encodeURIComponent(botId), { step: 'chat' });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '读不到对话', 'chat');
