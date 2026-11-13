@@ -87,7 +87,9 @@ export default function WorkbenchHomeScreen({
     <View style={s.root}>
       <ScrollView
         style={s.scroll}
-        contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }}
+        contentContainerStyle={{
+          paddingBottom: onTabPress && !embedded ? dockPadding(insets, S) : S.page + insets.bottom,
+        }}
         showsVerticalScrollIndicator={false}
         // 动效不在本轮：不挂 Animated，不加入场
       >
