@@ -292,7 +292,7 @@ export default function MainTabs({ navigation }) {
         <View style={s.stack}>
           {TABS.map((t) =>
             tab === t.key ? (
-              <View key={t.key} style={{ flex: 1, backgroundColor: '#FF0000' }}>
+              <View key={t.key} style={{ flex: 1 }}>
                 {renderPage(t.key, true)}
               </View>
             ) : null,

@@ -68,7 +68,6 @@ export default function HomeScreen({ active = true, onOpenDraft }) {
       style={{ flex: 1, backgroundColor: C.bg }}
       contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: 0, paddingBottom: dockPadding(insets, S) }}
     >
-      <Text style={{ color: '#FFFFFF', fontSize: 22, padding: 12 }}>渲染OK-1</Text>
       {/* ① 顶部：丁香形状 + 问候 + 日期 + 破边圆点/白圆（H01–H07） */}
       {/* 整块左右各出屏 20，所以下面的圆点坐标可以按屏幕坐标写，不用再减页面边距 */}
       <View style={s.heroBlock}>
