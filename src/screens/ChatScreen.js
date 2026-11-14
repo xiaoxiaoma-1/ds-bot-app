@@ -213,12 +213,8 @@ export default function ChatScreen({ bot, onBack }) {
   const seqs = useRef(new Set());
   const targetBot = useRef(String(bot.id));
 
-  useEffect(() => {
-    if (attachHint) {
-      const t = setTimeout(() => setAttachHint(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [attachHint]);
+  // 附件菜单不再 3 秒自动收回：点了就停在那儿，直到用户点「取消」或选完图。
+  // （之前的 setTimeout 3s 是「点一下自己回弹」的原因）
 
   const applyMessages = useCallback((msgs) => {
     seqs.current = new Set(msgs.map((m) => m.seq).filter((x) => x !== undefined && x !== null));
@@ -387,30 +383,33 @@ export default function ChatScreen({ bot, onBack }) {
 
   async function onSend() {
     let finalText = draft.trim();
-    
+
     // 如果有图片，先上传
     if (selectedImage) {
       setUploading(true);
+      // 上传 Promise 可能一直不 settle（RN 带文件体的 fetch 在连接卡住时不会 reject，
+      // 服务端日志里的 WinError 10053 是客户端先断，不是服务端拒），
+      // 所以这里和时间赛跑：要么上传成功，要么到点自己放弃，转圈一定会停。
+      const guard = new Promise((resolve) => setTimeout(resolve, 45000));
       try {
-        const uploadResult = await uploadImage(selectedImage.uri);
+        const uploadResult = await Promise.race([uploadImage(selectedImage.uri), guard]);
+        if (!uploadResult || !uploadResult.url) throw new Error('上传没返回地址');
         const base = await getBase();
-        const imageUrl = base.replace(/\/$/, '') + uploadResult.url;
+        const imageUrl = String(base).replace(/\/$/, '') + uploadResult.url;
         // 将图片URL附加到文本中
-        if (finalText) {
-          finalText = finalText + '\n' + imageUrl;
-        } else {
-          finalText = imageUrl;
-        }
+        finalText = finalText ? finalText + '\n' + imageUrl : imageUrl;
         // 上传成功后清除图片
         setSelectedImage(null);
       } catch (e) {
+        setErr({ step: 'upload', message: '图片没传上去：' + String((e && e.message) || '超时了，再试一次') });
+        return; // 转圈由 finally 收
+      } finally {
+        // 任何分支（成功、失败、throw）都必须把转圈关掉，
+        // 之前 uploading 只在大成功/大失败两处复位，中间 throw 出来就一直转。
         setUploading(false);
-        setErr({ step: 'upload', message: '图片没传上去，再试一次' });
-        return;
       }
-      setUploading(false);
     }
-    
+
     if (!finalText) return;
     
     setDraft('');
@@ -494,13 +493,13 @@ export default function ChatScreen({ bot, onBack }) {
                 style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, backgroundColor: C.bad, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}
                 onPress={() => setSelectedImage(null)}
               >
-                <Text style={{ color: C.onBad, fontSize: 12 }}>×</Text>
+                <Text style={{ color: C.onHero, ...T.meta }}>×</Text>
               </Pressable>
             </View>
           </View>
         )}
         
-        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x2 }]}>
+        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x6 }]}>
           <Pressable
             style={s.attachBtn}
             onPress={() => {
@@ -511,15 +510,17 @@ export default function ChatScreen({ bot, onBack }) {
           >
             <Text style={s.attachText}>+</Text>
           </Pressable>
-          <TextInput
-            style={s.input}
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="说点什么"
-            placeholderTextColor={C.placeholder}
-            multiline
-            scrollEnabled
-          />
+          <View style={s.inputWrapper}>
+            <TextInput
+              style={s.input}
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="说点什么"
+              placeholderTextColor={C.placeholder}
+              multiline
+              scrollEnabled
+            />
+          </View>
           <Animated.View style={sendPress.scale}>
             <Pressable
               style={[s.sendBtn, uploading && { opacity: 0.7 }]}
@@ -538,27 +539,35 @@ export default function ChatScreen({ bot, onBack }) {
             </Pressable>
           </Animated.View>
         </View>
+        {/* 附件菜单挪到输入框**上面**：原来排在 composer 之后，等于贴在屏幕最底边，
+            一半压在安全区外面，点来点去点不到（「点了没反应」）。
+            底部留白按 Math.max(insets.bottom, S.x3) + S.x6 给，绝不贴屏幕边。 */}
         {attachHint ? (
-          <View style={{ paddingHorizontal: S.page, paddingTop: S.x2, flexDirection: 'row', gap: S.x2 }}>
+          <View
+            style={[s.attachPanel, { marginBottom: S.x2 }]}
+          >
             <Pressable
-              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small, opacity: picking ? 0.5 : 1 }}
+              style={[s.attachPill, picking ? s.attachPillOff : null]}
               onPress={() => pickImage(false)}
               disabled={picking}
+              accessibilityRole="button"
             >
-              <Text style={{ color: C.ink, fontSize: 12 }}>从相册选</Text>
+              <Text style={s.attachPillText} allowFontScaling={false}>从相册选</Text>
             </Pressable>
             <Pressable
-              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small, opacity: picking ? 0.5 : 1 }}
+              style={[s.attachPill, picking ? s.attachPillOff : null]}
               onPress={() => pickImage(true)}
               disabled={picking}
+              accessibilityRole="button"
             >
-              <Text style={{ color: C.ink, fontSize: 12 }}>拍照</Text>
+              <Text style={s.attachPillText} allowFontScaling={false}>拍照</Text>
             </Pressable>
             <Pressable
-              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              style={s.attachPill}
               onPress={() => setAttachHint(false)}
+              accessibilityRole="button"
             >
-              <Text style={{ color: C.ink, fontSize: 12 }}>取消</Text>
+              <Text style={s.attachPillText} allowFontScaling={false}>取消</Text>
             </Pressable>
           </View>
         ) : null}
@@ -614,17 +623,27 @@ const makeStyles = (C, T, S, R) =>
       paddingHorizontal: S.page,
       paddingTop: S.x3,
     },
-    input: {
+    inputWrapper: {
       flex: 1,
       width: 0,
       minHeight: 44,
       maxHeight: 120,
       backgroundColor: C.card,
       borderRadius: R.capsule,
+      overflow: 'hidden',
+      paddingVertical: S.x3,
+      justifyContent: 'center',
+    },
+    input: {
+      flex: 1,
+      width: '100%',
+      maxHeight: 120,
       color: C.ink,
       ...T.body,
+      paddingVertical: 0,
       paddingHorizontal: S.x4,
-      paddingVertical: S.x3,
+      textAlignVertical: 'top',
+      textAlign: 'left',
     },
     sendBtn: {
       backgroundColor: C.accent,
@@ -633,6 +652,22 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x3,
     },
     sendText: { color: C.onAccent, ...T.body },
+    attachPanel: {
+      flexDirection: 'row',
+      gap: S.x2,
+      paddingHorizontal: S.page,
+      paddingTop: S.x2,
+    },
+    attachPill: {
+      backgroundColor: C.card,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x2,
+      borderRadius: R.capsule,
+      minHeight: 32,
+      justifyContent: 'center',
+    },
+    attachPillOff: { opacity: 0.5 },
+    attachPillText: { color: C.ink, ...T.meta, fontWeight: '500' },
     attachBtn: {
       backgroundColor: C.card,
       borderRadius: R.capsule,

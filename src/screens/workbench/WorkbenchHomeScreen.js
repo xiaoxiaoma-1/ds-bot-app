@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
-import { BookOpen, Database, FileStack, Lightbulb, MessageSquareQuote, Mic, PenLine } from 'lucide-react-native';
+import { BookOpen, Database, FileStack, LayoutGrid, Lightbulb, MessageSquareQuote, Mic, PenLine, TrendingUp } from 'lucide-react-native';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
 
@@ -20,6 +20,8 @@ const DEFAULT_FEATURES = [
   { key: 'corpus', title: '语料库' },
   { key: 'books', title: '书库' },
   { key: 'ability', title: '能力表达' },
+  { key: 'board', title: '看板' },
+  { key: 'hot', title: '今日热点' },
 ];
 
 const LINE_ICONS = {
@@ -30,6 +32,8 @@ const LINE_ICONS = {
   corpus: Database,
   books: BookOpen,
   ability: Mic,
+  board: LayoutGrid,
+  hot: TrendingUp,
 };
 
 // 「—」是数据没接上时的占位符，不是副标题；渲染出来就是气泡下面那根横杠。
@@ -58,10 +62,12 @@ export default function WorkbenchHomeScreen({
 
   const featureRows = useMemo(() => {
     const list = Array.isArray(features) && features.length > 0 ? features : DEFAULT_FEATURES;
+    // 三行排版 2 / 3 / 剩下全部。原来第三行写死 slice(5, 7)，第九块一加进来
+    // 「看板 / 今日热点」会被直接切掉（第九块永远不显示），所以末尾改成不封顶。
     return [
       list.slice(0, 2),
       list.slice(2, 5),
-      list.slice(5, 7),
+      list.slice(5),
     ].filter((row) => row.length > 0);
   }, [features]);
 

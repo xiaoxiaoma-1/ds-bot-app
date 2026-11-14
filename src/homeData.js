@@ -1,8 +1,30 @@
-import { getBase, getSess } from './store';
+import { getBase, getPass, getSess } from './store';
+import { login } from './api';
 
 // 首页三块的数据层：各自独立，谁挂了都不影响另外两块。
 // 不给假数兜底——接口失败就抛，由 UI 显示空态。
-async function get(path) {
+//
+// 401 自动重登（2026-11-14）：8788 的会话一失效就回 401 {ok:false,error:"未登录"}。
+// api.js 那条链路有自动重登，这一条当初没有，所以「今日灵感」在会话失效后一直显示未登录，
+// 而顾问 / 聊天照常——同一次会话里两套行为，用户只能怀疑自己没登录。
+let reloginLock = null;
+async function reloginOn401(base) {
+  const pass = await getPass();
+  if (!pass) return false;
+  try {
+    if (!reloginLock) {
+      reloginLock = login(base, pass).finally(() => {
+        reloginLock = null;
+      });
+    }
+    await reloginLock;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function get(path, { retry = true } = {}) {
   const base = await getBase();
   if (!base) throw new Error('还没填服务地址');
   const sess = await getSess();
@@ -18,6 +40,10 @@ async function get(path) {
     throw new Error('网络不通：' + (e.message || '请求失败'));
   }
   const data = await res.json().catch(() => null);
+  if (res.status === 401) {
+    if (retry && (await reloginOn401(base))) return get(path, { retry: false });
+    throw new Error('会话失效了（401）：回设置重新登录一下');
+  }
   if (!res.ok || !data || data.ok === false) {
     throw new Error((data && data.error) || 'HTTP ' + res.status);
   }
@@ -68,8 +94,10 @@ export async function loadHotDaily() {
   return {
     date: typeof d.date === 'string' ? d.date : '',
     isToday: Boolean(d.isToday),
+    generatedAt: typeof d.generatedAt === 'string' ? d.generatedAt : '',
     itemCount: items.length,
-    items: items.slice(0, 5), // 首页显示前 5 条
+    items, // 热点详情页要全量（之前在这里就切成 5 条，详情页只能看见 5 条）
+    head: items.slice(0, 5), // 首页卡片固定 5 行
     picked,
   };
 }

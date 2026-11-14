@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
+import { cleanTitle } from './bookText';
 
 // 书库首页（2026-11-12）
 // 总经理已批：① 翻页用纵向连续滚动（番茄默认形态）② 保留 全部/精读/翻翻/跳过 三筛 + 搜索（**400ms 防抖**，
@@ -72,10 +73,10 @@ export default function BooksScreen({
     const p = prog[item.id];
     const pct = p && p.total ? Math.min(100, Math.round(((p.chunkIdx + 1) / p.total) * 100)) : 0;
     return (
-      <Pressable style={s.row} onPress={() => onOpenBook && onOpenBook(item)} accessibilityRole="button" accessibilityLabel={item.title}>
+      <Pressable style={s.row} onPress={() => onOpenBook && onOpenBook(item)} accessibilityRole="button" accessibilityLabel={cleanTitle(item.title)}>
         <View style={s.rowTop}>
           <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-            {item.title}
+            {cleanTitle(item.title)}
           </Text>
           <View style={[s.badge, { borderColor: vColor(item.verdict, C, K) }]}>
             <Text style={[s.badgeText, { color: vColor(item.verdict, C, K) }]} allowFontScaling={false}>

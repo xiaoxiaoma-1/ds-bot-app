@@ -14,7 +14,7 @@ import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme';
 import { useRoles } from './workbench/roles';
 import { usePressScale } from '../motion';
-import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
+import { DOCK_INSET, IND_DOT, IND_H, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import { buildGreetingAndDate } from '../greeting';
 import { loadWorkbenchStats } from '../homeData';
 import BotListScreen from './BotListScreen';
@@ -48,6 +48,9 @@ const FEATURE_CARDS = [
   { key: 'corpus', title: '语料库' },
   { key: 'books', title: '书库' },
   { key: 'ability', title: '能力表达' },
+  // 2026-11-14 补两个入口：看板排在热点前面（看板是「今天动哪件」，比读资讯更靠前）
+  { key: 'board', title: '看板' },
+  { key: 'hot', title: '今日热点' },
 ];
 
 // 七张卡 → 路由名（九条路由里 ViewsDetail / BookReader 由列表页自己进，不在这张表里）
@@ -59,6 +62,8 @@ const FEATURE_ROUTE = {
   corpus: 'Corpus',
   books: 'Books',
   ability: 'Expression',
+  board: 'Board',
+  hot: 'HotDaily',
 };
 
 const TABS = [
@@ -205,7 +210,10 @@ export default function MainTabs({ navigation }) {
       dotLeft.stopAnimation();
 
       const cx = cellCenter(innerWidth, count, toIndex);
-      const pillLeft = leftForCenter(cx, IND_PILL);
+      // 药丸横向两侧各内缩 S.x2：原来的 IND_PILL(88) 正好等于一格宽（353/4≈88.25），
+      // 选中态把整格填满，看起来像一条横线而不是一个药丸。
+      const pillW = Math.max(IND_DOT, innerWidth / count - S.x2 * 2);
+      const pillLeft = leftForCenter(cx, pillW);
       const dotLeftTarget = leftForCenter(cx, IND_DOT);
 
       if (reduceMotion) {
@@ -216,7 +224,7 @@ export default function MainTabs({ navigation }) {
 
       // 第一段：拉宽 + 移动，目标都是绝对值（不从上一格累加），中途再点也不飘
       Animated.parallel([
-        Animated.spring(dotW, { toValue: IND_PILL, tension: 420, friction: 20, useNativeDriver: false }),
+        Animated.spring(dotW, { toValue: pillW, tension: 420, friction: 20, useNativeDriver: false }),
         Animated.spring(dotLeft, { toValue: pillLeft, tension: 420, friction: 20, useNativeDriver: false }),
       ]).start();
 
@@ -239,7 +247,7 @@ export default function MainTabs({ navigation }) {
         ]).start();
       }, PHASE1_MS);
     },
-    [dotW, dotLeft, innerWidth, count, reduceMotion],
+    [dotW, dotLeft, innerWidth, count, reduceMotion, S],
   );
 
   const switchTab = useCallback(
@@ -364,7 +372,7 @@ export default function MainTabs({ navigation }) {
           pointerEvents="none"
           style={[
             s.indicator,
-            { width: dotW, left: dotLeft, backgroundColor: C.ink, borderRadius: RADIUS },
+            { width: dotW, left: dotLeft, backgroundColor: K.dockPill, borderRadius: RADIUS },
           ]}
         />
         <View style={s.items}>

@@ -6,7 +6,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, useTheme } from './src/theme';
 import { isConfigured } from './src/store';
-import { warmCache, setCached, useCachedResource } from './src/cache';
+import { warmCache, setCached, setCachedLimited, readCached, useCachedResource } from './src/cache';
 import SetupScreen from './src/screens/SetupScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MainTabs from './src/screens/MainTabs';
@@ -45,6 +45,8 @@ import TopicsPoolScreen from './src/screens/workbench/TopicsPoolScreen';
 import DraftLibraryScreen from './src/screens/workbench/DraftLibraryScreen';
 import IdeaQuickAddScreen from './src/screens/IdeaQuickAddScreen';
 import TeamManageScreen from './src/screens/TeamManageScreen';
+import HotDailyScreen from './src/screens/workbench/HotDailyScreen';
+import BoardScreen from './src/screens/workbench/BoardScreen';
 
 // 导航：原生栈（react-native-screens）。
 //   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
@@ -113,6 +115,8 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
         <Stack.Screen name="IdeaQuickAdd" component={IdeaQuickAddRoute} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
+        <Stack.Screen name="HotDaily" component={HotDailyRoute} />
+        <Stack.Screen name="Board" component={BoardRoute} />
         <Stack.Screen name="TeamManage" component={TeamManageRoute} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -168,6 +172,22 @@ function SetupRoute({ navigation }) {
       onOpenProfile={canGoBack ? () => navigation.navigate('Profile') : undefined}
     />
   );
+}
+
+function HotDailyRoute({ navigation }) {
+  return (
+    <HotDailyScreen
+      navigation={navigation}
+      onBack={() => navigation.goBack()}
+    />
+  );
+}
+
+// 看板：首页四格（待完成 / 进行中 / 阶段完成 / 已完成）点进来落这里，
+// 首页不再原地往下展开，展开那一段已经删掉。status 从首页带过来，决定进来停在哪一栏。
+function BoardRoute({ route, navigation }) {
+  const status = (route && route.params && route.params.status) || 'todo';
+  return <BoardScreen status={status} onBack={() => navigation.goBack()} />;
 }
 
 function ProfileRoute({ navigation }) {
@@ -491,6 +511,7 @@ function ViewsPoolRoute({ navigation, route }) {
       left={left}
       done={done}
       autoSwipe={Boolean(selected && selected.length)}
+      loading={!data}
       error={err || (data ? null : cachedViews.error) || null}
       onRetry={() => {
         setErr(null);
@@ -736,14 +757,32 @@ function BookReaderRoute({ route, navigation }) {
 
   const pack = (d, off) => (d.blocks || []).map((b, i) => ({ idx: off + i, text: b.text || '', heading: b.heading || '' }));
 
+  // 正文缓存（E5）：key 就是 `book:<id>:<offset>`，一块不落。
+  // 上限 20 本 × 最新 30 块 = 600 条（一本书一次拉 20 块，正常读到 30 块就会命中前两屏）。
+  const bookKey = (off) => 'book:' + bookId + ':' + off;
+  const cacheBlock = (off, list) => {
+    try {
+      setCachedLimited(bookKey(off), list, { prefix: 'book:', max: 600 });
+    } catch (e) {
+      // 存不进就算了，不能因为缓存把阅读搞崩
+    }
+  };
+
   const reload = useCallback(async () => {
     if (!bookId) {
       setErr('没有传入书籍信息');
       setInitialLoading(false);
       return;
     }
+    // ① 先吃缓存：有缓存就先把首屏渲染出来，再静默拉新（不用每次都干等）
+    const cached0 = readCached(bookKey(0));
+    if (Array.isArray(cached0) && cached0.length) {
+      setBlocks(cached0);
+      setBase(0);
+      setInitialLoading(false);
+    }
     setErr(null);
-    setInitialLoading(true);
+    if (!Array.isArray(cached0) || !cached0.length) setInitialLoading(true);
     try {
       const d0 = await getBookRead({ id: bookId, offset: 0, limit: 20 });
       if (!aliveRef.current) return;
@@ -752,25 +791,39 @@ function BookReaderRoute({ route, navigation }) {
       // savedIdx 越界会请求到空块；夹在 0..total-1，避免第一屏白屏。
       const jump = Math.max(0, Math.min(Number(d0.savedIdx) || 0, Math.max(0, totalN - 1)));
       setSavedIdx(jump);
+      const first = pack(d0, 0);
+      cacheBlock(0, first);
       if (jump > 0) {
+        const cachedJump = readCached(bookKey(jump));
+        if (Array.isArray(cachedJump) && cachedJump.length) {
+          setBlocks(cachedJump);
+          setBase(jump);
+        }
         try {
           const d1 = await getBookRead({ id: bookId, offset: jump, limit: 20 });
           if (!aliveRef.current) return;
-          setBlocks(pack(d1, jump));
+          const jumped = pack(d1, jump);
+          cacheBlock(jump, jumped);
+          setBlocks(jumped);
           setBase(jump);
         } catch (jumpErr) {
           // 定位失败时退回第一段，至少让正文能读；不把整本书卡死。
           if (!aliveRef.current) return;
-          setBlocks(pack(d0, 0));
-          setBase(0);
-          setSavedIdx(0);
+          if (!(Array.isArray(cachedJump) && cachedJump.length)) {
+            setBlocks(first);
+            setBase(0);
+            setSavedIdx(0);
+          }
         }
       } else {
-        setBlocks(pack(d0, 0));
+        setBlocks(first);
         setBase(0);
       }
     } catch (e) {
-      if (aliveRef.current) setErr(`${bookId} · offset=0 · limit=20 · ${e.message}`);
+      if (aliveRef.current) {
+        // 已有缓存内容时不把错误盖在正文上，只提示一句
+        setErr(Array.isArray(cached0) && cached0.length ? null : `${bookId} · offset=0 · limit=20 · ${e.message}`);
+      }
     } finally {
       if (aliveRef.current) setInitialLoading(false);
     }
@@ -784,8 +837,15 @@ function BookReaderRoute({ route, navigation }) {
       moreLock.current = true;
       setLoadingMore(true);
       try {
+        const cachedNext = readCached(bookKey(nextOffset));
+        if (Array.isArray(cachedNext) && cachedNext.length) {
+          setBlocks((prev) => prev.concat(cachedNext));
+          return;
+        }
         const d = await getBookRead({ id: bookId, offset: nextOffset, limit: 20 });
-        setBlocks((prev) => prev.concat(pack(d, nextOffset)));
+        const next = pack(d, nextOffset);
+        cacheBlock(nextOffset, next);
+        setBlocks((prev) => prev.concat(next));
       } catch (e) {
         setErr(e.message);
       } finally {

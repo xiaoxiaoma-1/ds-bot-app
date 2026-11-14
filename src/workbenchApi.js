@@ -1,4 +1,5 @@
-import { getBase, getSess } from './store';
+import { getBase, getPass, getSess } from './store';
+import { login } from './api';
 
 // 工作台功能页接口层（对照 8788 的真实契约写的，逐条都在 mobile_server.py 里核过行号）。
 // 规矩：契约不清楚的**不写**——宁可留着死按钮，也不写一个会骗人的按钮。
@@ -10,7 +11,31 @@ const DEFAULT_TIMEOUT = 30000;
 // 客户端给 90 秒，别用默认值（否则用户点完等到一半就超时）。
 const REVIEW_TIMEOUT = 90000;
 
-async function request(path, { method = 'GET', body, timeoutMs = DEFAULT_TIMEOUT } = {}) {
+// 401 自动重登（2026-11-14）。
+// 为什么要有：8788 的 _authed 认的是会话表，会话一失效回的就是
+// 401 {ok:false,error:"未登录"}。api.js 的 request() 早就会拿存下的口令自动重登一次，
+// 但这一层和 homeData 那一层当初没抄这段，于是同样一个失效会话下：
+// 顾问 / 聊天（走 api.js）照常出数据，书库正文 / 观点库 / 今日灵感（走这两层）一律
+// 停在「未登录」——这才是用户看到「我的服务器已经登录了呀」却有空页面的真原因。
+// 锁一下避免多个页面同时 401 时并发登录（服务端会记失败次数）。
+let reloginLock = null;
+async function reloginOn401(base) {
+  const pass = await getPass();
+  if (!pass) return false;
+  try {
+    if (!reloginLock) {
+      reloginLock = login(base, pass).finally(() => {
+        reloginLock = null;
+      });
+    }
+    await reloginLock;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function request(path, { method = 'GET', body, timeoutMs = DEFAULT_TIMEOUT, retry = true } = {}) {
   const base = await getBase();
   if (!base) throw new Error('还没填服务地址');
   const sess = await getSess();
@@ -38,6 +63,13 @@ async function request(path, { method = 'GET', body, timeoutMs = DEFAULT_TIMEOUT
   }
 
   const data = await res.json().catch(() => null);
+  if (res.status === 401) {
+    // 会话失效：先自动重登一次，成不成都不许把 401 原文丢给界面当内容
+    if (retry && (await reloginOn401(base))) {
+      return request(path, { method, body, timeoutMs, retry: false });
+    }
+    throw new Error('会话失效了（401）：回设置重新登录一下');
+  }
   if (!res.ok) throw new Error((data && data.error) || 'HTTP ' + res.status);
   if (!data) throw new Error('返回的内容看不懂');
   if (data.ok === false) throw new Error(data.error || '这个操作没成功');

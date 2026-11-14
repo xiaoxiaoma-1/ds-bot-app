@@ -47,7 +47,6 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
-  const [boardOpen, setBoardOpen] = useState(null);  // 'todo' | 'stage' | 'done' | 'doing' | null
 
   const loadAll = useCallback(async () => {
     manualRefresh.current = true;
@@ -85,10 +84,10 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const i = ideas.data;
   const tp = topics.data;
 
-  const hotItems = h && Array.isArray(h.items) && h.items.length
-    ? h.items.slice(0, 5)  // 首页显示前5条
+  const hotItems = h && Array.isArray(h.head) && h.head.length
+    ? h.head // 数据层已经给了 head（前 5 条）
     : (h && h.picked ? [h.picked] : []);
-  const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 3) : [];
+  const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 5) : [];
   const ideaItems = (i && Array.isArray(i.items)) ? i.items : [];
 
   // 服务端 posts 记录不算「我的稿子」，显示空态；只有 my_drafts 才显示接着写。
@@ -103,18 +102,15 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
     go('MyViews');
   };
 
-  const openBoard = (status) => setBoardOpen((v) => (v === status ? null : status));
-
-  // 根据 boardOpen 状态过滤对应类别的卡片
-  const categoryCards = useMemo(() => {
-    if (!boardOpen || !b || !Array.isArray(b.cards)) return [];
-    const list = b.cards.filter((c) => c.status === boardOpen);
-    return list.slice(0, 30);
-  }, [boardOpen, b]);
+  const openBoard = (status) => go('Board', status ? { status } : undefined);
 
   const openIdeas = () => {
     const selected = ideaItems.map((x) => x && x.id).filter(Boolean);
     go('ViewsPool', selected.length ? { selected } : undefined);
+  };
+
+  const openHot = () => {
+    go('HotDaily');
   };
 
   const scoreFor = (topic) => {
@@ -194,7 +190,17 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
         >
           <HeroCard
             title={h && !h.isToday && h.date ? h.date + ' 热点' : '今日热点'}
-            meta={h && h.itemCount ? `${h.itemCount} 条` : '每天更新'}
+            // 卡里只放 5 行（和其它两张卡等高），所以标注只能写渲染出来的 5 条，
+            // 多出来的用「还有 N 条 ›」提示；以前直接写总数，看着像卡里少了东西。
+            meta={
+              h && hotItems.length
+                ? (h.items && h.items.length > hotItems.length
+                  ? `${hotItems.length} 条 · 还有 ${h.items.length - hotItems.length} 条 ›`
+                  : `${hotItems.length} 条 ›`)
+                : '每天更新'
+            }
+            onPress={openHot}
+            label="查看热点"
           >
             {hot.loading && !h ? (
               <StateLine st={hot} empty="正在取热点" />
@@ -203,25 +209,33 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
             ) : hotItems.length === 0 ? (
               <Text style={s.stateText} allowFontScaling={false}>今天的热点还没生成</Text>
             ) : (
-              hotItems.map((it, index) => (
-                <View key={'hot-' + index + '-' + ((it && (it.url || it.title)) || '')} style={s.listRow}>
-                  <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
-                  <View style={s.listText}>
-                    <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                      {(it && it.title) || '（无标题）'}
-                    </Text>
-                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                      {(it && it.source) ? '来源 ' + it.source : '来源未知'}
-                    </Text>
+              // 固定5行高度：不足5条时补空 View，保持等高
+              [...Array(5)].map((_, index) => {
+                const it = index < hotItems.length ? hotItems[index] : null;
+                return (
+                  <View key={'hot-' + index + '-' + (it ? (it.url || it.title) : 'empty')} style={s.listRow}>
+                    <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
+                    {it ? (
+                      <View style={s.listText}>
+                        <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                          {it.title || '（无标题）'}
+                        </Text>
+                        <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                          {it.source ? '来源 ' + it.source : '来源未知'}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={{ flex: 1, height: 16 }} />
+                    )}
                   </View>
-                </View>
-              ))
+                );
+              })
             )}
           </HeroCard>
 
           <HeroCard
             title="选题池"
-            meta={tp && tp.total ? `${tp.total} 条` : '去挑一个'}
+            meta={tp && tp.total ? `${tp.total} 条 ›` : '去挑一个'}
             onPress={!topics.loading && !topics.error && topicItems.length ? () => go('TopicsPool') : undefined}
             label="选题池"
           >
@@ -229,18 +243,30 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
               <StateLine st={topics} empty="正在取选题" />
             ) : topics.error && !tp ? (
               <ErrorBlock st={topics} />
-            ) : topicItems.length === 0 ? (
-              <Text style={s.stateText} allowFontScaling={false}>选题池还空着</Text>
             ) : (
-              topicItems.map((topic, index) => (
-                <View key={(topic && topic.id) || 'topic-' + index} style={s.listRow}>
-                  <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
-                  <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
-                    {(topic && topic.title) || '（无标题）'}
-                  </Text>
-                  <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
-                </View>
-              ))
+              // 固定 5 行：和热点卡同条数、同高（220）。不足 5 条时补占位行，
+              // 占位只显示「—」，不缩字号——三张卡的字必须一样大。
+              [...Array(5)].map((_, index) => {
+                const topic = index < topicItems.length ? topicItems[index] : null;
+                return (
+                  <View key={topic ? (topic.id || 'topic-' + index) : 'topic-empty-' + index} style={s.listRow}>
+                    <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
+                    {topic ? (
+                      <>
+                        <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
+                          {topic.title || '（无标题）'}
+                        </Text>
+                        <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
+                      </>
+                    ) : (
+                      <>
+                        <View style={s.listText} />
+                        <Text style={s.score} allowFontScaling={false}>—</Text>
+                      </>
+                    )}
+                  </View>
+                );
+              })
             )}
           </HeroCard>
 
@@ -255,21 +281,24 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
             ) : draft.error && !d ? (
               <ErrorBlock st={draft} />
             ) : draftMine && d ? (
-              <View style={s.listRow}>
+              // 只有 1 条稿子也要把 220 撑满：标题区在上、「继续写 ›」贴底。
+              // 底部那截留白由 draftFill 的 justifyContent:'space-between' 撑开，
+              // 不靠塞透明假字（透明 ######## 一旦换行就会把真实行高也顶歪）。
+              <View style={s.draftFill}>
                 <View style={s.listText}>
-                  <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
+                  <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
                     {d.title || '（无标题）'}
                   </Text>
                   {d.tail ? (
-                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                    <Text style={s.rowSub} numberOfLines={3} allowFontScaling={false}>
                       上次写到：{d.tail}
                     </Text>
                   ) : null}
-                  <Text style={s.rowSub} allowFontScaling={false}>继续写 ›</Text>
                 </View>
+                <Text style={s.rowSub} allowFontScaling={false}>继续写 ›</Text>
               </View>
             ) : (
-              <View style={s.draftEmpty}>
+              <View style={s.draftFill}>
                 <Text style={s.stateText} allowFontScaling={false}>还没有稿子，赶紧去写一篇。</Text>
                 <Text style={s.emptyActionText} allowFontScaling={false}>点这里去我的观点 ›</Text>
               </View>
@@ -280,42 +309,29 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
         <View style={s.sectionCard}>
           <View style={s.sectionHead}>
             <Text style={s.sectionTitle} allowFontScaling={false}>今天动哪件</Text>
-            <Text style={s.sectionMeta} allowFontScaling={false}>看板</Text>
+            <Pressable onPress={() => openBoard()} hitSlop={12} accessibilityRole="button" accessibilityLabel="打开看板">
+              <Text style={s.sectionMeta} allowFontScaling={false}>看板 ›</Text>
+            </Pressable>
           </View>
           {board.loading && !b ? (
             <StateLine st={board} empty="正在取看板" />
           ) : board.error && !b ? (
             <ErrorBlock st={board} />
           ) : b ? (
-            <>
-              <View style={s.boardGrid}>
-                {BOARD_STATUS.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    style={[s.boardCell, boardOpen === item.key ? s.boardCellOn : null]}
-                    onPress={() => openBoard(item.key)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: boardOpen === item.key }}
-                  >
-                    <Text style={s.boardCount} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
-                    <Text style={s.boardLabel} allowFontScaling={false}>{item.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {boardOpen && b && categoryCards.length === 0 ? (
-                <Text style={s.stateText} allowFontScaling={false}>这一类现在没有卡片</Text>
-              ) : null}
-              {boardOpen && categoryCards.length > 0 ? categoryCards.map((c) => (
-                <View key={c.id} style={s.listRow}>
-                  <View style={s.listText}>
-                    <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>{c.title || '（无标题）'}</Text>
-                    {c.nextStep ? (
-                      <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{c.nextStep}</Text>
-                    ) : null}
-                  </View>
-                </View>
-              )) : null}
-            </>
+            <View style={s.boardGrid}>
+              {BOARD_STATUS.map((item) => (
+                <Pressable
+                  key={item.key}
+                  style={s.boardCell}
+                  onPress={() => openBoard(item.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`看板 ${item.label}，${b[item.key] ?? 0} 件`}
+                >
+                  <Text style={s.boardCount} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
+                  <Text style={s.boardLabel} allowFontScaling={false}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
           ) : (
             <Text style={s.stateText} allowFontScaling={false}>今天没有待办</Text>
           )}
@@ -362,7 +378,7 @@ const makeStyles = (C, T, S, R) =>
     date: { color: C.ink2, ...T.meta, marginTop: S.x1 },
     heroRow: { paddingHorizontal: S.page, gap: S.x3, paddingBottom: S.x4, alignItems: 'flex-start' },
     heroCard: {
-      minHeight: 220,
+      height: 220,
       flexShrink: 0,
       backgroundColor: C.card,
       borderRadius: R.small,
@@ -376,7 +392,8 @@ const makeStyles = (C, T, S, R) =>
     },
     heroTitle: { color: C.ink, ...T.section },
     heroMeta: { color: C.ink3, ...T.meta },
-    heroBody: { gap: S.x2 },
+    heroBody: { flex: 1, justifyContent: 'space-between', paddingTop: S.x1 },
+    draftFill: { flex: 1, justifyContent: 'space-between', paddingTop: S.x1, paddingBottom: S.x2 },
     sectionCard: {
       marginHorizontal: S.page,
       marginBottom: S.x3,
@@ -419,8 +436,7 @@ const makeStyles = (C, T, S, R) =>
       gap: S.x1,
     },
     boardCellOn: { backgroundColor: C.accent, borderColor: C.accent },
-    boardCount: { color: C.ink, ...T.section },
-    boardLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
+    boardCount: { color: C.ink, ...T.section },    boardLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
     stateRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingVertical: S.x2 },
     stateText: { color: C.ink3, ...T.meta },
     centerBlock: { alignItems: 'center', paddingVertical: S.x3, gap: S.x2 },

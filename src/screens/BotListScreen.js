@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DeviceMotion } from 'expo-sensors';
 import { avatarInk, inkOn, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
+import CHARACTER_SHAPES from '../components/characterShapes';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
 import { botApi } from '../botApi';
@@ -31,8 +32,34 @@ const ROW_H = 84;
 const ROW_GAP = 12;
 const LONG_PRESS_MS = 300;
 
-// 圆润/有机形状可以加脸，几何类不加
-const FACED_SHAPES = new Set(['gumdrop','squircle','cushion','pebbles','whale','bunny','kitty','acorn','saucer','beacon','peanut','moon']);
+// 圆润/有机形状可以加脸，几何类不加。
+// 有脸 = characterShapes.js 里这个 shape 真带了 eyes 数据；不在表里的 shape 一律不画。
+const FACED_SHAPES = new Set(
+  Object.keys(CHARACTER_SHAPES).filter((k) => Array.isArray(CHARACTER_SHAPES[k].eyes) && CHARACTER_SHAPES[k].eyes.length),
+);
+
+// 头像盒边长（眼睛坐标按这个换算）
+const MARK = 40;
+// 源数据是 100×100 坐标系、cx/cy 是眼睛**中心**、tilt 是角度。
+// 以前这里把眼睛写成死像素（left:13.75 / right:13.75 / top:12）+ 一个自己发明的嘴，
+// 那套值只对 gumdrop 一个形状成立：换 squircle / whale / moon 时眼睛直接落到轮廓外，
+// 看起来就是「眼睛位置错、比例怪」，moon 这种窄形状还多出一条悬空的嘴。
+// 现在一律按源数据逐个 shape 换算，并且不再画嘴（源设计里没有嘴）。
+function eyeBox(shape, i) {
+  const list = CHARACTER_SHAPES[shape] && CHARACTER_SHAPES[shape].eyes;
+  const e = (list && list[i]) || null;
+  if (!e) return null;
+  const [cx, cy, w, h, tilt] = e;
+  const k = MARK / 100;
+  return {
+    left: (cx - w / 2) * k,
+    top: (cy - h / 2) * k,
+    width: w * k,
+    height: h * k,
+    borderRadius: (w * k) / 2,
+    tilt,
+  };
+}
 
 
 // 设备倾斜：只取 gamma / beta 两个角度，供头像眼睛跟随。
@@ -127,21 +154,27 @@ const AdvisorRow = memo(function AdvisorRow({
           />
           {FACED_SHAPES.has(shape) ? (
             <>
-              <View
-                style={[
-                  s.eye,
-                  s.eyeL,
-                  { backgroundColor: faceInk, transform: [{ translateX: dx }, { translateY: dy }] },
-                ]}
-              />
-              <View
-                style={[
-                  s.eye,
-                  s.eyeR,
-                  { backgroundColor: faceInk, transform: [{ translateX: dx }, { translateY: dy }] },
-                ]}
-              />
-              <View style={[s.mouth, { backgroundColor: faceInk, opacity: 0.75 }]} />
+              {[0, 1].map((i) => {
+                const b = eyeBox(shape, i);
+                if (!b) return null;
+                return (
+                  <View
+                    key={'eye' + i}
+                    style={[
+                      s.eye,
+                      {
+                        left: b.left,
+                        top: b.top,
+                        width: b.width,
+                        height: b.height,
+                        borderRadius: b.borderRadius,
+                        backgroundColor: faceInk,
+                        transform: [{ translateX: dx }, { translateY: dy }, { rotate: `${b.tilt}deg` }],
+                      },
+                    ]}
+                  />
+                );
+              })}
             </>
           ) : null}
         </View>
@@ -619,16 +652,14 @@ const makeStyles = (C, T, S, R) =>
       borderRadius: R.small,
       gap: S.x4,
     },
-    mark: { width: 40, height: 40 },
+    mark: { width: MARK, height: MARK },
     markWrap: {
-      width: 40,
-      height: 40,
+      width: MARK,
+      height: MARK,
       position: 'relative',
     },
-    eye: { width: 2.5, height: 6.5, borderRadius: 1.2, position: 'absolute' },
-    eyeL: { left: 13.75, top: 12 },
-    eyeR: { right: 13.75, top: 12 },
-    mouth: { width: 10, height: 2.5, borderRadius: 1.25, position: 'absolute', left: 15, top: 24.75 },
+    // 位置/尺寸全部由 eyeBox() 按 shape 的源数据算，这里只留 position 与公共兜底值
+    eye: { position: 'absolute', width: 2.5, height: 6.5, borderRadius: 1.2 },
     rowBody: { flex: 1 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
     dot: { width: 6, height: 6, borderRadius: R.capsule },

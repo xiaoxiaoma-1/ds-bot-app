@@ -35,6 +35,40 @@ function getCached(key) {
 }
 
 /**
+ * 同步读一条缓存（内存命中才算；磁盘在 warmCache 里已经预热进内存）。
+ * 给「进页面就要第一帧有内容」的场景用，例如书库正文首屏。
+ * @param {string} key 业务 key（不含前缀）
+ */
+export function readCached(key) {
+  const e = memory.get(key);
+  return e ? e.data : null;
+}
+
+/**
+ * 带上限的双写缓存（LRU）。书库正文用它：书太多，不封顶会把手机存满。
+ * @param {string} key 业务 key
+ * @param {any} data 数据
+ * @param {object} opts
+ * @param {string} opts.prefix 同一类缓存的公共前缀，例如 'book:'
+ * @param {number} [opts.max=30] 这一类最多留几条，超了从最久没写的开始删
+ */
+export function setCachedLimited(key, data, { prefix, max = 30 } = {}) {
+  setCached(key, data);
+  if (!prefix || max <= 0) return;
+  const idxKey = 'lru:' + prefix;
+  const prev = readCached(idxKey);
+  const list = Array.isArray(prev) ? prev.filter((k) => k !== key) : [];
+  list.push(key);
+  const drop = list.length > max ? list.slice(0, list.length - max) : [];
+  const keep = list.slice(drop.length);
+  for (const k of drop) {
+    memory.delete(k);
+    AsyncStorage.removeItem(diskKey(k)).catch(() => {});
+  }
+  setCached(idxKey, keep);
+}
+
+/**
  * 双写缓存：同步更新内存，异步写入磁盘。
  * @param {string} key 业务 key（不含前缀）
  * @param {any} data 任意 JSON 可序列化的数据

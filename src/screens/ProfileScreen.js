@@ -143,13 +143,16 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
   const cachedProfile = useCachedResource('me:profile', fetchMe);
-  const cachedMoments = useCachedResource('me:moments:first', () => fetchMoments(PAGE_SIZE, 0));
+  const cachedMoments = useCachedResource('me:moments:first', async () => {
+    const items = await fetchMoments(PAGE_SIZE, 0);
+    return Promise.all(items.map(normalizeMoment));
+  });
 
   const [me, setMe] = useState(() => ({
     nickname: cachedProfile.data?.nickname || '',
-    avatarUrl: /^https?:\/\//i.test(String(cachedProfile.data?.avatarUrl || ''))
-      ? cachedProfile.data.avatarUrl
-      : '',
+    // fetchMe 返回前已经把相对路径拼成完整地址了，这里不再做 ^https?:// 正则门禁：
+    // 那道门禁会把缓存里一条相对地址判成空串，于是头像变纯黑、头像框消失（H1）。
+    avatarUrl: String(cachedProfile.data?.avatarUrl || ''),
     signature: cachedProfile.data?.signature || '',
   }));
   const [editing, setEditing] = useState(null);
@@ -609,16 +612,20 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
         </View>
       ) : null}
 
+      {/* 资料没取到时**不要**把整页换成不可滚动的 loading —— 那样看起来就是「这页划不动」，
+          过一会儿资料到了又好了（H4 的偶发）。现在骨架一直在，只在顶部加一行提示。 */}
       {loading ? (
-        <View style={s.center}>
-          <ActivityIndicator color={C.accent} size="large" />
+        <View style={s.loadingRow}>
+          <ActivityIndicator color={C.accent} size="small" />
           <Text style={s.loadingText} allowFontScaling={false}>正在取我的资料</Text>
         </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom + S.x6 }}
-          keyboardShouldPersistTaps="handled"
-        >
+      ) : null}
+
+      <ScrollView
+        scrollEnabled
+        contentContainerStyle={{ paddingBottom: insets.bottom + S.x6 }}
+        keyboardShouldPersistTaps="handled"
+      >
           <View style={s.profileBlock}>
             <Pressable
               onPress={() => setShowAvatarMenu(true)}
@@ -712,7 +719,6 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
             <Text style={s.serverRowHint} allowFontScaling={false}>地址、口令、退出登录 ›</Text>
           </Pressable>
         </ScrollView>
-      )}
 
       <Modal
         visible={showAvatarMenu}
@@ -986,6 +992,13 @@ const makeStyles = (C, T, S, R) =>
     errTitle: { color: C.bad, ...T.title },
     errMsg: { color: C.ink2, ...T.body },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: S.x3 },
+    loadingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: S.x2,
+      paddingHorizontal: S.page,
+      paddingTop: S.x3,
+    },
     loadingText: { color: C.ink3, ...T.meta },
     profileBlock: { alignItems: 'center', paddingHorizontal: S.page, paddingTop: S.x4 },
     avatarWrap: { position: 'relative' },

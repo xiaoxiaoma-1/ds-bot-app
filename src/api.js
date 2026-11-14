@@ -279,9 +279,18 @@ export function openFeed({ onEvent, onError, onAuthFail }) {
 export async function fetchMe() {
   const d = await request('/api/dsbot/me', { step: 'me' });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '获取个人资料失败', 'me');
+  // 后端给的是 /api/dsbot/uploads/xxx 这种相对路径。这里直接拼成完整地址再返回，
+  // 否则 ProfileScreen 初始 state 那段 http 正则会把相对路径判成空，首帧头像永远是空，
+  // 只能等 useEffect 异步补 —— 表现就是「头像等半天才出来 / 切走再回来又消失」。
+  const raw = d.avatar_url || '';
+  let avatarUrl = raw;
+  if (raw && !/^https?:\/\//i.test(raw)) {
+    const base = String(await getBase()).replace(/\/$/, '');
+    avatarUrl = base + (raw.startsWith('/') ? raw : '/' + raw);
+  }
   return {
     nickname: d.nickname || '',
-    avatarUrl: d.avatar_url || '',
+    avatarUrl,
     signature: d.signature || '',
   };
 }

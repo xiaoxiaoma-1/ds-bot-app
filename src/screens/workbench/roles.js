@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useTheme } from '../../theme';
+import { useTheme, inkOn } from '../../theme';
 
 // 工作台各页共用的「令牌角色 → theme.js 键」映射。
 // 只在这里写一次，别每页抄一份——抄八份就会有一份漏改。
@@ -32,8 +32,13 @@ export function roleOf(C, scheme) {
     dock: light ? C.hero : C.card,
     dockIdle: C.dockIdle,
     dockIdleOpacity: light ? 1 : 0.75,
-    dockOn: C.onHero,
-    circle: C.onHero,
+    // 选中标识的底色和字色必须同源，否则就是白字压白球（对比度 1:1，字直接看不见）。
+    // 为什么不是 inkOn(C.ink)：浅色下 dock 面是 C.hero(#1B1D1B)，C.ink 也是 #1B1D1B，
+    // 药丸会和胶囊面糊成一片（字看得见、选中态反而没了）。所以药丸固定「压得住 dock 面」的一侧：
+    // 浅色 → C.card(#FFFFFF)，深色 → C.ink(#FFFFFF)，两种模式都是白药丸 + 深字。
+    dockPill: light ? C.card : C.ink,
+    dockOn: inkOn(light ? C.card : C.ink),
+    circle: light ? C.card : C.ink,
   };
 }
 

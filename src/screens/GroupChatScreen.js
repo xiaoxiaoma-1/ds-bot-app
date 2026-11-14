@@ -382,16 +382,19 @@ export default function GroupChatScreen({ group, onBack }) {
                 ＋
               </Text>
             </Pressable>
-            <TextInput
-              style={s.input}
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="说点什么"
-              placeholderTextColor={C.placeholder}
-              multiline
-              editable={!sending}
-              allowFontScaling={false}
-            />
+            <View style={s.inputWrapper}>
+              <TextInput
+                style={s.input}
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="说点什么"
+                placeholderTextColor={C.placeholder}
+                multiline
+                editable={!sending}
+                allowFontScaling={false}
+                scrollEnabled
+              />
+            </View>
             <Pressable
               style={[s.sendBtn, (sending || uploading || (!draft.trim() && media.length === 0)) ? s.sendDim : null]}
               onPress={onSend}
@@ -454,17 +457,27 @@ const makeStyles = (C, T, S, R) =>
       paddingHorizontal: S.page,
       paddingTop: S.x3,
     },
-    input: {
+    inputWrapper: {
       flex: 1,
-      width: 0, // RN中强制换行的写法
+      width: 0,
       minHeight: 44,
       maxHeight: 120,
       backgroundColor: C.card,
       borderRadius: R.capsule,
+      overflow: 'hidden',
+      paddingVertical: S.x3,
+      justifyContent: 'center',
+    },
+    input: {
+      flex: 1,
+      width: '100%',
+      maxHeight: 120,
       color: C.ink,
       ...T.body,
+      paddingVertical: 0,
       paddingHorizontal: S.x4,
-      paddingVertical: S.x3,
+      textAlignVertical: 'top',
+      textAlign: 'left',
     },
     sendBtn: {
       backgroundColor: C.accent,

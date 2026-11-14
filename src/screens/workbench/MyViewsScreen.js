@@ -89,6 +89,7 @@ async function addToCorpus(id) {
 export default function MyViewsScreen({
   views,
   detail = null,
+  error = null,
   activeTab = 'workbench',
   onBack,
   onTabPress,
@@ -121,6 +122,8 @@ export default function MyViewsScreen({
   const selfList = all.filter((v) => String(v.kind || '') !== 'clash');
   const openId = detail && detail.id;
   const countText = (n) => (loading && n === 0 ? '…' : String(n));
+  // 错就显示出来。之前 error 传进来了但页面从来没用它——读失败和「真的 0 条」在界面上长得一模一样。
+  const errText = error ? (typeof error === 'string' ? error : String((error && error.message) || error)) : '';
 
   const submit = async () => {
     const t = draft.trim();
@@ -157,17 +160,17 @@ export default function MyViewsScreen({
     }
   };
 
-  const renderRow = (v) => {
+  const renderRow = (v, index) => {
     const open = openId === v.id;
     const score = v.review && v.review.score;
     return (
-      <View key={v.id} style={s.cardWrap}>
+      <View key={String(v.id || 'row-' + index)} style={s.cardWrap}>
         <Pressable
           style={s.row}
           onPress={() => (open ? onClose && onClose() : onOpen && onOpen(v.id))}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          accessibilityLabel={`${v.title}，${score == null ? '未评' : score + ' 分'}`}
+          accessibilityLabel={`${v.title || '（无标题）'}，${score == null ? '未评' : score + ' 分'}`}
         >
           <View style={s.rowTop}>
             <View style={s.kindPill}>
@@ -333,10 +336,20 @@ export default function MyViewsScreen({
           <Text style={s.groupTitle} allowFontScaling={false}>观点库里的观点</Text>
           <Text style={s.groupCount} allowFontScaling={false}>{countText(poolList.length)} 条</Text>
         </View>
+        {errText ? (
+          <View style={s.errBox}>
+            <Text style={s.errBoxText} allowFontScaling={false}>{errText}</Text>
+            {onRetry ? (
+              <Pressable onPress={onRetry} hitSlop={10} accessibilityRole="button">
+                <Text style={s.errBoxBtn} allowFontScaling={false}>重试</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
         {poolList.length === 0 ? (
-          !loading ? <Text style={s.groupEmpty} allowFontScaling={false}>还没有表态</Text> : null
+          !loading && !errText ? <Text style={s.groupEmpty} allowFontScaling={false}>还没有表态</Text> : null
         ) : (
-          poolList.map(renderRow)
+          poolList.map((v, i) => renderRow(v, i))
         )}
 
         <View style={[s.groupHead, s.groupHeadGap]}>
@@ -344,9 +357,9 @@ export default function MyViewsScreen({
           <Text style={s.groupCount} allowFontScaling={false}>{countText(selfList.length)} 条</Text>
         </View>
         {selfList.length === 0 ? (
-          !loading ? <Text style={s.groupEmpty} allowFontScaling={false}>还没有自己写的</Text> : null
+          !loading && !errText ? <Text style={s.groupEmpty} allowFontScaling={false}>还没有自己写的</Text> : null
         ) : (
-          selfList.map(renderRow)
+          selfList.map((v, i) => renderRow(v, i))
         )}
       </ScrollView>
 
@@ -424,6 +437,16 @@ const makeStyles = (C, T, S, R, K) =>
     groupTitle: { color: C.ink, ...T.title },
     groupCount: { color: C.ink3, ...T.meta },
     groupEmpty: { marginTop: S.x2, marginHorizontal: S.page, color: C.ink3, ...T.meta },
+    errBox: {
+      marginTop: S.x2,
+      marginHorizontal: S.page,
+      padding: S.x3,
+      borderRadius: R.small,
+      backgroundColor: C.card2,
+      gap: S.x2,
+    },
+    errBoxText: { color: C.bad, ...T.meta },
+    errBoxBtn: { color: C.ink, ...T.meta, fontWeight: '600' },
 
     cardWrap: { marginTop: S.x3, marginHorizontal: S.page, backgroundColor: C.card, borderRadius: R.small, overflow: 'hidden' },
     row: { padding: S.x4 },

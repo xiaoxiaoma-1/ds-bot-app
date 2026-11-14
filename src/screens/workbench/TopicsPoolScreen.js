@@ -49,6 +49,10 @@ const DIM_KEYS = ['普世性', '数字冲击', '反常识', '可操作', '痛点
 // 选题池可能被中途退出；正在跑的那一轮不能跟着组件一起消失。
 // 用模块级状态保留进度，回来时按钮仍然显示「正在出题」，全部刷完才放开。
 let sharedBusy = null;
+// 正在跑那一轮的 AbortController 也必须留在组件外面：
+// 否则退出再进来时 busy 还在（进度看得见），但 abortRef 是空的，
+// 「取消」按钮点了什么都不做——用户只能等它跑完。
+let sharedAbort = null;
 const busyListeners = new Set();
 function publishBusy(value) {
   sharedBusy = value;
@@ -150,6 +154,7 @@ export default function TopicsPoolScreen({
             }
             const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
             abortRef.current = ctrl;
+            sharedAbort = ctrl;
             setNote(null);
             setBusy({ done: 0, total: boards.length, current: '' });
             Promise.resolve(
@@ -165,6 +170,7 @@ export default function TopicsPoolScreen({
               .finally(() => {
                 setBusy(null);
                 abortRef.current = null;
+                sharedAbort = null;
               });
           },
         },
@@ -173,7 +179,9 @@ export default function TopicsPoolScreen({
   }, [busy, boards.length, minScore, onRefreshAll]);
 
   const cancelRefresh = () => {
-    if (abortRef.current) abortRef.current.abort();
+    const ctrl = abortRef.current || sharedAbort;
+    if (ctrl) ctrl.abort();
+    sharedAbort = null;
     setBusy(null);
   };
 

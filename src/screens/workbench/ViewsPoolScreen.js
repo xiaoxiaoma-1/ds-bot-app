@@ -56,10 +56,20 @@ const THRESHOLD = 96;
 
 const springIn = { tension: 420, friction: 20, useNativeDriver: false }; // 令牌 S3；pan.x 是 JS 驱动，弹簧必须同为 JS
 
+// error 可能是字符串，也可能是 Error（cache 层抛的原样）；统一取出一句能给人看的话
+function errorText(e) {
+  if (!e) return '';
+  if (typeof e === 'string') return e;
+  return e.message ? String(e.message) : String(e);
+}
+
 export default function ViewsPoolScreen({
   topics = [],
   done = 0,
   left = 0,
+  loading = false,
+  error = null,
+  onRetry,
   activeTab = 'workbench',
   onBack,
   onTabPress,
@@ -86,6 +96,7 @@ export default function ViewsPoolScreen({
   }, [autoSwipe, topics, mode]);
 
   const [myTotal, setMyTotal] = useState(null);
+  const [myErr, setMyErr] = useState(null);
   const [idx, setIdx] = useState(0);
   const [doneN, setDoneN] = useState(done);
   const [verdict, setVerdict] = useState(null);
@@ -102,14 +113,17 @@ export default function ViewsPoolScreen({
   const next = topics[idx + 1] || null;
   const remain = Math.max(0, left - (doneN - done));
   const pending = Math.max(0, Number(left) || 0);
-  const myCount = myTotal === null ? '…' : String(myTotal);
+  // 三种状态分开显示：读着是「…」，读失败是「—」，读到才是数字。
+  // 之前只有一个「…」，getMyViews 一失败就永远停在这一屏（错误被 catch 吞了）。
+  const myCount = myErr ? '—' : myTotal === null ? '…' : String(myTotal);
 
   const refreshMyCount = useCallback(async () => {
     try {
       const d = await getMyViews();
       setMyTotal(Number(d.total) || 0);
-    } catch {
-      // 计数失败不影响主流程
+      setMyErr(null);
+    } catch (e) {
+      setMyErr((e && e.message) || '读取失败');
     }
   }, []);
 
@@ -235,15 +249,15 @@ export default function ViewsPoolScreen({
   const menuPending = pending || topics.length;
 
   const goBack = () => {
-    if (mode === 'swipe') {
-      setVerdict(null);
-      setWhy('');
-      setErr(null);
-      pan.setValue({ x: 0, y: 0 });
-      setMode('menu');
-      return;
-    }
     if (onBack) onBack();
+  };
+
+  const cancelVote = () => {
+    setVerdict(null);
+    setWhy('');
+    setErr(null);
+    pan.setValue({ x: 0, y: 0 });
+    setMode('menu');
   };
 
   const openMine = () => {
@@ -271,16 +285,38 @@ export default function ViewsPoolScreen({
         <View style={s.menuWrap}>
           <Pressable style={s.menuCard} onPress={() => setMode('swipe')} accessibilityRole="button">
             <Text style={s.menuTitle} allowFontScaling={false}>观点库</Text>
-            <Text style={s.menuSub} allowFontScaling={false}>还有 {menuPending} 条待判定</Text>
+            <Text style={s.menuSub} allowFontScaling={false}>
+              {loading ? '正在读…' : `还有 ${menuPending} 条待判定`}
+            </Text>
             <Text style={s.menuHint} allowFontScaling={false}>点进来左右滑</Text>
           </Pressable>
 
           <Pressable style={s.menuCard} onPress={openMine} accessibilityRole="button">
             <Text style={s.menuTitle} allowFontScaling={false}>我的观点</Text>
-            <Text style={s.menuSub} allowFontScaling={false}>{myCount} 条</Text>
+            <Text style={s.menuSub} allowFontScaling={false}>{myErr ? '读不到' : myCount + ' 条'}</Text>
             <Text style={s.menuHint} allowFontScaling={false}>看我自己写的</Text>
           </Pressable>
         </View>
+
+        {/* 三态分开：有错就说错在哪、能重试；真的 0 条才是空态 */}
+        {error ? (
+          <View style={s.menuStateRow}>
+            <Text style={s.menuStateText} allowFontScaling={false}>{errorText(error)}</Text>
+            {onRetry ? (
+              <Pressable onPress={onRetry} hitSlop={10} accessibilityRole="button">
+                <Text style={s.menuStateBtn} allowFontScaling={false}>重试</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+        {myErr ? (
+          <View style={s.menuStateRow}>
+            <Text style={s.menuStateText} allowFontScaling={false}>我的观点读不到：{myErr}</Text>
+            <Pressable onPress={refreshMyCount} hitSlop={10} accessibilityRole="button">
+              <Text style={s.menuStateBtn} allowFontScaling={false}>重试</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {onTabPress ? (
           <Dock activeTab={activeTab} onTabPress={onTabPress} />
@@ -526,6 +562,9 @@ const makeStyles = (C, T, S, R, K) =>
     menuTitle: { color: C.ink, ...T.section },
     menuSub: { marginTop: S.x2, color: C.ink2, ...T.body },
     menuHint: { marginTop: S.x1, color: C.ink3, ...T.meta },
+    menuStateRow: { paddingHorizontal: S.page, paddingTop: S.x4, flexDirection: 'row', alignItems: 'center', gap: S.x2, flexWrap: 'wrap' },
+    menuStateText: { color: C.bad, ...T.meta, flexShrink: 1 },
+    menuStateBtn: { color: C.ink, ...T.meta, fontWeight: '600' },
 
     sheetHead: { flexDirection: 'row', alignItems: 'center', gap: S.x2 },
     verdictBadge: { ...T.meta, fontWeight: '500' },
