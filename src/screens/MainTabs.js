@@ -19,7 +19,7 @@ import { loadWorkbenchStats } from '../homeData';
 import BotListScreen from './BotListScreen';
 import HomeScreen from './HomeScreen';
 import WorkbenchHomeScreen from './workbench/WorkbenchHomeScreen';
-import SetupScreen from './SetupScreen';
+import ProfileScreen from './ProfileScreen';
 
 // 底部 dock（定案）：黑胶囊、四项、选中标识「圆 → 胶囊 → 圆」形变滑动（老板 2026-11-13 定）。
 // 页面切换：淡出淡入，**四页常驻 + 懒挂载**，用 opacity/pointerEvents 切，绝不 unmount。
@@ -83,7 +83,7 @@ function Placeholder({ name, C, T, S }) {
 }
 
 // 底部 tab 只有文字，不放图标（老板 2026-11-13 定：「不要有图标就简单的文字就行了」）
-function DockItem({ tab, active, onPress, C, T }) {
+function DockItem({ tab, active, onPress, C, T, scheme }) {
   const press = usePressScale(0.94);
   return (
     <Pressable
@@ -96,7 +96,11 @@ function DockItem({ tab, active, onPress, C, T }) {
     >
       <Animated.View style={press.scale}>
         <Text
-          style={[s.label, { color: active ? C.hero : C.ink3 }, active ? T.body : null]}
+          style={[
+            s.label,
+            { color: active ? (scheme === 'light' ? C.onHero : C.hero) : C.ink3 },
+            active ? T.body : null,
+          ]}
           allowFontScaling={false}
           numberOfLines={1}
         >
@@ -108,7 +112,7 @@ function DockItem({ tab, active, onPress, C, T }) {
 }
 
 export default function MainTabs({ navigation }) {
-  const { C, T, S, R } = useTheme();
+  const { C, T, S, R, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: winWidth } = useWindowDimensions();
 
@@ -305,14 +309,21 @@ export default function MainTabs({ navigation }) {
         return (
           <BotListScreen
             active={active}
+            navigation={navigation}
             onOpen={(bot) => navigation.navigate(bot && bot.isGroup ? 'GroupChat' : 'Chat', { bot })}
-            onSettings={() => switchTab('mine')}
+            onSettings={() => navigation.navigate('Setup')}
           />
         );
       }
       if (key === 'mine') {
-        // 设置页只在点「保存」时才发请求，没有常驻请求，不需要 active 门控
-        return <SetupScreen onDone={() => switchTab('advisors')} />;
+        // 「我的」是个人主页，不是登录/设置页；设置入口留在 Profile 的服务器行。
+        return (
+          <ProfileScreen
+            embedded
+            navigation={navigation}
+            onOpenSettings={() => navigation.navigate('Setup')}
+          />
+        );
       }
       return <Placeholder name={key === 'home' ? '首页' : '工作台'} C={C} T={T} S={S} />;
     },
@@ -335,20 +346,14 @@ export default function MainTabs({ navigation }) {
 
       <BlurView
         intensity={60}
-        tint="dark"
+        tint={scheme === 'light' ? 'light' : 'dark'}
         style={[
           s.dock,
           {
             bottom: dockBottom,
             borderRadius: R.capsule,
             overflow: 'hidden',
-            // Android 兜底：毛玻璃没生效也不会变全透明
-            backgroundColor: 'rgba(40,40,40,0.72)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.5,
-            shadowRadius: 16,
-            elevation: 8,
+            backgroundColor: C.glass,
           },
         ]}
         accessibilityRole="tablist"
@@ -357,7 +362,7 @@ export default function MainTabs({ navigation }) {
           pointerEvents="none"
           style={[
             s.indicator,
-            { width: dotW, left: dotLeft, backgroundColor: '#FFFFFF', borderRadius: RADIUS },
+            { width: dotW, left: dotLeft, backgroundColor: C.ink, borderRadius: RADIUS },
           ]}
         />
         <View style={s.items}>
@@ -369,6 +374,7 @@ export default function MainTabs({ navigation }) {
               onPress={() => switchTab(t.key)}
               C={C}
               T={T}
+              scheme={scheme}
             />
           ))}
         </View>
@@ -394,5 +400,5 @@ const s = StyleSheet.create({
   indicator: { position: 'absolute', height: IND_H, top: 14 },
   items: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   item: { flex: 1, height: IND_H + 28, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  label: { fontSize: 15, lineHeight: 20, textAlign: 'center', marginHorizontal: 2 },
+  label: { fontSize: 15, lineHeight: 20, textAlign: 'center', marginHorizontal: 4 },
 });

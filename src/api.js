@@ -222,6 +222,22 @@ export async function send(botId, text) {
   return d.messages || [];
 }
 
+export async function models() {
+  const d = await request('/api/dsbot/models', { step: 'models' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '读不到模型列表', 'models');
+  return d.models || [];
+}
+
+export async function writeModel({ id, model }) {
+  const d = await request('/api/dsbot/bot/' + encodeURIComponent(id) + '/model', {
+    method: 'POST',
+    body: { model },
+    step: 'model',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '保存失败', 'model');
+  return d;
+}
+
 // ---- 流式：SSE 长连接（解析与重连在 src/sse.js，那部分是纯 JS，可在 Node 里自测）----
 // 断开后 2 秒退避重连（最长 10 秒）；401/403 不重连，直接报「请重新登录」。
 export function openFeed({ onEvent, onError, onAuthFail }) {
@@ -279,33 +295,67 @@ export async function updateMe(patch) {
   return d;
 }
 
-export async function uploadImage(fileUri) {
+export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jpg', timeoutMs = UPLOAD_TIMEOUT } = {}) {
+  const base = await getBase();
+  if (!base) throw new ApiError('还没填服务地址', 'upload');
+  const sess = await getSess();
+  if (!sess) throw new ApiError('没有会话凭证，需要先登录', 'auth');
+
   const formData = new FormData();
-  formData.append('file', {
-    uri: fileUri,
-    type: 'image/jpeg',
-    name: 'avatar.jpg',
-  });
-  // 使用 multipart/form-data 上传（mobile_server.py 会识别）
-  const d = await request('/api/dsbot/upload', {
-    method: 'POST',
-    body: formData,
-    step: 'upload',
-  });
-  if (!d || !d.ok) throw new ApiError((d && d.error) || '上传图片失败', 'upload');
-  return d; // { ok: true, path: '...', url: '/api/dsbot/uploads/...' }
+  // 不手写 content-type：让 fetch 自己带 multipart boundary，否则后端解析必失败。
+  formData.append('file', { uri: fileUri, type, name });
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let res;
+  try {
+    res = await fetch(join(base, '/api/dsbot/upload'), {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer ' + sess,
+        [COOKIE_HEADER]: SESSION_COOKIE + '=' + sess,
+      },
+      body: formData,
+      credentials: 'include',
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new ApiError('上传超时', 'upload');
+    throw new ApiError('上传失败：' + (e.message || '网络不通'), 'upload');
+  } finally {
+    clearTimeout(timer);
+  }
+
+  let data = null;
+  const text = await res.text();
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = null;
+  }
+  if (res.status === 401) throw new ApiError('会话无效（401）：需要重新登录', 'auth');
+  if (!res.ok || !data || !data.ok) {
+    throw new ApiError((data && data.error) || '上传失败', 'upload');
+  }
+  return data; // { ok: true, path: '...', url: '/api/dsbot/uploads/...' }
 }
 
-export async function fetchMoments() {
-  const d = await request('/api/dsbot/me/moments', { step: 'moments' });
+export async function uploadImage(fileUri) {
+  return uploadFile(fileUri, { type: 'image/jpeg', name: 'avatar.jpg' });
+}
+
+export async function fetchMoments(limit = 20, offset = 0) {
+  const d = await request('/api/dsbot/me/moments?limit=' + encodeURIComponent(limit) + '&offset=' + encodeURIComponent(offset), {
+    step: 'moments',
+  });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '获取朋友圈失败', 'moments');
   return d.items || [];
 }
 
-export async function postMoment(text) {
+export async function postMoment(text, media = []) {
   const d = await request('/api/dsbot/me/moment', {
     method: 'POST',
-    body: { text },
+    body: { text, media },
     step: 'post_moment',
   });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '发送朋友圈失败', 'post_moment');

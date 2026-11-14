@@ -1,65 +1,28 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { BookOpen, Database, FileStack, Lightbulb, MessageSquareQuote, Mic, PenLine } from 'lucide-react-native';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
-
-// 工作台首页（骨架版 · 2026-11-12）
-// 依据：design/设计稿-定案-首页与会话页.md 第一屏 3.2 元素表 H01–H21；令牌 v4。
-// 本轮只做结构：数据全是 props 默认值（假数），不接接口、不加动效。
-//
-// props（路由由移动端工程师挂，组件本身不管导航）
-//   greeting         string   H02 问候语，34/41/700
-//   dateText         string   H03 日期，11/15/500
-//   inspiration      shape { tag, body, pill }   H08 每日灵感主卡
-//   stats            [3]      H14–H16 采集台三数 { key, value, label }；不可点
-//   features         [7]      H18 六张网格卡 + H19 一张全宽卡 { key, title, sub }
-//   activeTab        string   dock 选中项：home | workbench | advisor | me
-//   onPressInspiration()            主卡整体点击
-//   onPressPill()                   H11「+1 条」点击（独立 responder，不冒泡到主卡）
-//   onOpenFeature(key)              七块功能入口点击
-//   onTabPress(key)                 dock 四项点击
-//
-// 颜色一律从 theme.js 取，本文件零硬编码色值。角色→键的对应见 roles()：
-//   令牌 brand  → 浅色 C.accent（#CE9EDB）/ 深色 C.card2（#3C3C3C）——roles.js 实际代码
-//   令牌 hero   → C.hero  （浅 #1A1A1A / 深 #3C3C3C，深色下比底亮）
-//   令牌 card   → C.card
-//   令牌 ink/ink2 → C.ink / C.ink2
-//   令牌 brandHi → theme.js 无此键，浅色用 C.me(#E8D9EE，≈令牌 #EAD2EE)、深色用 C.ink2(#8B8B94)
-//   令牌 accent（珊瑚橙 #FFAB96）→ theme.js 的 accent 键已被主色占用，珊瑚橙无键可取；
-//     药丸改走 浅 C.me / 深 C.accent，属偏差，已在交付说明里报备。
-//
-// 令牌硬约束在本文件的落点：零边框零投影（line 一律不引）、字号只 34/24/17/15/11、
-// 间距只 4 的倍数、圆角只 32(R.big)/24(R.small)/胶囊(R.capsule)。
+import { loadTodayWords, loadTrainToday, loadTodayBlocks } from '../../homeData';
 
 const DEFAULT_INSPIRATION = {
-  tag: '每日灵感',
-  body: '把「能力表达」当成产品来做，而不是当成日记写——先立三条可复用的说法，再拿真实案例校准。',
-  pill: '+1 条',
+  tag: '今天先做',
+  body: '把今天最想写的一句话先写下来，再决定它值不值得展开。',
+  pill: '＋ 记一条',
 };
 
-const DEFAULT_STATS = [
-  { key: 'onair', value: '3', label: '在播' },
-  { key: 'pending', value: '12', label: '待转写' },
-  { key: 'done', value: '148', label: '转完' },
-];
-
 const DEFAULT_FEATURES = [
-  { key: 'drafts', title: '稿库', sub: '186 篇' },
-  { key: 'topics', title: '选题池', sub: '34 条待写' },
-  { key: 'opinions', title: '观点库', sub: '512 条' },
-  { key: 'myOpinions', title: '我的观点', sub: '28 条' },
-  { key: 'corpus', title: '语料库', sub: '9.4 万词' },
-  { key: 'books', title: '书库', sub: '62 本' },
-  { key: 'ability', title: '能力表达', sub: '本周 +3 条' },
+  { key: 'drafts', title: '稿库' },
+  { key: 'topics', title: '选题池' },
+  { key: 'opinions', title: '观点库' },
+  { key: 'myOpinions', title: '我的观点' },
+  { key: 'corpus', title: '语料库' },
+  { key: 'books', title: '书库' },
+  { key: 'ability', title: '能力表达' },
 ];
 
-// 七张卡改用线条简笔画（老板 2026-11-13 定：「回来的是简笔画」「简约干净的线条」）。
-// 图标名逐个从 lucide-react-native 1.72.0 的真实导出里核过，不是硬编：
-//   file-stack / lightbulb / message-square-quote / pen-line / database / book-open / mic
-// 统一 size 24、strokeWidth 1.6、颜色 C.ink2（不用彩色）。
 const LINE_ICONS = {
   drafts: FileStack,
   topics: Lightbulb,
@@ -70,11 +33,15 @@ const LINE_ICONS = {
   ability: Mic,
 };
 
+function numberText(value, suffix) {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
+  return `${Math.round(Number(value))}${suffix}`;
+}
+
 export default function WorkbenchHomeScreen({
   greeting = '下午好，金屿',
   dateText = '11月12日 周四',
   inspiration = DEFAULT_INSPIRATION,
-  stats = DEFAULT_STATS,
   features = DEFAULT_FEATURES,
   activeTab = 'workbench',
   onPressInspiration,
@@ -88,13 +55,59 @@ export default function WorkbenchHomeScreen({
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
 
-  // 前 6 张两列，第 7 张全宽（H18 / H19）
-  const { pairs, wide } = useMemo(() => {
-    const grid = features.slice(0, 6);
-    const out = [];
-    for (let i = 0; i < grid.length; i += 2) out.push(grid.slice(i, i + 2));
-    return { pairs: out, wide: features[6] };
+  const [done, setDone] = useState({ words: null, train: null, blocks: null });
+
+  useEffect(() => {
+    let alive = true;
+    Promise.allSettled([loadTodayWords(), loadTrainToday(), loadTodayBlocks()]).then((results) => {
+      if (!alive) return;
+      const val = (r) => (r.status === 'fulfilled' ? r.value : null);
+      const words = val(results[0]);
+      const train = val(results[1]);
+      const blocks = val(results[2]);
+      setDone({
+        words: words ? words.words : null,
+        train: train ? train.count : null,
+        blocks: blocks ? blocks.blocks : null,
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const featureRows = useMemo(() => {
+    const list = Array.isArray(features) && features.length > 0 ? features : DEFAULT_FEATURES;
+    return [
+      list.slice(0, 2),
+      list.slice(2, 5),
+      list.slice(5, 7),
+    ].filter((row) => row.length > 0);
   }, [features]);
+
+  const draftFeature = (Array.isArray(features) ? features : []).find((f) => f.key === 'drafts');
+  const draftSub = draftFeature && draftFeature.sub && draftFeature.sub !== '—' ? draftFeature.sub : '';
+
+  const renderFeature = (item) => {
+    const Icon = LINE_ICONS[item.key] || FileStack;
+    return (
+      <Pressable
+        key={item.key}
+        style={s.block}
+        onPress={() => onOpenFeature && onOpenFeature(item.key)}
+        accessibilityRole="button"
+        accessibilityLabel={item.sub ? `${item.title}，${item.sub}` : item.title}
+      >
+        <Icon size={24} strokeWidth={1.6} color={C.ink2} />
+        <View style={s.blockText}>
+          <Text style={s.blockTitle} numberOfLines={1} allowFontScaling={false}>{item.title}</Text>
+          {item.sub ? (
+            <Text style={s.blockSub} numberOfLines={1} allowFontScaling={false}>{item.sub}</Text>
+          ) : null}
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <View style={s.root}>
@@ -104,145 +117,75 @@ export default function WorkbenchHomeScreen({
           paddingBottom: onTabPress && !embedded ? dockPadding(insets, S) : S.page + insets.bottom,
         }}
         showsVerticalScrollIndicator={false}
-        // 动效不在本轮：不挂 Animated，不加入场
       >
-        {/* ── 顶部块：形状 + 问候 + 每日灵感 + 破边装饰（H01–H12） ── */}
-        <View style={s.top}>
-          <View style={[s.greetWrap, { paddingTop: insets.top + S.x5 }]}>
-            <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>
-              {greeting}
-            </Text>
-            <Text style={s.date} numberOfLines={1} allowFontScaling={false}>
-              {dateText}
-            </Text>
-          </View>
+        <View style={[s.greetWrap, { paddingTop: insets.top + S.x4 }]}>
+          <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>{greeting}</Text>
+          <Text style={s.date} numberOfLines={1} allowFontScaling={false}>{dateText}</Text>
+        </View>
 
-          {/* H08 每日灵感：一屏唯一的高对比卡 */}
+        <Pressable
+          style={s.hero}
+          onPress={onPressInspiration}
+          accessibilityRole="button"
+          accessibilityLabel={`每日灵感：${inspiration.tag}`}
+        >
+          <Text style={s.heroTag} allowFontScaling={false}>{inspiration.tag}</Text>
+          <Text style={s.heroBody} numberOfLines={2} allowFontScaling={false}>{inspiration.body}</Text>
           <Pressable
-            style={s.hero}
-            onPress={onPressInspiration}
+            style={s.pill}
+            onPress={(e) => {
+              if (e && e.stopPropagation) e.stopPropagation();
+              if (onPressPill) onPressPill();
+            }}
             accessibilityRole="button"
-            accessibilityLabel={`每日灵感：${inspiration.tag}`}
+            accessibilityLabel={inspiration.pill}
           >
-            <View style={s.halftone} pointerEvents="none">
-              {Array.from({ length: 6 }).map((_, r) => (
-                <View key={r} style={s.halftoneRow}>
-                  {Array.from({ length: 6 }).map((__, c) => (
-                    <View key={c} style={s.halftoneDot} />
-                  ))}
-                </View>
-              ))}
-            </View>
-
-            <Text style={s.heroTag} allowFontScaling={false}>
-              {inspiration.tag}
-            </Text>            {/* 正文限宽 277，避免压到右下药丸（H10） */}
-            <Text style={s.heroBody} numberOfLines={2} allowFontScaling={false}>
-              {inspiration.body}
-            </Text>
-
-            {/* H11 药丸落在主卡热区内：独立 Pressable 接管 responder，父卡不同时响应 */}
-            <Pressable
-              style={s.pill}
-              hitSlop={{ top: 10, bottom: 10, left: 0, right: 0 }}
-              onPress={(e) => {
-                if (e && e.stopPropagation) e.stopPropagation();
-                if (onPressPill) onPressPill();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={inspiration.pill}
-            >
-              <Text style={s.pillText} allowFontScaling={false}>
-                {inspiration.pill}
-              </Text>
-            </Pressable>
+            <Text style={s.pillText} allowFontScaling={false}>{inspiration.pill}</Text>
           </Pressable>
+        </Pressable>
 
-        </View>
-
-        {/* ── 采集台：整块不可点，无按下态、无箭头（H13–H16） ── */}
-        <Text style={s.section}>采集台</Text>
-        <View style={s.statsRow}>
-          <View style={[s.stat, s.statBrand, s.statA]}>
-            <Text style={[s.statNum, s.statNumDark]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
-              {stats[0] ? stats[0].value : ''}
-            </Text>
-            <Text style={[s.statLabel, s.statNumDark]} numberOfLines={1} allowFontScaling={false}>
-              {stats[0] ? stats[0].label : ''}
-            </Text>
-          </View>
-          <View style={[s.stat, s.statBrand, s.statB]}>
-            <Text style={[s.statNum, s.statNumDark]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
-              {stats[1] ? stats[1].value : ''}
-            </Text>
-            <Text style={[s.statLabel, s.statNumDark]} numberOfLines={1} allowFontScaling={false}>
-              {stats[1] ? stats[1].label : ''}
-            </Text>
-          </View>
-          <View style={[s.stat, s.statPlain, s.statC]}>
-            <Text style={[s.statNum, { color: C.ink }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} allowFontScaling={false}>
-              {stats[2] ? stats[2].value : ''}
-            </Text>
-            <Text style={[s.statLabel, { color: C.ink }]} numberOfLines={1} allowFontScaling={false}>
-              {stats[2] ? stats[2].label : ''}
-            </Text>
-          </View>
-        </View>
-
-        {/* ── 全部功能：六张网格卡 + 一张全宽卡（H17–H19） ── */}
-        <Text style={s.sectionAll}>全部功能</Text>
-        <View style={s.grid}>
-          {pairs.map((pair, i) => (
-            <View key={i} style={s.gridRow}>
-              {pair.map((f) => {
-                const Icon = LINE_ICONS[f.key] || FileStack;
-                return (
-                  <Pressable
-                    key={f.key}
-                    style={s.card}
-                    onPress={() => onOpenFeature && onOpenFeature(f.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${f.title}，${f.sub}`}
-                  >
-                    <Icon size={24} strokeWidth={1.6} color={C.ink2} />
-                    <View style={s.cardText}>
-                      <Text style={s.cardTitle} numberOfLines={1} allowFontScaling={false}>
-                        {f.title}
-                      </Text>
-                      {f.sub ? (
-                        <Text style={s.cardSub} numberOfLines={1} allowFontScaling={false}>
-                          {f.sub}
-                        </Text>
-                      ) : null}
-                    </View>
-                  </Pressable>
-                );
-              })}
+        <Text style={s.sectionTitle} allowFontScaling={false}>全部入口</Text>
+        <View style={s.featureRows}>
+          {featureRows.map((row, index) => (
+            <View key={index} style={s.featureRow}>
+              {row.map(renderFeature)}
             </View>
           ))}
         </View>
 
-        {wide ? (
-          <Pressable
-            style={s.wide}
-            onPress={() => onOpenFeature && onOpenFeature(wide.key)}
-            accessibilityRole="button"
-            accessibilityLabel={`${wide.title}，${wide.sub}`}
-          >
-            {(() => {
-              const WideIcon = LINE_ICONS[wide.key] || Mic;
-              return <WideIcon size={24} strokeWidth={1.6} color={C.ink2} />;
-            })()}
-            <View style={s.cardText}>
-              <Text style={s.wideTitle} numberOfLines={1} allowFontScaling={false}>
-                {wide.title}
-              </Text>
-              <Text style={s.wideSub} numberOfLines={1} allowFontScaling={false}>
-                {wide.sub}
-              </Text>
+        <View style={s.doneCard}>
+          <View style={s.doneHead}>
+            <Text style={s.doneTitle} allowFontScaling={false}>今日完成</Text>
+            <Text style={s.doneHint} allowFontScaling={false}>今天干了些什么</Text>
+          </View>
+          <View style={s.doneRow}>
+            <View style={s.doneCell}>
+              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.words, ' 字')}</Text>
+              <Text style={s.doneLabel} allowFontScaling={false}>写下的字</Text>
             </View>
-          </Pressable>
-        ) : null}
+            <View style={s.doneCell}>
+              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.train, ' 次')}</Text>
+              <Text style={s.doneLabel} allowFontScaling={false}>练表达</Text>
+            </View>
+            <View style={s.doneCell}>
+              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.blocks, ' 块')}</Text>
+              <Text style={s.doneLabel} allowFontScaling={false}>看过的书</Text>
+            </View>
+          </View>
+        </View>
+
+        <Pressable
+          style={s.lastWork}
+          onPress={() => onOpenFeature && onOpenFeature('drafts')}
+          accessibilityRole="button"
+          accessibilityLabel="接着上次工作"
+        >
+          <Text style={s.lastKicker} allowFontScaling={false}>接着上次工作</Text>
+          <Text style={s.lastTitle} numberOfLines={1} allowFontScaling={false}>
+            {draftSub ? `稿库里还有 ${draftSub}` : '回稿库，接着写'}
+          </Text>
+          <Text style={s.lastHint} allowFontScaling={false}>打开稿库 ›</Text>
+        </Pressable>
       </ScrollView>
 
       {onTabPress && !embedded ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
@@ -254,37 +197,20 @@ const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     scroll: { flex: 1 },
-
-    // 顶部块：内容从屏顶 y=0 起，形状盖住灵动岛
-    top: { paddingBottom: 0 },
-    greetWrap: { paddingHorizontal: S.page },
+    greetWrap: { paddingHorizontal: S.page, paddingBottom: S.x3 },
     greet: { color: C.ink, ...T.display },
-    date: { marginTop: S.x1, color: C.ink2, ...T.body },
-
-    // H08 主卡：距形状 16，宽满内容（353 @393）
+    date: { marginTop: S.x1, color: C.ink2, ...T.meta },
     hero: {
-      marginTop: S.x6,
       marginHorizontal: S.page,
-      height: 168,
+      height: 124,
       borderRadius: R.big,
       backgroundColor: C.hero,
       padding: S.card,
       overflow: 'hidden',
+      justifyContent: 'center',
     },
-    halftone: {
-      position: 'absolute',
-      right: S.x4,
-      top: S.x4,
-      width: 88,
-      height: 88,
-      justifyContent: 'space-between',
-    },
-    halftoneRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    halftoneDot: { width: 2, height: 2, borderRadius: R.capsule, backgroundColor: K.halftone, opacity: 0.16 },
-
     heroTag: { color: K.heroTag, opacity: K.heroTagOpacity, ...T.meta, fontWeight: '500' },
-    heroBody: { marginTop: S.x1, maxWidth: 277, color: C.onHero, ...T.title, lineHeight: 22 },
-
+    heroBody: { marginTop: S.x1, maxWidth: '80%', color: C.onHero, ...T.title },
     pill: {
       position: 'absolute',
       right: S.x4,
@@ -297,51 +223,47 @@ const makeStyles = (C, T, S, R, K) =>
       justifyContent: 'center',
       paddingHorizontal: S.x2,
     },
-    pillText: { color: K.onPill, ...T.meta, fontWeight: '500', lineHeight: 15 },
-
-    // 区块标题：采集台距主卡 20（H13），全部功能距数字块 24（H17 坐标 574 − 550）
-    section: { marginTop: S.x5, marginHorizontal: S.page, color: C.ink, ...T.section },
-    sectionAll: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink, ...T.section },
-
-    statsRow: { flexDirection: 'row', marginTop: S.x6, marginHorizontal: S.page },
-    stat: { height: 96, borderRadius: R.small, paddingHorizontal: S.x4, paddingTop: S.x4, paddingBottom: S.x3, justifyContent: 'space-between' },
-    statBrand: { backgroundColor: K.brand },
-    statPlain: { backgroundColor: C.card },
-    statA: { flex: 1 },
-    statB: { flex: 1, marginLeft: S.x2 }, // ①↔② 缝 8（6.5：同色不调）
-    statC: { flex: 1, marginLeft: S.x3 }, // ②↔③ 缝 12（6.5 补偿 +4）
-    statNum: { ...T.display },
-    statNumDark: { color: K.onBrand },
-    statLabel: { ...T.meta, fontWeight: '500' },
-
-    grid: { marginTop: S.x6, marginHorizontal: S.page },
-    gridRow: { flexDirection: 'row', gap: S.gap, marginBottom: S.gap },
-    card: {
+    pillText: { color: K.onPill, ...T.meta, fontWeight: '500' },
+    sectionTitle: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink, ...T.section },
+    featureRows: { marginTop: S.x3, marginHorizontal: S.page, gap: S.x3 },
+    featureRow: { flexDirection: 'row', gap: S.x3 },
+    block: {
       flex: 1,
       height: 96,
       borderRadius: R.small,
       backgroundColor: C.card,
       padding: S.cardSm,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: S.x3,
+      justifyContent: 'space-between',
     },
-    cardText: { flex: 1 },
-    cardTitle: { color: C.ink, ...T.title },
-    cardSub: { marginTop: S.x1, color: C.ink2, ...T.meta },
-
-    wide: {
-      marginTop: 0,
+    blockText: { minWidth: 0 },
+    blockTitle: { color: C.ink, ...T.title },
+    blockSub: { color: C.ink3, ...T.meta, marginTop: S.x1 },
+    doneCard: {
       marginHorizontal: S.page,
-      height: 96,
-      borderRadius: R.big,
-      backgroundColor: C.hero,
-      padding: S.card,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: S.x3,
+      marginTop: S.x6,
+      padding: S.x4,
+      borderRadius: R.small,
+      backgroundColor: C.card,
     },
-    wideTitle: { color: C.onHero, ...T.title },
-    wideSub: { marginTop: S.x1, color: K.onHeroSub, opacity: K.onHeroSubOpacity, ...T.meta },
-
+    doneHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    doneTitle: { color: C.ink, ...T.section },
+    doneHint: { color: C.ink3, ...T.meta, marginLeft: S.x2 },
+    doneRow: { flexDirection: 'row', gap: S.x2, marginTop: S.x3 },
+    doneCell: {
+      flex: 1,
+      padding: S.x2,
+      alignItems: 'center',
+    },
+    doneNumber: { color: C.ink, ...T.section },
+    doneLabel: { color: C.ink3, ...T.meta, marginTop: S.x1, textAlign: 'center' },
+    lastWork: {
+      marginHorizontal: S.page,
+      marginTop: S.x4,
+      padding: S.x4,
+      borderRadius: R.small,
+      backgroundColor: C.card,
+    },
+    lastKicker: { color: C.ink3, ...T.meta },
+    lastTitle: { color: C.ink, ...T.title, marginTop: S.x1 },
+    lastHint: { color: C.accent, ...T.meta, marginTop: S.x2 },
   });

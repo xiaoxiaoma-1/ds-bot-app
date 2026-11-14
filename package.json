@@ -1,6 +1,6 @@
 {
   "name": "app-dsbot",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "main": "index.js",
   "private": true,
   "scripts": {
@@ -17,6 +17,7 @@
     "expo-secure-store": "~57.0.4",
     "expo-sensors": "~57.0.3",
     "expo-status-bar": "~57.0.1",
+    "expo-video": "~57.0.5",
     "lucide-react-native": "^1.72.0",
     "react": "19.2.3",
     "react-native": "0.86.3",

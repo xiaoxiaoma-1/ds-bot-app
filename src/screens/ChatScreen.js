@@ -207,6 +207,8 @@ export default function ChatScreen({ bot, onBack }) {
   const reconnectCount = useRef(0);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const pickLock = useRef(false);
   const stopFeed = useRef(null);
   const liveRef = useRef(null);
   const seqs = useRef(new Set());
@@ -335,6 +337,11 @@ export default function ChatScreen({ bot, onBack }) {
   }, [bot.id, load, onEvent]);
 
   const pickImage = useCallback(async (useCamera) => {
+    // 防重入：选图进行中再点一次会并发弹第二个系统选择器，
+    // 真机上能把原生选择器压死（退出不了、只能大退）
+    if (pickLock.current) return;
+    pickLock.current = true;
+    setPicking(true);
     try {
       const options = {
         mediaTypes: ['images'],
@@ -361,17 +368,20 @@ export default function ChatScreen({ bot, onBack }) {
       }
 
       if (result.canceled) {
-        // 用户取消选择，确保界面状态正确
-        setAttachHint(false);
+        // 用户取消选择：无图片要设，直接走 finally 复位
         return;
       }
 
       if (result.assets && result.assets[0]) {
         setSelectedImage(result.assets[0]);
-        setAttachHint(false);
       }
     } catch (error) {
       setErr({ step: 'pick', message: '选择图片失败: ' + error.message });
+    } finally {
+      // 取消 / 成功 / 失败 / 权限拒绝，所有出口统一在这里复位，
+      // 不允许任何分支绕过
+      pickLock.current = false;
+      setPicking(false);
       setAttachHint(false);
     }
   }, []);
@@ -536,14 +546,16 @@ export default function ChatScreen({ bot, onBack }) {
         {attachHint ? (
           <View style={{ paddingHorizontal: S.page, paddingTop: S.x2, flexDirection: 'row', gap: S.x2 }}>
             <Pressable
-              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small, opacity: picking ? 0.5 : 1 }}
               onPress={() => pickImage(false)}
+              disabled={picking}
             >
               <Text style={{ color: C.ink, fontSize: 12 }}>从相册选</Text>
             </Pressable>
             <Pressable
-              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small }}
+              style={{ backgroundColor: C.card, paddingHorizontal: S.x3, paddingVertical: S.x2, borderRadius: R.small, opacity: picking ? 0.5 : 1 }}
               onPress={() => pickImage(true)}
+              disabled={picking}
             >
               <Text style={{ color: C.ink, fontSize: 12 }}>拍照</Text>
             </Pressable>

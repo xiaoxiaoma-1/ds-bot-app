@@ -1,26 +1,42 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Animated } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { charsLabel, loadBoardSummary, loadDraftResume, loadHotDaily, loadIdeas, loadTopics, loadTrainToday, loadTodayWords, loadTodayBlocks } from '../homeData';
+import {
+  charsLabel,
+  loadBoardSummary,
+  loadDraftResume,
+  loadHotDaily,
+  loadIdeas,
+  loadTopics,
+  loadTrainToday,
+  loadTodayWords,
+  loadTodayBlocks,
+} from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
-import PullGreetingBanner from './PullGreetingBanner';
 
-// 首页（我这边新建的屏）：三块各自独立加载、独立失败。
-// 数据一律从 ../homeData 取，不在这里造假数兜底——接口挂了就显示空态。
-// active=false 时不发请求（沿用 MainTabs 的门控）。
+const HERO_H = 470;
+const HERO_W = 333;
+
 export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
-  const { C, T, S, R, scheme } = useTheme();
-  const s = useMemo(() => makeStyles(C, T, S, R, scheme), [C, T, S, R, scheme]);
+  const { C, T, S, R } = useTheme();
+  const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
-
+  const { width: winWidth } = useWindowDimensions();
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
 
-  const startedRef = useRefFlag();
-  const manualRefresh = useRef(false); // 标记主动刷新，跳过缓存静默更新
-
+  const manualRefresh = useRef(false);
   const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
   const hot = useCachedResource('home:hot', loadHotDaily, { refreshOnMount: !manualRefresh.current });
   const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
@@ -31,14 +47,19 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const blocks = useCachedResource('home:blocks', loadTodayBlocks, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
-  const pullAnim = useRef(new Animated.Value(0)).current; // 下拉量（负值）
 
   const loadAll = useCallback(async () => {
-    manualRefresh.current = true; // 标记主动刷新，避免 hook 后台静默刷新
+    manualRefresh.current = true;
     try {
       const [b, h, d, i, t, tr, w, bl] = await Promise.all([
-        loadBoardSummary(), loadHotDaily(), loadDraftResume(), loadIdeas(), loadTopics(), loadTrainToday(),
-        loadTodayWords(), loadTodayBlocks()
+        loadBoardSummary(),
+        loadHotDaily(),
+        loadDraftResume(),
+        loadIdeas(),
+        loadTopics(),
+        loadTrainToday(),
+        loadTodayWords(),
+        loadTodayBlocks(),
       ]);
       setCached('home:board', b);
       setCached('home:hot', h);
@@ -49,50 +70,15 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
       setCached('home:words', w);
       setCached('home:blocks', bl);
     } catch {
-      // 失败不更新缓存，保留旧数据，用户状态不变
+      // 保留旧数据，失败不打断当前页面
     }
     manualRefresh.current = false;
   }, []);
 
-  // 静默刷新由 useCachedResource 内部处理，切换 active 时不重复执行
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    const doRefresh = async () => {
-      try {
-        await loadAll();
-      } catch {
-        // 失败保留旧数据
-      } finally {
-        setRefreshing(false);
-      }
-    };
-    doRefresh();
+    loadAll().finally(() => setRefreshing(false));
   }, [loadAll]);
-
-  const scrollHandler = useCallback((e) => {
-    const y = e.nativeEvent.contentOffset.y;
-    // 下拉时 y < 0，设置 pullAnim 为 y 或 -200 的较大者（负值越小下拉越多）
-    pullAnim.setValue(Math.min(0, y));
-  }, []);
-
-  const StateLine = ({ st, empty }) => {
-    if (st.loading) {
-      return (
-        <View style={s.stateRow}>
-          <ActivityIndicator color={C.accent} />
-          <Text style={s.stateText} allowFontScaling={false}>
-            正在取
-          </Text>
-        </View>
-      );
-    }
-    return (
-      <Text style={[s.stateText, st.error ? { color: C.ink3 } : null]} allowFontScaling={false}>
-        {st.error ? '数据没来：' + st.error : empty}
-      </Text>
-    );
-  };
 
   const b = board.data;
   const h = hot.data;
@@ -100,371 +86,306 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const i = ideas.data;
   const tp = topics.data;
   const hotTitle = h ? (h.isToday ? '今日热点' : (h.date ? h.date + ' 热点' : '热点')) : '今日热点';
+  const cardW = Math.min(HERO_W, Math.max(260, winWidth - S.page * 2));
+  const snap = cardW + S.x3;
 
-  // 米白条的高度插值已随组件迁到 PullGreetingBanner，这里不再自己算。
+  const StateLine = ({ st, empty }) =>
+    st && st.loading ? (
+      <View style={s.stateRow}>
+        <ActivityIndicator color={C.accent} />
+        <Text style={s.stateText} allowFontScaling={false}>正在取</Text>
+      </View>
+    ) : (
+      <Text style={s.stateText} allowFontScaling={false}>
+        {st && st.error ? '数据没来：' + st.error : empty}
+      </Text>
+    );
+
+  const HeroCard = ({ tint, kicker, title, body, meta, footer, onPress }) => {
+    const content = (
+      <View style={[s.heroCard, { backgroundColor: tint }]}>
+        <View>
+          <Text style={s.heroKicker} allowFontScaling={false}>{kicker}</Text>
+          <Text style={s.heroTitle} numberOfLines={3} allowFontScaling={false}>{title}</Text>
+          {body ? (
+            <Text style={s.heroBody} numberOfLines={4} allowFontScaling={false}>{body}</Text>
+          ) : null}
+        </View>
+        <View style={s.heroBottom}>
+          {meta ? (
+            <Text style={s.heroMeta} numberOfLines={2} allowFontScaling={false}>{meta}</Text>
+          ) : (
+            <View />
+          )}
+          {footer ? (
+            <Text style={s.heroFooter} allowFontScaling={false}>{footer}</Text>
+          ) : null}
+        </View>
+      </View>
+    );
+    return onPress ? (
+      <Pressable onPress={onPress} style={{ width: cardW, height: HERO_H }}>{content}</Pressable>
+    ) : (
+      <View style={{ width: cardW, height: HERO_H }}>{content}</View>
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      {/* 下拉时出现的米白条（固定位置在顶部，交 PullGreetingBanner 渲染） */}
-      <PullGreetingBanner pullProgress={pullAnim} greeting={greeting} dateText={dateText} insetsTop={insets.top} />
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: 0, paddingBottom: dockPadding(insets, S) }}
+        contentContainerStyle={{
+          paddingTop: insets.top + S.x4,
+          paddingBottom: dockPadding(insets, S),
+        }}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={C.ink2}
-            progressViewOffset={218} // 转圈不被米白遮住（固定为最大高度）
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.ink2} />
         }
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
       >
-        {/* ① 顶部：丁香形状 + 破边圆点/白圆（H01–H07） */}
-        {/* 整块左右各出屏 20，所以下面的圆点坐标可以按屏幕坐标写，不用再减页面边距 */}
-        <View style={s.heroBlock}>
-            <View style={s.shape} />
-            {/* 三个破边点：位置按圆心折算左上角（cx − d/2, cy − d/2） */}
-            <View style={[s.dot, { left: 55, top: 181, width: 10, height: 10 }]} pointerEvents="none" />
-            <View style={[s.dot, { left: 93, top: 190, width: 6, height: 6 }]} pointerEvents="none" />
-            <View style={[s.dot, { left: 323, top: 173, width: 14, height: 14 }]} pointerEvents="none" />
-            {/* 白圆：H07 写的是纯白两模式通用，压的是紫形状，所以写死 #FFFFFF 而不走令牌 */}
-            <View style={s.whiteDot} pointerEvents="none" />
-          </View>
-
-      {/* ① 今天动哪件 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            今天动哪件
-          </Text>
-          {b ? (
-            <Text style={s.cardMeta} allowFontScaling={false}>
-              待办 {b.todo} · 在等你 {b.waiting.length}
-            </Text>
-          ) : null}
+        <View style={s.head}>
+          <Text style={s.greeting} allowFontScaling={false}>{greeting}</Text>
+          <Text style={s.date} allowFontScaling={false}>{dateText}</Text>
         </View>
-        {!b ? (
-          <StateLine st={board} empty="今天没有待办" />
-        ) : b.waiting.length === 0 ? (
-          <Text style={s.stateText} allowFontScaling={false}>
-            今天没有在等你的
-          </Text>
-        ) : (
-          b.waiting.map((it, i) => {
-            // 后端 waiting 目前给对象；这里挡一下非对象元素，免得一个 null 把整页打死。
-            // 纯防御，没有实测到接口会给 null。
-            if (!it || typeof it !== 'object') return null;
-            return (
-              <View key={String(it.id != null ? it.id : 'w' + i)} style={s.row}>
-                <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-                  {it.title || '（无标题）'}
-                </Text>
-                {it.nextStep ? (
-                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                    {it.nextStep}
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={snap}
+          snapToAlignment="start"
+          contentContainerStyle={s.heroRow}
+        >
+          <HeroCard
+            tint={C.softMint}
+            kicker="今日热点"
+            title={h && h.picked ? h.picked.title : '今天的热点还没生成'}
+            body={h && h.picked && h.picked.source ? '来源 ' + h.picked.source : '打开选题池，看看今天可以写什么'}
+            meta={h && h.itemCount ? `${h.itemCount} 条候选` : '每天更新'}
+            footer="打开热点 ›"
+            onPress={() => navigation && navigation.navigate && navigation.navigate('TopicsPool')}
+          />
+          <HeroCard
+            tint={C.softBlue}
+            kicker="选题池"
+            title={tp && tp.items && tp.items[0] ? tp.items[0].title : '选题池还空着'}
+            body={tp && tp.items && tp.items[1] ? tp.items[1].title : '把想到的题目先放进来，写的时候就有得挑'}
+            meta={tp && tp.total ? `${tp.total} 条待挖` : '还没有选题'}
+            footer="去挑一个 ›"
+            onPress={() => navigation && navigation.navigate && navigation.navigate('TopicsPool')}
+          />
+          <HeroCard
+            tint={C.softOat}
+            kicker="接着写"
+            title={d ? (d.title || '（无标题）') : '还没有稿子'}
+            body={d && d.tail ? d.tail : '从上次停下的地方继续，不用重新找感觉'}
+            meta={d && d.chars ? charsLabel(d.chars) : '稿库同步'}
+            footer="继续写 ›"
+            onPress={() => {
+              if (d && onOpenDraft) onOpenDraft(d.id);
+              else if (navigation && navigation.navigate) navigation.navigate('DraftLibrary');
+            }}
+          />
+        </ScrollView>
+
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>今天动哪件</Text>
+            {b ? (
+              <Text style={s.sectionMeta} allowFontScaling={false}>
+                待办 {b.todo} · 在等你 {b.waiting.length}
+              </Text>
+            ) : null}
+          </View>
+          {!b ? (
+            <StateLine st={board} empty="今天没有待办" />
+          ) : b.waiting.length === 0 ? (
+            <Text style={s.stateText} allowFontScaling={false}>今天没有在等你的</Text>
+          ) : (
+            b.waiting.map((it, index) => {
+              if (!it || typeof it !== 'object') return null;
+              return (
+                <View key={String(it.id != null ? it.id : 'w' + index)} style={s.row}>
+                  <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
+                    {it.title || '（无标题）'}
                   </Text>
-                ) : null}
-              </View>
-            );
-          })
-        )}
-      </View>
-
-      {/* ② 今日热点 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            {hotTitle}
-          </Text>
-          {h && h.itemCount ? (
-            <Text style={s.cardMeta} allowFontScaling={false}>
-              {h.itemCount} 条
-            </Text>
-          ) : null}
+                  {it.nextStep ? (
+                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{it.nextStep}</Text>
+                  ) : null}
+                </View>
+              );
+            })
+          )}
         </View>
-        {!h ? (
-          <StateLine st={hot} empty="今天的热点还没生成" />
-        ) : !h.picked ? (
-          <Text style={s.stateText} allowFontScaling={false}>
-            这条日期没有挑出热点
-          </Text>
-        ) : (
-          <View style={s.row}>
-            <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-              {h.picked.title}
-            </Text>
-            {h.picked.source ? (
-              <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                来源 {h.picked.source}
-              </Text>
+
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>今日灵感</Text>
+            {i && i.total ? (
+              <Text style={s.sectionMeta} allowFontScaling={false}>{i.total} 条</Text>
             ) : null}
           </View>
-        )}
-      </View>
-
-      {/* ③ 接着写 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            接着写
-          </Text>
-          {d && d.chars ? (
-            <Text style={s.cardMeta} allowFontScaling={false}>
-              {charsLabel(d.chars)}
+          {ideas.loading ? (
+            <StateLine st={ideas} empty="正在取灵感" />
+          ) : ideas.error ? (
+            <View style={s.centerBlock}>
+              <Text style={s.stateText} allowFontScaling={false}>灵感没取到</Text>
+              <Pressable onPress={loadAll} style={s.retryBtn}>
+                <Text style={s.retryText} allowFontScaling={false}>重试</Text>
+              </Pressable>
+            </View>
+          ) : i && i.items && i.items.length === 0 ? (
+            <Text style={[s.stateText, { textAlign: 'center' }]} allowFontScaling={false}>
+              还没有灵感，去工作台记一条。
             </Text>
+          ) : i && i.items ? (
+            i.items.slice(0, 3).map((idea) => (
+              <View key={idea.id} style={s.row}>
+                <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                  {idea.content || '（无内容）'}
+                </Text>
+              </View>
+            ))
           ) : null}
         </View>
-        {!d ? (
-          <StateLine st={draft} empty="还没有稿子" />
-        ) : (
-          <Pressable
-            style={s.row}
-            disabled={!onOpenDraft}
-            onPress={() => onOpenDraft && onOpenDraft(d.id)}
-          >
-            <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-              {d.title || '（无标题）'}
-            </Text>
-            {d.tail ? (
-              <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                {d.tail}
-              </Text>
-            ) : null}
-            {d.source === 'latest' ? (
-              <Text style={s.rowHint} allowFontScaling={false}>
-                最近入库
-              </Text>
-            ) : null}
-          </Pressable>
-        )}
-      </View>
 
-      {/* ④ 今日灵感 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            今日灵感
-          </Text>
-          {i && i.total ? (
-            <Text style={s.cardMeta} allowFontScaling={false}>
-              {i.total} 条
-            </Text>
-          ) : null}
-        </View>
-        {ideas.loading ? (
-          <Text style={[s.stateText, { textAlign: 'center', paddingVertical: S.x4 }]} allowFontScaling={false}>
-            正在载入…
-          </Text>
-        ) : ideas.error ? (
-          <View style={{ alignItems: 'center', paddingVertical: S.x4 }}>
-            <Text style={s.stateText} allowFontScaling={false}>
-              灵感没取到
-            </Text>
-            <Pressable onPress={loadAll} style={{ marginTop: S.x2 }}>
-              <Text style={[s.stateText, { color: C.accent }]} allowFontScaling={false}>
-                重试
-              </Text>
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>快速开始</Text>
+          </View>
+          <View style={s.quickGrid}>
+            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('DraftLibrary')}>
+              <Text style={s.quickText} allowFontScaling={false}>写新稿</Text>
+            </Pressable>
+            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('Expression')}>
+              <Text style={s.quickText} allowFontScaling={false}>练表达</Text>
+            </Pressable>
+            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('Books')}>
+              <Text style={s.quickText} allowFontScaling={false}>翻书</Text>
+            </Pressable>
+            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('BotList')}>
+              <Text style={s.quickText} allowFontScaling={false}>问顾问</Text>
             </Pressable>
           </View>
-        ) : i && i.items.length === 0 ? (
-          <Text style={[s.stateText, { textAlign: 'center', paddingVertical: S.x4 }]} allowFontScaling={false}>
-            还没有灵感，点右下角 +1 记一条。
-          </Text>
-        ) : i ? (
-          i.items.slice(0, 3).map((idea) => (
-            <View key={idea.id} style={s.row}>
-              <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                {idea.content || '（无内容）'}
-              </Text>
+        </View>
+
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>今日进度</Text>
+          </View>
+          <View style={s.progressGrid}>
+            <View style={s.progressCell}>
+              <Text style={s.progressCount} allowFontScaling={false}>{train.data?.count ?? '—'}</Text>
+              <Text style={s.progressLabel} allowFontScaling={false}>练了几次</Text>
             </View>
-          ))
-        ) : null}
-      </View>
-
-      {/* ⑥ 四个大按钮 (2×2) */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            快速开始
-          </Text>
-        </View>
-        <View style={s.buttonGrid}>
-          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('DraftLibrary')}>
-            <Text style={s.bigButtonText} allowFontScaling={false}>写新稿</Text>
-          </Pressable>
-          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('Expression')}>
-            <Text style={s.bigButtonText} allowFontScaling={false}>练表达</Text>
-          </Pressable>
-          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('Books')}>
-            <Text style={s.bigButtonText} allowFontScaling={false}>翻书</Text>
-          </Pressable>
-          <Pressable style={s.bigButton} onPress={() => navigation?.navigate?.('BotList')}>
-            <Text style={s.bigButtonText} allowFontScaling={false}>问顾问</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* ⑦ 今日进度 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            今日进度
-          </Text>
-        </View>
-        <View style={s.progressGrid}>
-          {/* 练了几次 */}
-          <View style={s.progressCell}>
-            <Text style={s.progressCount} allowFontScaling={false}>
-              {train.data?.count ?? '—'}
-            </Text>
-            <Text style={s.progressLabel} allowFontScaling={false}>练了几次</Text>
-            {train.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
-          </View>
-          
-          {/* 今日采集 */}
-          <View style={s.progressCell}>
-            <Text style={s.progressCount} allowFontScaling={false}>
-              {(() => {
-                const wordsNum = words.data?.words;
-                if (wordsNum === undefined || wordsNum === null) return '—';
-                const n = Number(wordsNum);
-                if (n >= 10000) return (n / 10000).toFixed(1) + ' 万字';
-                if (n >= 1000) return Math.round(n / 1000) + ' 千字';
-                if (n > 0) return n + ' 字';
-                return '0 字';
-              })()}
-            </Text>
-            <Text style={s.progressLabel} allowFontScaling={false}>今日采集</Text>
-            {words.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
-          </View>
-          
-          {/* 看了几块 */}
-          <View style={s.progressCell}>
-            <Text style={s.progressCount} allowFontScaling={false}>
-              {(() => {
-                const blocksNum = blocks.data?.blocks;
-                if (blocksNum === undefined || blocksNum === null) return '—';
-                const n = Number(blocksNum);
-                const intBlocks = Math.round(n);
-                return intBlocks + ' 块';
-              })()}
-            </Text>
-            <Text style={s.progressLabel} allowFontScaling={false}>看了几块</Text>
-            {blocks.error && <Text style={s.progressHint} allowFontScaling={false}>数据没来</Text>}
-          </View>
-        </View>
-      </View>
-
-      {/* ⑤ 选题池 */}
-      <View style={s.card}>
-        <View style={s.cardHead}>
-          <Text style={s.cardTitle} allowFontScaling={false}>
-            选题池
-          </Text>
-          {tp && tp.total ? (
-            <Text style={s.cardMeta} allowFontScaling={false}>
-              {tp.total} 条
-            </Text>
-          ) : null}
-        </View>
-        {!tp ? (
-          <StateLine st={topics} empty="选题池空的" />
-        ) : tp.items.length === 0 ? (
-          <Text style={s.stateText} allowFontScaling={false}>
-            没有待挖的选题
-          </Text>
-        ) : (
-          tp.items.slice(0, 3).map((topic) => (
-            <View key={topic.id} style={s.row}>
-              <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                {topic.title || '（无标题）'}
+            <View style={s.progressCell}>
+              <Text style={s.progressCount} allowFontScaling={false}>
+                {(() => {
+                  const n = words.data?.words;
+                  if (n === undefined || n === null) return '—';
+                  const num = Number(n);
+                  if (num >= 10000) return (num / 10000).toFixed(1) + ' 万';
+                  if (num >= 1000) return Math.round(num / 1000) + ' 千';
+                  return num + ' 字';
+                })()}
               </Text>
-              {topic.board ? (
-                <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                  {topic.board}
+              <Text style={s.progressLabel} allowFontScaling={false}>今日采集</Text>
+            </View>
+            <View style={s.progressCell}>
+              <Text style={s.progressCount} allowFontScaling={false}>
+                {(() => {
+                  const n = blocks.data?.blocks;
+                  if (n === undefined || n === null) return '—';
+                  return Math.round(Number(n)) + ' 块';
+                })()}
+              </Text>
+              <Text style={s.progressLabel} allowFontScaling={false}>看了几块</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>选题池</Text>
+            {tp && tp.total ? (
+              <Text style={s.sectionMeta} allowFontScaling={false}>{tp.total} 条</Text>
+            ) : null}
+          </View>
+          {!tp ? (
+            <StateLine st={topics} empty="选题池空的" />
+          ) : tp.items.length === 0 ? (
+            <Text style={s.stateText} allowFontScaling={false}>没有待挖的选题</Text>
+          ) : (
+            tp.items.slice(0, 3).map((topic) => (
+              <View key={topic.id} style={s.row}>
+                <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                  {topic.title || '（无标题）'}
                 </Text>
-              ) : null}
-            </View>
-          ))
-        )}
-      </View>
-    </ScrollView>
-  </View>
+                {topic.board ? (
+                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{topic.board}</Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-// 极简的「只跑一次」标记，避免再引 useRef 的额外 import
-function useRefFlag() {
-  const [box] = useState(() => ({ value: false }));
-  return box;
-}
-
-// scheme 必须作为参数进来：它是组件内的局部变量，模块级函数取不到。
-// 少传这一个参数，渲染到 dot 这行就是 ReferenceError，release 包直接闪退（2026-11-13 真机踩到）。
-const makeStyles = (C, T, S, R, scheme) =>
+const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
-    // 顶部块：左右各出屏 20（所以块内坐标 = 屏幕坐标），高度 218 = 形状 196 + 白圆下沿 218
-    heroBlock: { height: 218, marginHorizontal: -S.page, marginTop: 0, marginBottom: S.x4 },
-    // H01：高 196、下沿左右各 64 弧、底色取品牌色（不是 C.hero —— 那是每日灵感主卡的颜色）
-    shape: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      height: 196,
-      // 深色下 C.accent 接近纯白，这块 196 高会变成刺眼大白块（老板：「上面那一块白色的太突兀了」）。
-      // 换 C.card2：浅色与页底 #F5EFF7 很接近，块感几乎消失——这是有意的。
-      backgroundColor: C.card2,
-      borderBottomLeftRadius: R.big * 2,
-      borderBottomRightRadius: R.big * 2,
+    head: { paddingHorizontal: S.page, paddingBottom: S.x4 },
+    greeting: { color: C.ink, ...T.display },
+    date: { color: C.ink2, ...T.meta, marginTop: S.x1 },
+    heroRow: { paddingHorizontal: S.page, gap: S.x3, paddingBottom: S.x4 },
+    heroCard: {
+      flex: 1,
+      borderRadius: R.big,
+      padding: S.x6,
+      justifyContent: 'space-between',
     },
-    greetWrap: { position: 'absolute', left: S.page * 2, right: S.page * 2, gap: S.x1 },
-    // 底色已从 C.accent（原深色近白）换成 C.card2（深色）。
-    // 深色下必须同时换浅字，否则深底色压着深字会看不清问候语。
-    // 浅色仍用 onAccent（#302636 on #EFE7F2 = 11.94:1）。
-    greet: { color: scheme === 'light' ? C.onAccent : C.ink, fontSize: 34, lineHeight: 41, fontWeight: '700' },
-    date: { color: scheme === 'light' ? C.onAccent : C.ink, opacity: 0.78, fontSize: 11, lineHeight: 15, fontWeight: '500', marginTop: S.x1 },
-    // 破边点：设计稿写 brandHi，但浅紫压浅紫看不清（EAD2EE on CE9EDB）。
-    // 改成「与白圆同族但有主次」：浅色白 55% / 深色近黑 40%（形状深色是近白，白点会消失）。
-    dot: {
-      position: 'absolute',
-      borderRadius: R.capsule,
-      backgroundColor: scheme === 'light' ? 'rgba(255,255,255,0.55)' : 'rgba(21,21,24,0.4)',
+    heroKicker: { color: C.ink2, ...T.meta },
+    heroTitle: { color: C.ink, ...T.section, marginTop: S.x2 },
+    heroBody: { color: C.ink2, ...T.body, marginTop: S.x3 },
+    heroBottom: { gap: S.x2 },
+    heroMeta: { color: C.ink3, ...T.meta },
+    heroFooter: { color: C.accent, ...T.meta },
+    sectionCard: {
+      marginHorizontal: S.page,
+      marginBottom: S.x3,
+      padding: S.x4,
+      borderRadius: R.small,
+      gap: S.x2,
     },
-    whiteDot: { position: 'absolute', left: 280, top: 174, width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF' },
-    card: { backgroundColor: C.card, borderRadius: R.small, padding: S.x4, marginBottom: S.x3, gap: S.x2 },
-    cardHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    cardTitle: { color: C.ink, ...T.title },
-    cardMeta: { color: C.ink3, ...T.meta },
-    row: { paddingVertical: S.x1, gap: 2 },
+    sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    sectionTitle: { color: C.ink, ...T.title },
+    sectionMeta: { color: C.ink3, ...T.meta },
+    row: { paddingVertical: S.x1, gap: S.x1 },
     rowTitle: { color: C.ink, ...T.body },
     rowSub: { color: C.ink2, ...T.meta },
-    rowHint: { color: C.ink3, ...T.meta },
     stateRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingVertical: S.x2 },
     stateText: { color: C.ink3, ...T.meta },
-    buttonGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: S.x3 },
-    bigButton: {
+    centerBlock: { alignItems: 'center', paddingVertical: S.x3, gap: S.x2 },
+    retryBtn: { paddingHorizontal: S.x4, paddingVertical: S.x2, borderRadius: R.capsule, backgroundColor: C.card2 },
+    retryText: { color: C.ink2, ...T.meta },
+    quickGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: S.x3 },
+    quickBtn: {
       width: '48%',
-      height: 88, // 至少 88pt 高
+      height: 88,
       backgroundColor: C.card2,
       borderRadius: R.small,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: S.x3,
     },
-    bigButtonText: { color: C.ink, ...T.title },
-    progressGrid: { flexDirection: 'row', justifyContent: 'space-between', gap: S.x2 },
+    quickText: { color: C.ink, ...T.title },
+    progressGrid: { flexDirection: 'row', gap: S.x2, paddingTop: S.x2 },
     progressCell: {
       flex: 1,
       backgroundColor: C.card2,
       borderRadius: R.small,
       padding: S.x3,
       alignItems: 'center',
-      justifyContent: 'center',
     },
-    progressCount: { color: C.ink, fontSize: 28, fontWeight: '700', marginBottom: S.x1 },
-    progressLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
-    progressHint: { color: C.ink3, ...T.meta, fontSize: 10, marginTop: 2, opacity: 0.7 },
+    progressCount: { color: C.ink, ...T.section },
+    progressLabel: { color: C.ink3, ...T.meta, marginTop: S.x1, textAlign: 'center' },
   });

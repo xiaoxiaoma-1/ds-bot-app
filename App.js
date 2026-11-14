@@ -44,6 +44,7 @@ import ViewsPoolScreen from './src/screens/workbench/ViewsPoolScreen';
 import TopicsPoolScreen from './src/screens/workbench/TopicsPoolScreen';
 import DraftLibraryScreen from './src/screens/workbench/DraftLibraryScreen';
 import IdeaQuickAddScreen from './src/screens/IdeaQuickAddScreen';
+import TeamManageScreen from './src/screens/TeamManageScreen';
 
 // 导航：原生栈（react-native-screens）。
 //   边缘左滑返回靠 gestureEnabled + fullScreenGestureEnabled:false —— 只接管屏幕左边缘 20~30pt，
@@ -112,6 +113,7 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
         <Stack.Screen name="IdeaQuickAdd" component={IdeaQuickAddRoute} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
+        <Stack.Screen name="TeamManage" component={TeamManageRoute} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -274,6 +276,10 @@ function DraftLibraryRoute({ route, navigation }) {
       
     />
   );
+}
+
+function TeamManageRoute({ navigation }) {
+  return <TeamManageScreen onBack={() => navigation.goBack()} />;
 }
 
 function TopicsPoolRoute({ navigation }) {

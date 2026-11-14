@@ -176,7 +176,7 @@ const AdvisorRow = memo(function AdvisorRow({
 // 切回顾问页时的静默刷新：1.5 秒内来回切不重复发（未读数会变，但不值得为此连发）
 const SILENT_REFRESH_MIN_MS = 1500;
 
-export default function BotListScreen({ onOpen, onSettings, active = true }) {
+export default function BotListScreen({ onOpen, onSettings, navigation, active = true }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -475,6 +475,13 @@ export default function BotListScreen({ onOpen, onSettings, active = true }) {
               </Text>
             </Pressable>
           ) : null}
+          {!dragMode ? (
+            <Pressable onPress={() => navigation.navigate('TeamManage')} hitSlop={10}>
+              <Text style={s.gear} allowFontScaling={false}>
+                管理
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
       {unreadNote ? (
@@ -618,21 +625,21 @@ const makeStyles = (C, T, S, R) =>
     mouth: { width: 10, height: 2.5, borderRadius: 1.25, position: 'absolute', left: 15, top: 24.75 },
     rowBody: { flex: 1 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
-    dot: { width: 6, height: 6, borderRadius: 3 },
+    dot: { width: 6, height: 6, borderRadius: R.capsule },
     status: { color: C.ink2, ...T.meta, flexShrink: 1 },
     name: { color: C.ink, ...T.title },
     badge: {
       minWidth: 20,
       height: 20,
-      borderRadius: 10,
+      borderRadius: R.capsule,
       paddingHorizontal: 6,
       alignItems: 'center',
       justifyContent: 'center',
     },
     badgeText: { color: C.onAccent, fontSize: 11, lineHeight: 15, fontWeight: '600' },
     handle: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
-    handleText: { color: C.ink3, fontSize: 20, lineHeight: 24 },
-    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    handleText: { color: C.ink3, ...T.title },
+    backdrop: { flex: 1, backgroundColor: C.scrim, justifyContent: 'flex-end' },
     sheet: { backgroundColor: C.card, borderTopLeftRadius: R.big, borderTopRightRadius: R.big, padding: S.x4, gap: S.x1 },
     sheetTitle: { color: C.ink2, ...T.meta, marginBottom: S.x2 },
     sheetItem: { paddingVertical: S.x3 },

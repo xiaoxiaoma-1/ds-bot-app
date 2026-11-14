@@ -234,8 +234,6 @@ const makeStyles = (C, T, S, R) =>
       marginTop: S.x4,
       paddingVertical: S.x4,
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: C.line,
     },
     btnBusy: { opacity: 0.7 },
     btnText: { color: C.onHero, ...T.title },

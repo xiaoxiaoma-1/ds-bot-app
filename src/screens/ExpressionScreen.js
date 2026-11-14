@@ -364,6 +364,7 @@ export default function ExpressionScreen({ onBack }) {
         <Animated.View style={[s.body, { paddingBottom: kbShiftJS }]}>
           <ScrollView
             ref={inputScrollRef}
+            style={s.scrollFlex}
             contentContainerStyle={s.inputWrap}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
@@ -402,6 +403,7 @@ export default function ExpressionScreen({ onBack }) {
         <Animated.View style={[s.body, { paddingBottom: kbShiftJS }]}>
           <ScrollView
             ref={scrollRef}
+            style={s.scrollFlex}
             contentContainerStyle={s.markedWrap}
             onScroll={onScroll}
             scrollEventThrottle={64}
@@ -579,6 +581,9 @@ const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     body: { flex: 1 },
+    // 关键：RN flexShrink 默认为 0，不给 flex:1 时 ScrollView 按内容撑高，
+    // 键盘弹起（body 被 paddingBottom 压缩）会把底部按钮/tabs 挤出可视区
+    scrollFlex: { flex: 1 },
     head: { height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: S.page, gap: S.x3 },
     back: { color: C.ink2, ...T.body },
     title: { color: C.ink, ...T.title, flex: 1, textAlign: 'center' },

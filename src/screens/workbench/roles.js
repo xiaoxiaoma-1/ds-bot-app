@@ -16,14 +16,13 @@ import { useTheme } from '../../theme';
 export function roleOf(C, scheme) {
   const light = scheme === 'light';
   return {
-    // 深色模式下 C.accent 现在是米白 #F5F1E8，用来铺顶部整块形状会变成一大片刺眼白（老板：「上面那一块白色的太突兀了」）。
-    // 米白现在只准用在三处——小标签、主按钮、进度条填充；不许铺大面积。浅色仍用丁香紫品牌色，不动。
+    // 浅色 accent 是深绿，深色 accent 是雾青；药丸统一走 accent，保证两种模式都有对比。
     brand: light ? C.accent : C.card2,
     onBrand: light ? C.onAccent : C.ink,
     brandHi: C.brandHi,
     coral: C.accentCoral,
     edge: light ? C.card : C.hero,
-    pill: light ? C.me : C.accent,
+    pill: C.accent,
     onPill: C.onAccent,
     heroTag: light ? C.me : C.ink,
     heroTagOpacity: light ? 1 : 0.8,
