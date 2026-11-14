@@ -33,10 +33,43 @@ const ROW_GAP = 12;
 const LONG_PRESS_MS = 300;
 
 // 圆润/有机形状可以加脸，几何类不加。
-// 有脸 = characterShapes.js 里这个 shape 真带了 eyes 数据；不在表里的 shape 一律不画。
+// 有脸 = characterShapes.js 里这个 shape 真带了 eyes 数据；不在表里的 shape 走 DEFAULT_EYES。
 const FACED_SHAPES = new Set(
   Object.keys(CHARACTER_SHAPES).filter((k) => Array.isArray(CHARACTER_SHAPES[k].eyes) && CHARACTER_SHAPES[k].eyes.length),
 );
+
+// H1：「有一些它还没眼睛」—— 后端给的 shape 名不一定都在 characterShapes.js 里
+// （比如 squircle / moon 这类旧名），那些头像就一颗眼睛都不画。给一套兜底眼睛。
+// 100×100 坐标系，cx/cy 是中心，和源数据同一套口径。
+const DEFAULT_EYES = [
+  [44.5, 46, 7, 18, -8],
+  [58.5, 42, 7, 18, -12],
+];
+
+// 眼睛颜色（H1）：以前是 inkOn(tint) —— 只有纯白 #FFFFFF 和近黑 #1A1A1A 两档，
+// 结果深色脸上是一片白（「眼睛是白色的」），浅色脸上一点黑（「有一个是黑色的」）。
+// 现在取脸色的同色系深/浅一档，任何脸型都能看出是「眼睛」，而且不刺眼。
+function hexToRgb(h) {
+  const s = String(h || '');
+  if (!/^#[0-9a-f]{6}$/i.test(s)) return null;
+  return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+function mixHex(a, b, t) {
+  const ra = hexToRgb(a);
+  const rb = hexToRgb(b);
+  if (!ra || !rb) return a;
+  const out = ra.map((v, i) => Math.round(v + (rb[i] - v) * t));
+  return '#' + out.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+function relLum(h) {
+  const rgb = hexToRgb(h);
+  if (!rgb) return 1;
+  const lin = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+}
 
 // 头像盒边长（眼睛坐标按这个换算）
 const MARK = 40;
@@ -46,7 +79,7 @@ const MARK = 40;
 // 看起来就是「眼睛位置错、比例怪」，moon 这种窄形状还多出一条悬空的嘴。
 // 现在一律按源数据逐个 shape 换算，并且不再画嘴（源设计里没有嘴）。
 function eyeBox(shape, i) {
-  const list = CHARACTER_SHAPES[shape] && CHARACTER_SHAPES[shape].eyes;
+  const list = (CHARACTER_SHAPES[shape] && CHARACTER_SHAPES[shape].eyes) || DEFAULT_EYES;
   const e = (list && list[i]) || null;
   if (!e) return null;
   const [cx, cy, w, h, tilt] = e;
@@ -128,7 +161,8 @@ const AdvisorRow = memo(function AdvisorRow({
   const shape = avatar.shape || 'gumdrop';
   // 跟随 bot.avatar.color，与 DS Bot 桌面端 BotMark 一致（图形填色 + 透明底）
   const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
-  const faceInk = inkOn(tint);
+  // 眼睛 = 脸色的同色系深/浅一档（深色脸往 C.onHero 提亮，浅色脸往 C.ink 压深）
+  const faceInk = relLum(tint) > 0.42 ? mixHex(tint, C.ink, 0.6) : mixHex(tint, C.onHero, 0.55);
 
   // 眼睛跟着倾斜走：单轴最多 3pt（老板要看得出来，又不至于飞出脸）；嘴不参与
   const tilt = useTilt();
@@ -152,7 +186,8 @@ const AdvisorRow = memo(function AdvisorRow({
             style={[s.mark, { tintColor: tint }]}
             resizeMode="contain"
           />
-          {FACED_SHAPES.has(shape) ? (
+          {/* 所有形状都画眼睛：有源数据的按源数据，没有的走 DEFAULT_EYES */}
+          {(
             <>
               {[0, 1].map((i) => {
                 const b = eyeBox(shape, i);
@@ -176,7 +211,7 @@ const AdvisorRow = memo(function AdvisorRow({
                 );
               })}
             </>
-          ) : null}
+          )}
         </View>
         <View style={s.rowBody}>
           <Text style={s.name} numberOfLines={1} allowFontScaling={false}>

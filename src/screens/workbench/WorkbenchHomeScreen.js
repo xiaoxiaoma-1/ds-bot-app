@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { BookOpen, Database, FileStack, LayoutGrid, Lightbulb, MessageSquareQuote, Mic, PenLine, TrendingUp } from 'lucide-react-native';
 import { useRoles } from './roles';
@@ -59,16 +59,15 @@ export default function WorkbenchHomeScreen({
   const insets = useSafeAreaInsets();
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
+  const { width: winWidth } = useWindowDimensions();
 
-  const featureRows = useMemo(() => {
+  // 一行最多 3 个（E1）。原来第三行塞 4 个：4 格平分后每格内容宽只剩 47pt，
+  // 「今日热点」这种 4 字标题在 17pt 字号下直接放不下，numberOfLines=1 一截就看不见了。
+  // 改成定宽网格 + 横向换行：一格最少 107pt（393 屏），标题不会再被饿死。
+  const blockW = Math.floor((winWidth - S.page * 2 - S.x4 * 2) / 3);
+  const featureList = useMemo(() => {
     const list = Array.isArray(features) && features.length > 0 ? features : DEFAULT_FEATURES;
-    // 三行排版 2 / 3 / 剩下全部。原来第三行写死 slice(5, 7)，第九块一加进来
-    // 「看板 / 今日热点」会被直接切掉（第九块永远不显示），所以末尾改成不封顶。
-    return [
-      list.slice(0, 2),
-      list.slice(2, 5),
-      list.slice(5),
-    ].filter((row) => row.length > 0);
+    return list;
   }, [features]);
 
   const renderFeature = (item) => {
@@ -77,14 +76,14 @@ export default function WorkbenchHomeScreen({
     return (
       <Pressable
         key={item.key}
-        style={s.block}
+        style={[s.block, { width: blockW }]}
         onPress={() => onOpenFeature && onOpenFeature(item.key)}
         accessibilityRole="button"
         accessibilityLabel={sub ? `${item.title}，${sub}` : item.title}
       >
         <Icon size={24} strokeWidth={1.6} color={C.ink2} />
         <View style={s.blockText}>
-          <Text style={s.blockTitle} numberOfLines={1} allowFontScaling={false}>{item.title}</Text>
+          <Text style={s.blockTitle} numberOfLines={2} allowFontScaling={false}>{item.title}</Text>
           {sub ? (
             <Text style={s.blockSub} numberOfLines={1} allowFontScaling={false}>{sub}</Text>
           ) : null}
@@ -94,7 +93,7 @@ export default function WorkbenchHomeScreen({
   };
 
   return (
-    <View style={s.root}>
+    <SafeAreaView edges={['top']} style={s.root}>
       <ScrollView
         style={s.scroll}
         contentContainerStyle={{
@@ -102,7 +101,7 @@ export default function WorkbenchHomeScreen({
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[s.greetWrap, { paddingTop: insets.top + S.x4 }]}>
+        <View style={s.greetWrap}>
           <Text style={s.greet} numberOfLines={1} allowFontScaling={false}>{greeting}</Text>
           <Text style={s.date} numberOfLines={1} allowFontScaling={false}>{dateText}</Text>
         </View>
@@ -130,16 +129,12 @@ export default function WorkbenchHomeScreen({
 
         <Text style={s.sectionTitle} allowFontScaling={false}>全部入口</Text>
         <View style={s.featureRows}>
-          {featureRows.map((row, index) => (
-            <View key={index} style={s.featureRow}>
-              {row.map(renderFeature)}
-            </View>
-          ))}
+          {featureList.map(renderFeature)}
         </View>
       </ScrollView>
 
       {onTabPress && !embedded ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -147,7 +142,7 @@ const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     scroll: { flex: 1 },
-    greetWrap: { paddingHorizontal: S.page, paddingBottom: S.x3 },
+    greetWrap: { paddingHorizontal: S.page, paddingTop: S.x4, paddingBottom: S.x3 },
     greet: { color: C.ink, ...T.display },
     date: { marginTop: S.x1, color: C.ink2, ...T.meta },
     hero: {
@@ -175,10 +170,15 @@ const makeStyles = (C, T, S, R, K) =>
     },
     pillText: { color: K.onPill, ...T.meta, fontWeight: '500' },
     sectionTitle: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink, ...T.section },
-    featureRows: { marginTop: S.x3, marginHorizontal: S.page, gap: S.x3 },
-    featureRow: { flexDirection: 'row', gap: S.x3 },
+    // 定宽网格：横向换行，一行 3 个，块之间间距 S.x4（气泡之间松开，不再挤成一坨）
+    featureRows: {
+      marginTop: S.x3,
+      marginHorizontal: S.page,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: S.x4,
+    },
     block: {
-      flex: 1,
       height: 96,
       borderRadius: R.small,
       backgroundColor: C.card,

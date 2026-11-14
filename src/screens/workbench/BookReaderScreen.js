@@ -44,6 +44,8 @@ const TOP_H = 96;
 const DEBOUNCE_MS = 500;
 const NEAR_END_PAGES = 3;
 const LETTER_SPACING = 0.3;
+// 量尺窗口长度（字）：只量当前位置往后这么多，字号变化只重量这一段（G2）
+const WIN_CHARS = 6000;
 
 // 字号档：lineHeight 跟着字号走，不然大字号会挤成一坨
 const FONT_STEPS = [
@@ -53,10 +55,12 @@ const FONT_STEPS = [
   { fontSize: 19, lineHeight: 32 },
 ];
 
+// G3：护眼就该是浅绿（softMint）。原来「护眼」挂在米黄（softOat）上、「浅绿」另起一档，
+// 现在把名字对正：默认 / 护眼（浅绿）/ 米色。
 const PAPERS = [
   { key: 'default', label: '默认' },
-  { key: 'warm', label: '护眼' },
-  { key: 'mint', label: '浅绿' },
+  { key: 'mint', label: '护眼' },
+  { key: 'warm', label: '米色' },
 ];
 
 export default function BookReaderScreen({
@@ -89,6 +93,7 @@ export default function BookReaderScreen({
   const [night, setNight] = useState(scheme !== 'light');
 
   const scroller = useRef(null);
+  const pageRef = useRef(0);
   const positioned = useRef(false);
   const progTimer = useRef(null);
   const lastBlock = useRef(-1);
@@ -119,26 +124,40 @@ export default function BookReaderScreen({
     return { text, parts };
   }, [blocks, base]);
 
-  // 正文宽度或字号变了必须重量：量不准就会切错页
+  // 量尺窗口：只量当前位置往后 WIN_CHARS 字（G2）
+  const [winStart, setWinStart] = useState(0);
+  // 跨窗口累计的页数（「第 N 页」用；换字号归零）
+  const [pagesBefore, setPagesBefore] = useState(0);
+  const winText = useMemo(
+    () => doc.text.slice(winStart, winStart + WIN_CHARS),
+    [doc.text, winStart],
+  );
+
+  // 正文窗口或宽度变了必须先清空（窗口一换，旧行的偏移就全废了）。
+  // 字号变化**不清**：旧的页先留着，量尺重排完再整体替换，避免闪一下「正在排版…」。
   useEffect(() => {
     setLines([]);
-  }, [doc.text, pageW, step.fontSize, step.lineHeight]);
+  }, [winText, pageW]);
 
   // ② 量行：隐藏 Text 与正文同宽同字号，onTextLayout 直接给每行高度
+  //
+  // G2：原来量尺渲染的是**整本已加载正文**，字号一动就整本重量一遍 —— 这就是
+  // 「点一下字号加大，它就在正在排版，排了半天」。现在只量当前位置附近一个窗口
+  // （WIN_CHARS 字，约十几页），字号变化只重量这一个窗口；翻到窗口末尾再把窗口往后挪。
   const onTextLayout = useCallback(
     (e) => {
       const raw = (e && e.nativeEvent && e.nativeEvent.lines) || [];
       let cursor = 0;
       const out = raw.map((l) => {
         const t = String((l && l.text) || '');
-        const found = t ? doc.text.indexOf(t, cursor) : -1;
-        const start = found >= 0 ? found : cursor;
-        cursor = start + t.length;
-        return { text: t, height: Number(l && l.height) || step.lineHeight, start, end: cursor };
+        const found = t ? winText.indexOf(t, cursor) : -1;
+        const start = (found >= 0 ? found : cursor) + winStart;
+        cursor = (found >= 0 ? found : cursor) + t.length;
+        return { text: t, height: Number(l && l.height) || step.lineHeight, start, end: cursor + winStart };
       });
       setLines(out);
     },
-    [doc.text, step.lineHeight],
+    [winText, winStart, step.lineHeight],
   );
 
   const pages = useMemo(() => paginate(lines, pageH), [lines, pageH]);
@@ -187,17 +206,55 @@ export default function BookReaderScreen({
     if (pages.length - 1 - pageIdx <= NEAR_END_PAGES) onNeedMore(base + blocks.length);
   }, [pages.length, pageIdx, onNeedMore, loadingMore, base, blocks.length, total]);
 
+  // ⑥ 窗口翻完：把量尺窗口往后挪一屏的量，不重量前面的（G2）
+  useEffect(() => {
+    if (!pages.length || pages.length < 2) return;
+    if (pageIdx < pages.length - 1) return;
+    const lastEnd = pages[pages.length - 1].end;
+    if (lastEnd >= doc.text.length) return;
+    // 页码跨窗口累计：换窗口时把已经翻过的页数记下来，「第 N 页」才不会每窗口从头数
+    setPagesBefore((n) => n + pages.length);
+    setWinStart(lastEnd);
+    setLines([]);
+    pageRef.current = 0;
+    setPageIdx(0);
+    if (scroller.current) scroller.current.scrollTo({ x: 0, animated: false });
+  }, [pageIdx, pages, doc.text.length]);
+
+  // 换字号：只以当前页为锚重量（不是从第 0 页重量整本）
+  const changeScale = useCallback(
+    (next) => {
+      const anchor = pages.length ? pages[Math.max(0, Math.min(pages.length - 1, pageIdx))].start : winStart;
+      setScaleIdx(next);
+      setWinStart(anchor);
+      // 不清 lines：旧的一页先留着，量尺重新排完直接换成新的，
+      // 用户看不到「正在排版…」那一下（这一窗口只有 6000 字，量得很快）。
+      setPageIdx(0);
+      setPagesBefore(0);
+      pageRef.current = 0;
+      if (scroller.current) scroller.current.scrollTo({ x: 0, animated: false });
+    },
+    [pages, pageIdx, winStart],
+  );
+
   // 进书：页算好之后一次性跳到 savedIdx 所在页（不让用户自己翻回去）
   useEffect(() => {
-    if (positioned.current || !pages.length || !pageW) return;
+    if (positioned.current || !pageW || !doc.parts.length) return;
     const savedPart = doc.parts.find((p) => p.idx === savedIdx);
     const offset = savedPart ? savedPart.start : 0;
+    // 上次读到的位置在窗口外（比如读到第 300 块）→ 先把窗口挪过去，再定位
+    if (offset < winStart || offset > winStart + WIN_CHARS - 200) {
+      setWinStart(offset);
+      setLines([]);
+      return;
+    }
+    if (!pages.length) return;
     let target = pages.findIndex((p) => p.end > offset);
     if (target < 0) target = 0;
     positioned.current = true;
     setPageIdx(target);
     if (scroller.current) scroller.current.scrollTo({ x: target * winWidth, animated: false });
-  }, [pages, pageW, savedIdx, doc.parts, winWidth]);
+  }, [pages, pageW, savedIdx, doc.parts, winStart, winText, winWidth]);
 
   const onMomentumEnd = (e) => {
     const x = e && e.nativeEvent ? e.nativeEvent.contentOffset.x : 0;
@@ -206,7 +263,20 @@ export default function BookReaderScreen({
   };
 
   const pageCount = pages.length;
-  const pct = pageCount ? Math.min(100, Math.round(((pageIdx + 1) / pageCount) * 100)) : 0;
+  // G2 文案：主进度只显示「第 N 页」（不显示总页数 —— 窗口只量了一段，总页数不可靠）。
+  // N = 之前窗口已经翻过的页数 + 本窗口内的第几页。
+  const pageNo = pagesBefore + Math.min(pageCount, pageIdx + 1);
+  // 百分比按「当前块 / 总块数」算：后端 total 是块数，不用量字也能算准。
+  const pct = useMemo(() => {
+    if (!pages.length) return 0;
+    const page = pages[Math.max(0, Math.min(pages.length - 1, pageIdx))];
+    if (!page) return 0;
+    const bIdx = blockAt(page.end);
+    const all = Number(total) || 0;
+    if (!all) return 0;
+    // bIdx 是块下标（0 起），按「读到第几块」算比例
+    return Math.min(100, Math.round(((Number(bIdx) + 1) / all) * 100));
+  }, [pages, pageIdx, blockAt, total]);
   const canBigger = scaleIdx < FONT_STEPS.length - 1;
   const canSmaller = scaleIdx > 0;
   const title = cleanTitle(book && book.title ? book.title : '阅读');
@@ -249,14 +319,14 @@ export default function BookReaderScreen({
           >
             {/* 隐藏量尺：和正文同宽同字号，只为了拿 lines[]。
                 不响应点击、不参与滚动，opacity 0 但仍然参与布局。 */}
-            {doc.text && pageW > 0 ? (
+            {winText && pageW > 0 ? (
               <Text
                 style={s.ruler}
                 onTextLayout={onTextLayout}
                 allowFontScaling={false}
                 pointerEvents="none"
               >
-                {doc.text}
+                {winText}
               </Text>
             ) : null}
 
@@ -302,7 +372,7 @@ export default function BookReaderScreen({
                 <Text style={s.menuLabel} allowFontScaling={false}>字号</Text>
                 <Pressable
                   style={[s.chip, canSmaller ? null : s.chipOff]}
-                  onPress={() => canSmaller && setScaleIdx((v) => v - 1)}
+                  onPress={() => canSmaller && changeScale(scaleIdx - 1)}
                   disabled={!canSmaller}
                   accessibilityRole="button"
                   accessibilityLabel="字号减一档"
@@ -313,7 +383,7 @@ export default function BookReaderScreen({
                 </Pressable>
                 <Pressable
                   style={[s.chip, canBigger ? null : s.chipOff]}
-                  onPress={() => canBigger && setScaleIdx((v) => v + 1)}
+                  onPress={() => canBigger && changeScale(scaleIdx + 1)}
                   disabled={!canBigger}
                   accessibilityRole="button"
                   accessibilityLabel="字号加一档"
@@ -391,7 +461,7 @@ export default function BookReaderScreen({
               <View style={[s.footFill, { width: pct + '%' }]} />
             </View>
             <Text style={[s.footText, { color: P.ink2 }]} allowFontScaling={false}>
-              读到 {pct}% · 第 {pageCount ? Math.min(pageCount, pageIdx + 1) : 0}/{pageCount || '?'} 页
+              第 {pageNo} 页 · 读到 {pct}%
             </Text>
           </View>
         </>

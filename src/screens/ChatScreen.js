@@ -25,6 +25,8 @@ import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
 // 动效：气泡采纳 S3 弹一次、新消息轻跳一次，全部 native driver。
 
 const BUBBLE_MAX = 279;
+// K2：一次最多选 9 张
+const MAX_PICK = 9;
 
 function useDots() {
   const v = useRef(new Animated.Value(0)).current;
@@ -204,8 +206,9 @@ export default function ChatScreen({ bot, onBack }) {
   const [mode, setMode] = useState('');
   const [attachHint, setAttachHint] = useState(false);
   const reconnectCount = useRef(0);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]); // K2：批量选图，最多 MAX_PICK
   const [uploading, setUploading] = useState(false);
+  const [uploadText, setUploadText] = useState('');
   const [picking, setPicking] = useState(false);
   const pickLock = useRef(false);
   const stopFeed = useRef(null);
@@ -359,7 +362,12 @@ export default function ChatScreen({ bot, onBack }) {
           setErr({ step: 'gallery', message: '没有相册权限' });
           return;
         }
-        result = await ImagePicker.launchImageLibraryAsync(options);
+        // K2：相册支持批量选，一次挑多张（拍照只能一张）
+        result = await ImagePicker.launchImageLibraryAsync({
+          ...options,
+          allowsMultipleSelection: true,
+          selectionLimit: MAX_PICK,
+        });
       }
 
       if (result.canceled) {
@@ -367,8 +375,13 @@ export default function ChatScreen({ bot, onBack }) {
         return;
       }
 
-      if (result.assets && result.assets[0]) {
-        setSelectedImage(result.assets[0]);
+      const assets = (result.assets || []).filter((a) => a && a.uri);
+      if (assets.length) {
+        // 拍照/追加：并到已有列表里，最多 MAX_PICK 张
+        setSelectedImages((prev) => {
+          const next = useCamera ? [...prev, ...assets] : assets;
+          return next.slice(0, MAX_PICK);
+        });
       }
     } catch (error) {
       setErr({ step: 'pick', message: '选择图片失败: ' + error.message });
@@ -384,29 +397,34 @@ export default function ChatScreen({ bot, onBack }) {
   async function onSend() {
     let finalText = draft.trim();
 
-    // 如果有图片，先上传
-    if (selectedImage) {
+    // 有图片，先一张张上传（K2：批量选、批量发，带「第几张/共几张」进度）
+    if (selectedImages.length) {
       setUploading(true);
-      // 上传 Promise 可能一直不 settle（RN 带文件体的 fetch 在连接卡住时不会 reject，
-      // 服务端日志里的 WinError 10053 是客户端先断，不是服务端拒），
-      // 所以这里和时间赛跑：要么上传成功，要么到点自己放弃，转圈一定会停。
-      const guard = new Promise((resolve) => setTimeout(resolve, 45000));
+      const urls = [];
       try {
-        const uploadResult = await Promise.race([uploadImage(selectedImage.uri), guard]);
-        if (!uploadResult || !uploadResult.url) throw new Error('上传没返回地址');
         const base = await getBase();
-        const imageUrl = String(base).replace(/\/$/, '') + uploadResult.url;
-        // 将图片URL附加到文本中
-        finalText = finalText ? finalText + '\n' + imageUrl : imageUrl;
-        // 上传成功后清除图片
-        setSelectedImage(null);
+        for (let i = 0; i < selectedImages.length; i += 1) {
+          setUploadText(`上传 ${i + 1}/${selectedImages.length}`);
+          // 上传 Promise 可能一直不 settle（RN 带文件体的 fetch 在连接卡住时不会 reject，
+          // 服务端日志里的 WinError 10053 是客户端先断，不是服务端拒），
+          // 所以这里和时间赛跑：要么上传成功，要么到点自己放弃，转圈一定会停。
+          const guard = new Promise((resolve) => setTimeout(() => resolve(null), 45000));
+          const uploadResult = await Promise.race([
+            uploadImage(selectedImages[i].uri),
+            guard,
+          ]);
+          if (!uploadResult || !uploadResult.url) throw new Error(`第 ${i + 1} 张没传上去`);
+          urls.push(String(base).replace(/\/$/, '') + uploadResult.url);
+        }
+        setSelectedImages([]);
+        finalText = finalText ? finalText + '\n' + urls.join('\n') : urls.join('\n');
       } catch (e) {
         setErr({ step: 'upload', message: '图片没传上去：' + String((e && e.message) || '超时了，再试一次') });
         return; // 转圈由 finally 收
       } finally {
-        // 任何分支（成功、失败、throw）都必须把转圈关掉，
-        // 之前 uploading 只在大成功/大失败两处复位，中间 throw 出来就一直转。
+        // 任何分支（成功、失败、throw）都必须把转圈关掉
         setUploading(false);
+        setUploadText('');
       }
     }
 
@@ -482,23 +500,78 @@ export default function ChatScreen({ bot, onBack }) {
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
         </View>
 
-        {selectedImage && (
-          <View style={{ paddingHorizontal: S.page, paddingBottom: S.x2, alignItems: 'center' }}>
-            <View style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
-              <Image
-                source={{ uri: selectedImage.uri }}
-                style={{ width: 60, height: 60, borderRadius: 8 }}
-              />
-              <Pressable
-                style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, backgroundColor: C.bad, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}
-                onPress={() => setSelectedImage(null)}
-              >
-                <Text style={{ color: C.onHero, ...T.meta }}>×</Text>
-              </Pressable>
-            </View>
+        {selectedImages.length > 0 && (
+          <View style={{ paddingHorizontal: S.page, paddingBottom: S.x2, flexDirection: 'row', flexWrap: 'wrap', gap: S.x2 }}>
+            {selectedImages.map((img, i) => (
+              <View key={String(img.uri) + i} style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                <Image
+                  source={{ uri: img.uri }}
+                  style={{ width: 60, height: 60, borderRadius: 8 }}
+                />
+                <Pressable
+                  style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, backgroundColor: C.bad, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}
+                  onPress={() => setSelectedImages((prev) => prev.filter((_, k) => k !== i))}
+                >
+                  <Text style={{ color: C.onHero, ...T.meta }}>×</Text>
+                </Pressable>
+              </View>
+            ))}
           </View>
         )}
+        {uploading && uploadText ? (
+          <Text style={{ color: C.ink3, ...T.meta, paddingHorizontal: S.page, paddingBottom: S.x2 }}>
+            {uploadText}
+          </Text>
+        ) : null}
         
+        {/* K1：附件弹层排在输入框**上面**（原来在 composer 之后，等于贴屏幕最底边，
+            一半压在安全区外，点不到）。三枚 80×80 方形图标按钮，横向居中，整块离底边留白。 */}
+        {attachHint ? (
+          <View
+            style={[s.attachPanel, { marginBottom: S.x3 }]}
+          >
+            <Pressable
+              style={[s.attachTile, picking ? s.attachPillOff : null]}
+              onPress={() => pickImage(false)}
+              disabled={picking}
+              accessibilityRole="button"
+              accessibilityLabel="从相册选"
+            >
+              {/* 相册图标：外框 + 中间一只「相片」 */}
+              <View style={[s.tileIconFrame, { borderColor: C.ink2 }]}>
+                <View style={[s.tileIconDot, { backgroundColor: C.accent }]} />
+                <View style={[s.tileIconHill, { backgroundColor: C.ink2 }]} />
+              </View>
+              <Text style={s.attachTileText} allowFontScaling={false}>从相册选</Text>
+            </Pressable>
+            <Pressable
+              style={[s.attachTile, picking ? s.attachPillOff : null]}
+              onPress={() => pickImage(true)}
+              disabled={picking}
+              accessibilityRole="button"
+              accessibilityLabel="拍照"
+            >
+              {/* 拍照图标：机身 + 镜头 */}
+              <View style={[s.tileIconCamera, { borderColor: C.ink2 }]}>
+                <View style={[s.tileIconLens, { backgroundColor: C.accent }]} />
+              </View>
+              <Text style={s.attachTileText} allowFontScaling={false}>拍照</Text>
+            </Pressable>
+            <Pressable
+              style={s.attachTile}
+              onPress={() => setAttachHint(false)}
+              accessibilityRole="button"
+              accessibilityLabel="取消"
+            >
+              <View style={s.tileIconCross}>
+                <View style={[s.tileIconCrossBar, { backgroundColor: C.ink2 }]} />
+                <View style={[s.tileIconCrossBar, s.tileIconCrossBarAlt, { backgroundColor: C.ink2 }]} />
+              </View>
+              <Text style={s.attachTileText} allowFontScaling={false}>取消</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x6 }]}>
           <Pressable
             style={s.attachBtn}
@@ -527,7 +600,7 @@ export default function ChatScreen({ bot, onBack }) {
               onPress={onSend}
               onPressIn={sendPress.onPressIn}
               onPressOut={sendPress.onPressOut}
-              disabled={(!draft.trim() && !selectedImage) || uploading}
+              disabled={(!draft.trim() && selectedImages.length === 0) || uploading}
             >
               {uploading ? (
                 <ActivityIndicator size="small" color={C.onAccent} />
@@ -539,38 +612,6 @@ export default function ChatScreen({ bot, onBack }) {
             </Pressable>
           </Animated.View>
         </View>
-        {/* 附件菜单挪到输入框**上面**：原来排在 composer 之后，等于贴在屏幕最底边，
-            一半压在安全区外面，点来点去点不到（「点了没反应」）。
-            底部留白按 Math.max(insets.bottom, S.x3) + S.x6 给，绝不贴屏幕边。 */}
-        {attachHint ? (
-          <View
-            style={[s.attachPanel, { marginBottom: S.x2 }]}
-          >
-            <Pressable
-              style={[s.attachPill, picking ? s.attachPillOff : null]}
-              onPress={() => pickImage(false)}
-              disabled={picking}
-              accessibilityRole="button"
-            >
-              <Text style={s.attachPillText} allowFontScaling={false}>从相册选</Text>
-            </Pressable>
-            <Pressable
-              style={[s.attachPill, picking ? s.attachPillOff : null]}
-              onPress={() => pickImage(true)}
-              disabled={picking}
-              accessibilityRole="button"
-            >
-              <Text style={s.attachPillText} allowFontScaling={false}>拍照</Text>
-            </Pressable>
-            <Pressable
-              style={s.attachPill}
-              onPress={() => setAttachHint(false)}
-              accessibilityRole="button"
-            >
-              <Text style={s.attachPillText} allowFontScaling={false}>取消</Text>
-            </Pressable>
-          </View>
-        ) : null}
       </View>
     </View>
   );
@@ -653,21 +694,52 @@ const makeStyles = (C, T, S, R) =>
     },
     sendText: { color: C.onAccent, ...T.body },
     attachPanel: {
+      // K1：三枚大号方形图标按钮，横向居中；整块离屏幕底边留出安全区 + 一档间距
       flexDirection: 'row',
-      gap: S.x2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: S.x5,
       paddingHorizontal: S.page,
-      paddingTop: S.x2,
+      paddingVertical: S.x4,
+      backgroundColor: C.card2,
+      marginHorizontal: S.x4,
+      borderRadius: R.big,
+      borderBottomLeftRadius: R.small,
+      borderBottomRightRadius: R.small,
     },
-    attachPill: {
+    attachTile: {
+      width: 80,
+      height: 80,
+      borderRadius: R.small,
       backgroundColor: C.card,
-      paddingHorizontal: S.x4,
-      paddingVertical: S.x2,
-      borderRadius: R.capsule,
-      minHeight: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: S.x2,
+    },
+    attachTileText: { color: C.ink, ...T.meta, fontWeight: '500' },
+    tileIconFrame: {
+      width: 28,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 1.5,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    tileIconDot: { position: 'absolute', top: 4, right: 5, width: 5, height: 5, borderRadius: 3 },
+    tileIconHill: { height: 7, borderTopLeftRadius: 4, borderTopRightRadius: 4, marginHorizontal: 4 },
+    tileIconCamera: {
+      width: 30,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 1.5,
+      alignItems: 'center',
       justifyContent: 'center',
     },
+    tileIconLens: { width: 11, height: 11, borderRadius: 6 },
+    tileIconCross: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+    tileIconCrossBar: { position: 'absolute', width: 22, height: 1.5, borderRadius: 1 },
+    tileIconCrossBarAlt: { transform: [{ rotate: '90deg' }] },
     attachPillOff: { opacity: 0.5 },
-    attachPillText: { color: C.ink, ...T.meta, fontWeight: '500' },
     attachBtn: {
       backgroundColor: C.card,
       borderRadius: R.capsule,

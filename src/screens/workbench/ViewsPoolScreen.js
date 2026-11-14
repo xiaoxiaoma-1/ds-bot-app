@@ -63,6 +63,74 @@ function errorText(e) {
   return e.message ? String(e.message) : String(e);
 }
 
+// 今日观点消息条（D4）：左滑露「认同」，右滑露「不认同」；点条本身进这条的表态页。
+// 双向都要露，所以没有复用 SwipeRow（那个只露一侧的「删除」）。
+const BAR_W = 96;
+function IdeaBar({ item, index, s, onOpen }) {
+  const tx = useRef(new Animated.Value(0)).current;
+  const shownRef = useRef(null); // 'agree' | 'disagree' | null
+
+  const snap = (side) => {
+    shownRef.current = side;
+    Animated.spring(tx, {
+      toValue: side === 'agree' ? -BAR_W : side === 'disagree' ? BAR_W : 0,
+      tension: 420,
+      friction: 20,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (e, g) => Math.abs(g.dx) > 4 && Math.abs(g.dx) > Math.abs(g.dy),
+        onMoveShouldSetPanResponderCapture: (e, g) => Math.abs(g.dx) > 4 && Math.abs(g.dx) > Math.abs(g.dy),
+        onPanResponderMove: (e, g) => tx.setValue(Math.max(-BAR_W, Math.min(BAR_W, g.dx))),
+        onPanResponderRelease: (e, g) => {
+          if (Math.abs(g.dx) <= 6 && Math.abs(g.dy) <= 6) {
+            snap(null);
+            if (onOpen) onOpen(null);
+            return;
+          }
+          if (g.dx <= -40) snap('agree');
+          else if (g.dx >= 40) snap('disagree');
+          else snap(null);
+        },
+        onPanResponderTerminate: () => snap(null),
+      }),
+    [tx, onOpen],
+  );
+
+  return (
+    <View style={s.barClip}>
+      <View style={s.barPanes} pointerEvents="box-none">
+        <Pressable
+          style={[s.barPane, s.barPaneLeft]}
+          onPress={() => onOpen && onOpen('disagree')}
+          accessibilityRole="button"
+        >
+          <Text style={s.barPaneText} allowFontScaling={false}>不认同</Text>
+        </Pressable>
+        <Pressable
+          style={[s.barPane, s.barPaneRight]}
+          onPress={() => onOpen && onOpen('agree')}
+          accessibilityRole="button"
+        >
+          <Text style={s.barPaneText} allowFontScaling={false}>认同</Text>
+        </Pressable>
+      </View>
+      <Animated.View {...responder.panHandlers} style={{ transform: [{ translateX: tx }] }}>
+        <Pressable style={s.barRow} onPress={() => onOpen && onOpen(null)} accessibilityRole="button">
+          <Text style={s.barIndex} allowFontScaling={false}>{index + 1}</Text>
+          <Text style={s.barTitle} numberOfLines={2} allowFontScaling={false}>
+            {(item && (item.title || item.claim || item.content)) || '（无标题）'}
+          </Text>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function ViewsPoolScreen({
   topics = [],
   done = 0,
@@ -249,6 +317,15 @@ export default function ViewsPoolScreen({
   const menuPending = pending || topics.length;
 
   const goBack = () => {
+    // 层级（D3）：投票页 → 观点库主页面；观点库主页面 → 上一级（全部入口）
+    if (mode === 'swipe') {
+      setVerdict(null);
+      setWhy('');
+      setErr(null);
+      pan.setValue({ x: 0, y: 0 });
+      setMode('menu');
+      return;
+    }
     if (onBack) onBack();
   };
 
@@ -268,6 +345,19 @@ export default function ViewsPoolScreen({
     if (nav && nav.navigate) nav.navigate('MyViews');
   };
 
+  // 今日观点的 3 条：点/滑 → 直接进这一条的表态页（D4 / D5）
+  const startVote = (item, withVerdict) => {
+    const i = topics.findIndex((t) => t && item && t.id === item.id);
+    setIdx(i >= 0 ? i : 0);
+    setWhy('');
+    setErr(null);
+    pan.setValue({ x: 0, y: 0 });
+    setVerdict(withVerdict || null);
+    setMode('swipe');
+  };
+
+  const dayIdeas = Array.isArray(topics) ? topics.slice(0, 3) : [];
+
   if (mode === 'menu') {
     return (
       <View style={s.root}>
@@ -283,6 +373,23 @@ export default function ViewsPoolScreen({
         </View>
 
         <View style={s.menuWrap}>
+          {/* 今日观点：固定在观点库最上面，像消息条（D4）。
+              左滑露「认同」，右滑露「不认同」，点条本身进这一条的表态页（D5）。 */}
+          {dayIdeas.length ? (
+            <View style={s.ideaBox}>
+              <Text style={s.ideaHead} allowFontScaling={false}>今日观点</Text>
+              {dayIdeas.map((it, i) => (
+                <IdeaBar
+                  key={(it && it.id) || 'day-' + i}
+                  item={it}
+                  index={i}
+                  s={s}
+                  onOpen={(verdictKey) => startVote(it, verdictKey)}
+                />
+              ))}
+            </View>
+          ) : null}
+
           <Pressable style={s.menuCard} onPress={() => setMode('swipe')} accessibilityRole="button">
             <Text style={s.menuTitle} allowFontScaling={false}>观点库</Text>
             <Text style={s.menuSub} allowFontScaling={false}>
@@ -348,14 +455,6 @@ export default function ViewsPoolScreen({
             已表态 {doneN} · 还剩 {remain}
           </Text>
         </View>
-        <Pressable
-          style={[s.exitVote, { top: insets.top }]}
-          onPress={cancelVote}
-          accessibilityRole="button"
-          accessibilityLabel="退出投票回到列表"
-        >
-          <Text style={s.exitVoteText} allowFontScaling={false}>退出投票</Text>
-        </Pressable>
       </View>
 
       {/* 卡片区：写理由时整块收起，把高度让给 sheet */}
@@ -532,8 +631,6 @@ const makeStyles = (C, T, S, R, K) =>
       justifyContent: 'center',
     },
     backText: { color: C.ink, ...T.title, marginTop: -2 },
-    exitVote: { position: 'absolute', right: S.page, height: 44, justifyContent: 'center' },
-    exitVoteText: { color: C.ink2, ...T.meta },
     headText: { position: 'absolute', left: S.page, right: S.page },
     title: { color: K.onBrand, ...T.display },
     subTitle: { marginTop: S.x1, color: K.onBrand, opacity: 0.78, ...T.meta, fontWeight: '500' },
@@ -568,6 +665,25 @@ const makeStyles = (C, T, S, R, K) =>
     emptySub: { color: C.ink2, ...T.meta, textAlign: 'center' },
 
     menuWrap: { flex: 1, paddingHorizontal: S.page, paddingTop: S.x6, gap: S.x4 },
+    // 今日观点消息条（D4）
+    ideaBox: { gap: S.x2 },
+    ideaHead: { color: C.ink2, ...T.meta },
+    barClip: { borderRadius: R.small, overflow: 'hidden' },
+    barPanes: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', justifyContent: 'space-between' },
+    barPane: { width: BAR_W, height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: C.card2 },
+    barPaneLeft: { alignItems: 'center' },
+    barPaneRight: { alignItems: 'center' },
+    barPaneText: { color: C.ink, ...T.meta, fontWeight: '600' },
+    barRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: S.x2,
+      padding: S.x3,
+      backgroundColor: C.card,
+      borderRadius: R.small,
+    },
+    barIndex: { minWidth: S.x4, color: C.ink3, ...T.meta, textAlign: 'right' },
+    barTitle: { flex: 1, minWidth: 0, color: C.ink, ...T.body },
     menuCard: { height: 148, borderRadius: R.big, backgroundColor: C.card, padding: S.x5, justifyContent: 'center' },
     menuTitle: { color: C.ink, ...T.section },
     menuSub: { marginTop: S.x2, color: C.ink2, ...T.body },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,9 +8,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
-import { useCachedResource } from '../../cache';
+import { readCached, setCached } from '../../cache';
 import { loadBoardSummary } from '../../homeData';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
@@ -41,33 +41,77 @@ export default function BoardScreen({
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
 
-  const cached = useCachedResource('home:board', loadBoardSummary);
-  const loading = !cached.data && !cached.error;
-  const board = cached.data;
-  const cards = Array.isArray(board?.cards) ? board.cards : [];
+  // 崩溃根因（C1）：useCachedResource 只返回 { data, loading, error }，**没有 refresh()**。
+  // 之前这页写 `cached.refresh()`，下拉刷新一碰就是 "cached.refresh is not a function"。
+  // 现在这页自己管刷新状态：调 loadBoardSummary 成功后写回缓存，不再调不存在的方法。
+  const [board, setBoard] = useState(() => readCached('home:board'));
+  const [err, setErr] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [booted, setBooted] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const d = await loadBoardSummary();
+      setCached('home:board', d);
+      setBoard(d);
+      setErr(null);
+    } catch (e) {
+      // 失败只记错误，保留已有数据，不清屏
+      setErr({ message: String((e && e.message) || '读取失败') });
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!board) await load();
+      setBooted(true);
+    })();
+    // 只在首次挂载跑一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loading = !board && !err && !booted;
+  const cards = Array.isArray(board && board.cards) ? board.cards.filter(Boolean) : [];
 
   const [tab, setTab] = useState(status);
   const [openId, setOpenId] = useState(null);
 
-  const onRefresh = useCallback(() => {
-    cached.refresh();
-  }, [cached]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
 
-  const countOf = (key) => (board ? Number(board[key]) || 0 : 0);
-  const shown = cards.filter((c) => String(c.status || '') === tab);
+  const countOf = (key) => (board && Number(board[key]) ? Number(board[key]) : 0);
+  // 元素级空值保护：后端 cards[] 里偶尔会有空项，直接 .status 就抛
+  const shown = cards.filter((c) => c && String(c.status || '') === tab);
+
+  // B1：和热点页同一个毛病 —— 头部容器没高度、标题用绝对定位浮着，
+  // 于是「看板」大标题被下面的卡片压掉一半。改成真实占位、带底色的头部块，
+  // 安全区在原生侧补（SafeAreaView edges=['top']），下面的内容一定排在它之后。
+  const Head = () => (
+    <SafeAreaView edges={['top']} style={[s.headWrap, { backgroundColor: K.headBg }]}>
+      <View style={s.headRow}>
+        <Pressable style={s.back} onPress={onBack} accessibilityRole="button" accessibilityLabel="返回">
+          <Text style={s.backText} allowFontScaling={false}>‹</Text>
+        </Pressable>
+        <View style={s.headText}>
+          <Text style={s.title} numberOfLines={1} allowFontScaling={false}>看板</Text>
+          <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>
+            {loading ? '正在读取' : `待办 ${countOf('todo')} · 在办 ${countOf('doing')}`}
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
 
   if (loading) {
     return (
       <View style={s.root}>
-        <View style={s.top}>
-          <Pressable style={[s.back, { top: insets.top }]} onPress={onBack} accessibilityRole="button">
-            <Text style={s.backText} allowFontScaling={false}>‹</Text>
-          </Pressable>
-          <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
-            <Text style={s.title} allowFontScaling={false}>看板</Text>
-            <Text style={s.subTitle} allowFontScaling={false}>正在读取</Text>
-          </View>
-        </View>
+        <Head />
         <View style={s.center}>
           <ActivityIndicator color={K.brand} />
         </View>
@@ -78,17 +122,7 @@ export default function BoardScreen({
 
   return (
     <View style={s.root}>
-      <View style={s.top}>
-        <Pressable style={[s.back, { top: insets.top }]} onPress={onBack} accessibilityRole="button">
-          <Text style={s.backText} allowFontScaling={false}>‹</Text>
-        </Pressable>
-        <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
-          <Text style={s.title} allowFontScaling={false}>看板</Text>
-          <Text style={s.subTitle} allowFontScaling={false}>
-            待办 {countOf('todo')} · 在办 {countOf('doing')}
-          </Text>
-        </View>
-      </View>
+      <Head />
 
       {/* 四栏切换：数量跟着分栏走，切栏只换列表不换页 */}
       <ScrollView
@@ -121,16 +155,16 @@ export default function BoardScreen({
       <ScrollView
         style={s.scroll}
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={C.ink2} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.ink2} />
         }
         contentContainerStyle={{
           paddingHorizontal: S.page,
           paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom,
         }}
       >
-        {cached.error ? (
+        {err ? (
           <View style={s.errorBox}>
-            <Text style={s.errorText} allowFontScaling={false}>{cached.error.message || '读取失败'}</Text>
+            <Text style={s.errorText} allowFontScaling={false}>{err.message || '读取失败'}</Text>
             <Pressable style={s.retryBtn} onPress={onRefresh} accessibilityRole="button">
               <Text style={s.retryText} allowFontScaling={false}>重试</Text>
             </Pressable>
@@ -179,10 +213,15 @@ export default function BoardScreen({
 const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
-    top: { position: 'relative', minHeight: 100 },
+    headWrap: { paddingBottom: S.x5, borderBottomWidth: 1, borderBottomColor: C.hairline },
+    headRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: S.x4,
+      paddingHorizontal: S.page,
+      paddingTop: S.x4,
+    },
     back: {
-      position: 'absolute',
-      left: S.page,
       width: 44,
       height: 44,
       borderRadius: R.capsule,
@@ -192,9 +231,9 @@ const makeStyles = (C, T, S, R, K) =>
       zIndex: 2,
     },
     backText: { color: C.ink, ...T.title, marginTop: -2 },
-    headText: { position: 'absolute', left: S.page + 44 + S.x4, right: S.page },
-    title: { color: K.onBrand, ...T.display },
-    subTitle: { marginTop: S.x1, color: K.onBrand, opacity: 0.78, ...T.meta, fontWeight: '500' },
+    headText: { flex: 1, minWidth: 0 },
+    title: { color: K.headOn, ...T.display },
+    subTitle: { marginTop: S.x1, color: K.headOnSub, ...T.meta, fontWeight: '500' },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     tabScroll: { flexGrow: 0 },
     tab: {
@@ -203,9 +242,9 @@ const makeStyles = (C, T, S, R, K) =>
       borderRadius: R.capsule,
       backgroundColor: C.card2,
     },
-    tabOn: { backgroundColor: K.brand },
+    tabOn: { backgroundColor: K.headBg },
     tabText: { color: C.ink2, ...T.meta, fontWeight: '500' },
-    tabTextOn: { color: K.onBrand },
+    tabTextOn: { color: K.headOn },
     scroll: { flex: 1 },
     errorBox: {
       marginTop: S.x8,
@@ -220,9 +259,9 @@ const makeStyles = (C, T, S, R, K) =>
       paddingHorizontal: S.x5,
       paddingVertical: S.x3,
       borderRadius: R.capsule,
-      backgroundColor: K.brand,
+      backgroundColor: K.headBg,
     },
-    retryText: { color: K.onBrand, ...T.title },
+    retryText: { color: K.headOn, ...T.title },
     empty: { marginTop: S.x8, color: C.ink3, ...T.meta, textAlign: 'center' },
     card: {
       backgroundColor: C.card,

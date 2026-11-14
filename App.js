@@ -693,6 +693,12 @@ function CorpusRoute({ navigation }) {
       loading={!cachedCorpus.data && !cachedCorpus.error}
       onQuery={(kw) => setQuery(kw)}
       onRetry={() => setRetryTick((n) => n + 1)}
+      onDelete={async (row) => {
+        // 语料库和我的观点同一张表，删除复用 delView（F2）
+        await delView(row.id);
+        setRetryTick((n) => n + 1);
+      }}
+      // 移回「我的观点」后端还没有接口，这里不传 onMoveBack，按钮上标「待接入」（F3）
       onBack={() => navigation.goBack()}
       error={cachedCorpus.error || undefined}
     />
@@ -795,6 +801,12 @@ function BookReaderRoute({ route, navigation }) {
       cacheBlock(0, first);
       if (jump > 0) {
         const cachedJump = readCached(bookKey(jump));
+        // G1：定位那一段还没回来时，先把第 0 段铺上去，用户至少能立刻看到正文，
+        // 不再是一个「正在加载中」干等两个串行请求。
+        if (!(Array.isArray(cachedJump) && cachedJump.length) && first.length) {
+          setBlocks(first);
+          setBase(0);
+        }
         if (Array.isArray(cachedJump) && cachedJump.length) {
           setBlocks(cachedJump);
           setBase(jump);

@@ -19,6 +19,13 @@ export function roleOf(C, scheme) {
     // 浅色 accent 是深绿，深色 accent 是雾青；药丸统一走 accent，保证两种模式都有对比。
     brand: light ? C.accent : C.card2,
     onBrand: light ? C.onAccent : C.ink,
+    // 页面头部色带（热点 / 看板这类拿大标题当头的页）。
+    // 不能用 brand 做底：浅色下 accent 是深墨绿，白字只有 4.95:1；深色下 brand=card2，
+    // 色带和背景几乎糊在一起。统一走「首页三张卡」那套浅青绿：浅 softMint / 深 card2 + C.ink 字，
+    // 整站一套绿，不会出现首页青绿、内页墨绿两种绿打架。
+    headBg: light ? C.softMint : C.card2,
+    headOn: C.ink,
+    headOnSub: C.ink2,
     brandHi: C.brandHi,
     coral: C.accentCoral,
     edge: light ? C.card : C.hero,

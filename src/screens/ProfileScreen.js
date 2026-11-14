@@ -174,6 +174,28 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   const [posting, setPosting] = useState(false);
   const [postingText, setPostingText] = useState('');
 
+  // J2：iOS 上「同一个 tick 里关掉一个 Modal 又打开另一个 Modal」会把上一个
+  // modal window 的手势层留在屏幕上 —— 表现就是发完朋友圈/换完头像后整页划不动，
+  // 切走再回来才好。以后一律排队：先关，等 onDismiss 回来，再开下一个。
+  const pendingOpen = useRef(null);
+  const pendingPick = useRef(null);
+  const pickAvatarSourceRef = useRef(null);
+  const flushPending = useCallback(() => {
+    const next = pendingOpen.current;
+    pendingOpen.current = null;
+    if (next === 'composer') setShowComposer(true);
+    else if (next === 'moments') setShowMoments(true);
+    else if (next === 'avatarMenu') setShowAvatarMenu(true);
+    else if (next === 'pick') {
+      const src = pendingPick.current;
+      pendingPick.current = null;
+      if (src) pickAvatarSourceRef.current && pickAvatarSourceRef.current(src);
+    }
+  }, []);
+  const openAfterDismiss = useCallback((next) => {
+    pendingOpen.current = next;
+  }, []);
+
   const loadMomentsPage = useCallback(async (reset) => {
     const offset = reset ? 0 : moments.length;
     // 只让朋友圈自己转圈，不把已经加载好的个人资料整页清空。
@@ -184,7 +206,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
       setMoments((prev) => (reset ? normalized : [...prev, ...normalized]));
       setHasMore(items.length === PAGE_SIZE);
       if (reset) {
-        setShowMoments(true);
+        // 不在这里直接开 Modal：谁需要打开谁自己排队（J2）
         setCached('me:moments:first', items);
       }
       setErr(null);
@@ -283,8 +305,18 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
     try {
       const { path, url } = await uploadImage(uri);
       await updateMe({ avatar_path: path });
-      const fullUrl = await toFullUrl(url || path);
-      const nextMe = { ...me, avatarUrl: fullUrl };
+      // H1：上传接口回的可能是文件名也可能是相对路径，自己拼出来的地址会 404，
+      // iOS 上就是「头像变成纯黑 / 头像框消失」。换完头像后直接回读服务端资料，
+      // 用服务端给的那条地址（fetchMe 里已经拼成完整 URL）。
+      let nextMe = null;
+      try {
+        const fresh = await fetchMe();
+        if (fresh && fresh.avatarUrl) nextMe = fresh;
+      } catch {}
+      if (!nextMe) {
+        const fullUrl = await toFullUrl(url || path);
+        nextMe = { ...me, avatarUrl: fullUrl };
+      }
       setMe(nextMe);
       rememberProfile(nextMe);
       setErr(null);
@@ -295,8 +327,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
     }
   };
 
-  const chooseAvatar = async (source) => {
-    setShowAvatarMenu(false);
+  const pickAvatarSource = async (source) => {
     if (saving) return;
     if (source === 'view') {
       if (!me.avatarUrl) {
@@ -329,6 +360,18 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
       : await ImagePicker.launchImageLibraryAsync(options);
     if (result.canceled || !result.assets || !result.assets[0]) return;
     await applyAvatar(result.assets[0].uri);
+  };
+
+  // 菜单还开着就先把菜单收掉，等 onDismiss 之后再拉系统相册/相机（J2 同类问题）
+  pickAvatarSourceRef.current = pickAvatarSource;
+  const chooseAvatar = (source) => {
+    if (showAvatarMenu) {
+      pendingPick.current = source;
+      openAfterDismiss('pick');
+      setShowAvatarMenu(false);
+      return;
+    }
+    pickAvatarSource(source);
   };
 
   const pickImages = async () => {
@@ -455,8 +498,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
 
   const submitMoment = async () => {
     const text = postText.trim();
-    if (posting || (!text && draftMedia.length === 0)) return;
-    if (draftMedia.some((m) => m.kind === 'video' && !isUploadPath(m.cover))) {
+    if (posting || (!text && draftMedia.length === 0)) return;    if (draftMedia.some((m) => m.kind === 'video' && !isUploadPath(m.cover))) {
       setErr({ step: '发朋友圈失败', message: '视频需要先选封面再发布' });
       return;
     }
@@ -502,9 +544,10 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
       await postMoment(text, media);
       setPostText('');
       setDraftMedia([]);
+      // 先让写作层关干净，再排队开朋友圈（J2：不同 tick 里连开两层 Modal 会留下手势层）
+      openAfterDismiss('moments');
       setShowComposer(false);
       await loadMomentsPage(true);
-      setShowMoments(true);
       setErr(null);
     } catch (e) {
       setErr({ step: '发朋友圈失败', message: e.message || '未知错误，草稿已保留' });
@@ -724,6 +767,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
         visible={showAvatarMenu}
         transparent
         animationType="fade"
+        onDismiss={flushPending}
         onRequestClose={() => setShowAvatarMenu(false)}
       >
         <View style={s.sheetBackdrop}>
@@ -764,6 +808,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
         visible={showMoments}
         transparent
         animationType="slide"
+        onDismiss={flushPending}
         onRequestClose={() => setShowMoments(false)}
       >
         <View style={s.sheetBackdrop}>
@@ -779,8 +824,9 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
               <Pressable
                 style={s.writeBtn}
                 onPress={() => {
+                  // 先排队，等朋友圈这层 Modal 真的收掉再开写作层（J2）
+                  openAfterDismiss('composer');
                   setShowMoments(false);
-                  setShowComposer(true);
                 }}
               >
                 <Text style={s.writeBtnText} allowFontScaling={false}>＋ 写一条</Text>
@@ -853,6 +899,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
         visible={showComposer}
         transparent
         animationType="slide"
+        onDismiss={flushPending}
         onRequestClose={() => {
           if (!posting) setShowComposer(false);
         }}

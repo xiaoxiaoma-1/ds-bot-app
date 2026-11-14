@@ -34,6 +34,8 @@ export default function CorpusScreen({
   error = null, // 有值就盖在空态之上：先让用户看到「加载失败」，不是「没数据」
   loading = false,
   onRetry,
+  onDelete,
+  onMoveBack,
   activeTab = 'workbench',
   onTabPress,
 }) {
@@ -44,6 +46,9 @@ export default function CorpusScreen({
 
   const [q, setQ] = useState('');
   const timer = useRef(null);
+  // F：查看全文（本页展开）/ 移回 / 删除
+  const [openId, setOpenId] = useState(null);
+  const [note, setNote] = useState(null);
 
   // 防抖 400ms（跟电脑端一致）
   useEffect(() => {
@@ -118,24 +123,88 @@ export default function CorpusScreen({
         ) : (
           <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
             <View>
-              {rows.map((v) => (
-                <View key={v.id} style={s.card}>
-                  <View style={s.cardTop}>
-                    <Text style={s.cardTitle} numberOfLines={2} allowFontScaling={false}>
-                      {v.title || '（无标题）'}
+              {rows.map((v) => {
+                const open = openId === v.id;
+                return (
+                  <View key={v.id} style={s.card}>
+                    <View style={s.cardTop}>
+                      <Text style={s.cardTitle} numberOfLines={2} allowFontScaling={false}>
+                        {v.title || '（无标题）'}
+                      </Text>
+                      <Text style={s.cardChars} allowFontScaling={false}>
+                        {v.chars || 0} 字
+                      </Text>
+                    </View>
+                    <Text
+                      style={s.cardBody}
+                      numberOfLines={open ? undefined : 2}
+                      allowFontScaling={false}
+                    >
+                      {open ? String(v.content || '') : String(v.content || '').replace(/\n/g, ' ').slice(0, 90)}
                     </Text>
-                    <Text style={s.cardChars} allowFontScaling={false}>
-                      {v.chars || 0} 字
-                    </Text>
+                    {/* 三个动作：查看全文 / 移回我的观点 / 删除（F） */}
+                    <View style={s.actions}>
+                      <Pressable
+                        style={s.actBtn}
+                        onPress={() => {
+                          setNote(null);
+                          setOpenId(open ? null : v.id);
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={s.actText} allowFontScaling={false}>{open ? '收起' : '查看全文'}</Text>
+                      </Pressable>
+                      <Pressable
+                        style={s.actBtn}
+                        onPress={async () => {
+                          setNote(null);
+                          if (!onMoveBack) {
+                            setNote('移回「我的观点」的接口待接入');
+                            return;
+                          }
+                          try {
+                            await onMoveBack(v);
+                            setNote('已移回我的观点');
+                          } catch (e) {
+                            setNote('移回失败：' + String((e && e.message) || e));
+                          }
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={s.actText} allowFontScaling={false}>移回我的观点</Text>
+                        {!onMoveBack ? <Text style={s.actPending} allowFontScaling={false}>待接入</Text> : null}
+                      </Pressable>
+                      <Pressable
+                        style={s.actBtn}
+                        onPress={async () => {
+                          setNote(null);
+                          if (!onDelete) {
+                            setNote('删除接口没接上');
+                            return;
+                          }
+                          try {
+                            await onDelete(v);
+                            setNote('已删除这条');
+                          } catch (e) {
+                            setNote('删除失败：' + String((e && e.message) || e));
+                          }
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={s.actText} allowFontScaling={false}>删除</Text>
+                      </Pressable>
+                    </View>
                   </View>
-                  <Text style={s.cardBody} numberOfLines={2} allowFontScaling={false}>
-                    {String(v.content || '').replace(/\n/g, ' ').slice(0, 90)}
-                  </Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </TouchableWithoutFeedback>
         )}
+
+        {/* 操作结果提示：删除/移回的结果写在这里，不弹系统框 */}
+        {note ? (
+          <Text style={s.note} allowFontScaling={false}>{note}</Text>
+        ) : null}
 
         {/* 空位：导出文档、点开详情 —— 这一版不做，不画入口 */}
       </ScrollView>
@@ -189,6 +258,19 @@ const makeStyles = (C, T, S, R, K) =>
     cardTitle: { flex: 1, color: C.ink, ...T.title },
     cardChars: { color: C.ink3, ...T.meta },
     cardBody: { marginTop: S.x2, color: C.ink2, ...T.meta },
+    actions: { marginTop: S.x3, flexDirection: 'row', flexWrap: 'wrap', gap: S.x2 },
+    actBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: S.x1,
+      paddingHorizontal: S.x3,
+      paddingVertical: S.x2,
+      borderRadius: R.capsule,
+      backgroundColor: C.card2,
+    },
+    actText: { color: C.ink, ...T.meta, fontWeight: '500' },
+    actPending: { color: C.ink3, ...T.meta },
+    note: { marginTop: S.x3, marginHorizontal: S.page, color: C.ink2, ...T.meta },
 
     empty: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink2, ...T.body },
     errorBox: {

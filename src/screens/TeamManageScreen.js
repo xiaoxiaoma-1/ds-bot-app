@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -10,7 +11,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { avatarInk, useTheme } from '../theme';
+import { maskFor } from '../avatarMasks';
+import CHARACTER_SHAPES from '../components/characterShapes';
 import { advisors, models, writeModel } from '../api';
 import { setCached, useCachedResource } from '../cache';
 
@@ -27,14 +30,114 @@ function displayModelName(model) {
 
 function getModelSupplier(model) {
   if (typeof model !== 'string' || !model) return '';
-  if (model.includes('siliconflow')) return '硅基';
-  if (model.includes('opendesign')) return 'OpenDesign';
-  if (model.includes('deepseek-ai')) return 'DeepSeek';
-  return '未知';
+  const m = model.toLowerCase();
+  // I3：以前只认 siliconflow / opendesign / deepseek-ai 三种前缀，其它一律「未知」，
+  // 结果满屏都是「未知」，分不清谁是谁。现在按厂商关键词认，认不出来就把模型名
+  // 的第一段（/ 之前、: 之前）当供应商名显示，绝不回「未知」。
+  const known = [
+    ['硅基流动', ['siliconflow', 'silicon-flow']],
+    ['OpenDesign', ['opendesign', 'open-design']],
+    ['DeepSeek', ['deepseek']],
+    ['OpenAI', ['openai', 'gpt-', '/gpt', 'o1-', 'o3-', 'o4-']],
+    ['Anthropic', ['anthropic', 'claude']],
+    ['Google', ['google', 'gemini', 'palm']],
+    ['阿里通义', ['qwen', 'dashscope', 'tongyi', 'aliyun']],
+    ['智谱', ['glm', 'zhipu', 'chatglm']],
+    ['月之暗面', ['moonshot', 'kimi']],
+    ['字节豆包', ['doubao', 'volcengine', 'ark-', 'bytedance']],
+    ['MiniMax', ['minimax', 'abab']],
+    ['百度', ['ernie', 'wenxin', 'baidu']],
+    ['腾讯', ['hunyuan', 'tencent']],
+    ['讯飞', ['spark', 'xfyun', 'iflytek']],
+    ['Mistral', ['mistral', 'mixtral']],
+    ['Meta', ['llama', 'meta-']],
+    ['xAI', ['grok', 'xai']],
+    ['阶跃', ['stepfun', 'step-']],
+    ['零一万物', ['lingyi', 'yi-']],
+  ];
+  for (const [name, keys] of known) {
+    if (keys.some((k) => m.includes(k))) return name;
+  }
+  // 认不出来：把 "vendor/model-x" 的 vendor 段提出来当名字，比「未知」有用
+  const head = String(model).split('/')[0].split(':')[0].trim();
+  return head && head !== model ? head : displayModelName(model) || String(model);
+}
+
+// I2：团队管理的头像要和外面列表长得一模一样（同 shape、同 tint、同眼睛），
+// 以前这里是一个灰色圆角方块占位，所以「头像没显示」。
+function hexToRgb(h) {
+  const s = String(h || '');
+  if (!/^#[0-9a-f]{6}$/i.test(s)) return null;
+  return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+function mixHex(a, b, t) {
+  const ra = hexToRgb(a);
+  const rb = hexToRgb(b);
+  if (!ra || !rb) return a;
+  const out = ra.map((v, i) => Math.round(v + (rb[i] - v) * t));
+  return '#' + out.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+function relLum(h) {
+  const rgb = hexToRgb(h);
+  if (!rgb) return 1;
+  const lin = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+}
+const TEAM_MARK = 48;
+const DEFAULT_EYES = [
+  [44.5, 46, 7, 18, -8],
+  [58.5, 42, 7, 18, -12],
+];
+function teamEyes(shape, i) {
+  const list = (CHARACTER_SHAPES[shape] && CHARACTER_SHAPES[shape].eyes) || DEFAULT_EYES;
+  const e = list[i];
+  if (!e) return null;
+  const [cx, cy, w, h, tilt] = e;
+  const k = TEAM_MARK / 100;
+  return {
+    left: (cx - w / 2) * k,
+    top: (cy - h / 2) * k,
+    width: w * k,
+    height: h * k,
+    borderRadius: (w * k) / 2,
+    tilt,
+  };
+}
+function TeamAvatar({ avatar = {}, scheme, C }) {
+  const shape = avatar.shape || 'gumdrop';
+  const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
+  const faceInk = relLum(tint) > 0.42 ? mixHex(tint, C.ink, 0.6) : mixHex(tint, C.onHero, 0.55);
+  return (
+    <View style={{ width: TEAM_MARK, height: TEAM_MARK }}>
+      <Image source={{ uri: maskFor(shape) }} style={{ width: TEAM_MARK, height: TEAM_MARK, tintColor: tint }} resizeMode="contain" />
+      {[0, 1].map((i) => {
+        const b = teamEyes(shape, i);
+        if (!b) return null;
+        return (
+          <View
+            key={'eye' + i}
+            style={{
+              position: 'absolute',
+              left: b.left,
+              top: b.top,
+              width: b.width,
+              height: b.height,
+              borderRadius: b.borderRadius,
+              backgroundColor: faceInk,
+              transform: [{ rotate: `${b.tilt}deg` }],
+            }}
+          />
+        );
+      })}
+    </View>
+  );
 }
 
 export default function TeamManageScreen({ navigation }) {
-  const { C, T, S, R } = useTheme();
+  const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
 
@@ -43,34 +146,55 @@ export default function TeamManageScreen({ navigation }) {
   const [allModels, setAllModels] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(() => !cached.data);
+  const [modelsLoading, setModelsLoading] = useState(true);
   const [savingIds, setSavingIds] = useState([]);
   const [err, setErr] = useState(null);
   const [bulkOp, setBulkOp] = useState(null);
   const [showBulkMenu, setShowBulkMenu] = useState(false);
+  // I4：页面一卸载就把 mounted 置 false，后面所有 setState / setTimeout 都先看它，
+  // 避免「点返回直接闪退」（卸载后异步 setState / 定时器回来还在写状态）。
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
+  // I1：Bot 列表和模型清单分开拉、分开渲染。
+  // 原来 Promise.all 等两边都回来才算加载完，models 一慢整页就是转圈一分多钟。
   const load = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const [botsRes, modelsRes] = await Promise.all([
-        advisors(),
-        models(),
-      ]);
-      const filteredBots = botsRes?.filter(b => b.id && b.name) || [];
+      const botsRes = await advisors();
+      const filteredBots = (botsRes && botsRes.filter ? botsRes : []).filter((b) => b && b.id && b.name);
+      if (!mounted.current) return;
       setBots(filteredBots);
-      setAllModels(modelsRes || []);
       setErr(null);
       // 成功后写回缓存，下次点进来直接命中
       setCached('dsbot:advisors', filteredBots);
     } catch (e) {
-      setErr(e.message || '加载失败');
+      if (mounted.current) setErr((e && e.message) || '加载失败');
     } finally {
-      setLoading(false);
+      if (mounted.current) setLoading(false);
+    }
+  }, []);
+
+  const loadModels = useCallback(async () => {
+    try {
+      const res = await models();
+      if (mounted.current) setAllModels((res && Array.isArray(res)) ? res : []);
+    } catch {
+      // 模型清单拉不到不影响看 Bot 列表，只是「全部设为」暂时不可用
+    } finally {
+      if (mounted.current) setModelsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadModels();
+  }, [load, loadModels]);
 
   const handleExpand = useCallback((id) => {
     setExpandedId(expandedId === id ? null : id);
@@ -160,8 +284,10 @@ export default function TeamManageScreen({ navigation }) {
       });
       
       await Promise.all(promises);
+      if (!mounted.current) return;
       setBulkOp(prev => ({ ...prev, progress: success + fail }));
     }
+    if (!mounted.current) return;
     
     // 更新本地状态
     setBots(prev => prev.map(bot => 
@@ -170,8 +296,10 @@ export default function TeamManageScreen({ navigation }) {
     
     setBulkOp({ type: 'done', model, total: targetBots.length, success, fail });
     
-    // 3秒后清空
-    setTimeout(() => setBulkOp(null), 3000);
+    // 3秒后清空（I4：卸载后不再写状态）
+    setTimeout(() => {
+      if (mounted.current) setBulkOp(null);
+    }, 3000);
   }, [bots]);
 
   const mostCommonModel = getMostCommonModel();
@@ -294,10 +422,12 @@ export default function TeamManageScreen({ navigation }) {
                 onPress={() => handleExpand(bot.id)}
                 disabled={isSaving}
               >
-                <View style={s.avatarPlaceholder} />
+                <TeamAvatar avatar={bot.avatar} scheme={scheme} C={C} />
                 <View style={s.botInfo}>
                   <Text style={[s.botName, isDifferent && s.botNameBold]}>{bot.name}</Text>
-                  <Text style={s.botModel}>{displayModelName(bot.model)}</Text>
+                  <Text style={s.botModel} numberOfLines={1}>
+                    {getModelSupplier(bot.model)} · {displayModelName(bot.model)}
+                  </Text>
                 </View>
                 <Text style={s.expandIcon}>{isExpanded ? '▲' : '▼'}</Text>
               </Pressable>
