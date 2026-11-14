@@ -46,34 +46,14 @@ const FADE_STEPS = [0.15, 0.3, 0.45, 0.6, 0.78, 0.95];
 
 const DIM_KEYS = ['普世性', '数字冲击', '反常识', '可操作', '痛点强度', '时效性', '争议空间', '经验可挂', '能落到动作', '标题性'];
 
-// 假数：结构与 pool_db.py 的 pool_topics 表一致
-const DEFAULT_BOARDS = [
-  { board: '商业与变现', n: 8 },
-  { board: '内容创作', n: 6 },
-  { board: 'AI 与工具', n: 5 },
-  { board: '心理与人性', n: 7 },
-  { board: '语言与思维', n: 4 },
-  { board: '国学与哲学', n: 3 },
-  { board: '身心与生活', n: 3 },
-  { board: '权谋与政治', n: 2 },
-];
-
-const mkDims = (a, b, c) => {
-  const d = {};
-  DIM_KEYS.forEach((k, i) => (d[k] = 40 + ((i * 13 + a * 7) % 60)));
-  d[DIM_KEYS[a % 10]] = 80 + b;
-  d[DIM_KEYS[(a + 3) % 10]] = 75 + c;
-  return d;
-};
-
-const DEFAULT_TOPICS = [
-  { id: 't1', day: '2026-11-12', board: '商业与变现', title: '把「能力表达」当产品做，而不是当日记写', angle: '同一套能力，换个说法就能卖上价，差别不在能力而在表达结构。', hook: '你写的每一篇，都在替自己报价。', score: 91, status: 'idea', source_kind: '推文', source_ref: 'draft_2026-11-03_clean', dims: mkDims(2, 8, 5) },
-  { id: 't2', day: '2026-11-12', board: '商业与变现', title: '先收钱再交付，比先交付再收钱多活三年', angle: '现金流不是财务问题，是谈判位置问题。', hook: '欠款不是客户变坏了，是你给了他可以拖的位置。', score: 78, status: 'writing', source_kind: '直播', source_ref: 'live_2026-11-08', dims: mkDims(5, 6, 4) },
-  { id: 't3', day: '2026-11-12', board: '内容创作', title: '日更断掉的人，问题从来不是没时间', angle: '断更的真正原因是选题库存见底，写作能力从来不是瓶颈。', hook: '你不缺写的能力，你缺的是明天写什么。', score: 86, status: 'idea', source_kind: '推文', source_ref: 'draft_2026-10-28_hook', dims: mkDims(1, 7, 6) },
-  { id: 't4', day: '2026-11-12', board: '内容创作', title: '开头三秒决定完播，但决定开头的是标题', angle: '完播率的病根在选题阶段，不在剪辑台。', hook: '你剪得再快，也救不回一个没人想点开的标题。', score: 74, status: 'published', source_kind: '抖音文案', source_ref: 'douyin_2026-11-05', dims: mkDims(7, 5, 3) },
-  { id: 't5', day: '2026-11-12', board: 'AI 与工具', title: '把模型当实习生用，别当专家用', angle: '用它做初稿和整理，别让它替你做判断。', hook: '它写得比你快，但它不知道什么值得写。', score: 88, status: 'idea', source_kind: '推文', source_ref: 'draft_2026-11-09_ai', dims: mkDims(3, 9, 5) },
-  { id: 't6', day: '2026-11-12', board: '心理与人性', title: '拖延不是懒，是怕做完之后发现自己不行', angle: '拖延保护的是自我评价，不是身体休息。', hook: '你不是不想做，你是不敢知道结果。', score: 82, status: 'idea', source_kind: '书', source_ref: 'book_拖延心理学_03', dims: mkDims(4, 6, 7) },
-];
+// 选题池可能被中途退出；正在跑的那一轮不能跟着组件一起消失。
+// 用模块级状态保留进度，回来时按钮仍然显示「正在出题」，全部刷完才放开。
+let sharedBusy = null;
+const busyListeners = new Set();
+function publishBusy(value) {
+  sharedBusy = value;
+  busyListeners.forEach((listener) => listener(value));
+}
 
 function fmt(n) {
   return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -86,9 +66,11 @@ function top3(dims) {
 }
 
 export default function TopicsPoolScreen({
-  topics = DEFAULT_TOPICS,
-  boards = DEFAULT_BOARDS,
+  topics = [],
+  boards = [],
   minScore = 75,
+  loading = false,
+  error = null,
   activeTab = 'workbench',
   onBack,
   onTabPress,
@@ -106,7 +88,7 @@ export default function TopicsPoolScreen({
   const [statusF, setStatusF] = useState('all');
   const [openId, setOpenId] = useState(null);
   const [draft, setDraft] = useState(null); // { id, text, streaming, error }
-  const [busy, setBusy] = useState(null); // { done, total, current }
+  const [busy, setBusyState] = useState(sharedBusy); // { done, total, current }
   const [note, setNote] = useState(null);
   const [follow, setFollow] = useState(true); // 流式是否自动跟随
 
@@ -115,9 +97,16 @@ export default function TopicsPoolScreen({
   const followRef = useRef(true);
   followRef.current = follow;
 
-  // 离开页面（组件卸载）时不能让它静默继续跑
-  useEffect(() => () => {
-    if (abortRef.current) abortRef.current.abort();
+  // 组件卸载时只断开监听，不取消正在跑的一轮；进度留在模块级，回来能接着显示。
+  useEffect(() => {
+    const listener = (value) => setBusyState(value);
+    busyListeners.add(listener);
+    listener(sharedBusy);
+    return () => busyListeners.delete(listener);
+  }, []);
+
+  const setBusy = useCallback((value) => {
+    publishBusy(typeof value === 'function' ? value(sharedBusy) : value);
   }, []);
 
   const shownAll = useMemo(() => topics.filter((x) => (x.score || 0) >= minScore), [topics, minScore]);
@@ -190,9 +179,9 @@ export default function TopicsPoolScreen({
 
   const goBack = () => {
     if (busy) {
-      Alert.alert('正在出题，确定离开吗？', '走了这一轮就取消，已经出来的选题会保留。', [
+      Alert.alert('正在出题，先离开？', '这一轮会在后台继续跑，回来还看得到进度；不会丢已经出的选题。', [
         { text: '留下', style: 'cancel' },
-        { text: '离开并取消', style: 'destructive', onPress: () => { cancelRefresh(); onBack && onBack(); } },
+        { text: '离开', style: 'destructive', onPress: () => onBack && onBack() },
       ]);
       return;
     }
@@ -417,6 +406,11 @@ export default function TopicsPoolScreen({
             {note}
           </Text>
         ) : null}
+        {error ? (
+          <Text style={s.note} allowFontScaling={false}>
+            {error}
+          </Text>
+        ) : null}
 
         {/* 板块 chips：满宽出血横滚，最后一枚被屏缘裁掉一截 */}
         <View style={s.chipWrap}>
@@ -491,7 +485,7 @@ export default function TopicsPoolScreen({
 
         {!shown.length ? (
           <Text style={s.empty} allowFontScaling={false}>
-            还没有选题。点上面的「刷新全部板块」。
+            {loading ? '正在读取选题…' : '还没有选题。点上面的「刷新全部板块」。'}
           </Text>
         ) : null}
       </ScrollView>

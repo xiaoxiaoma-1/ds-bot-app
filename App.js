@@ -6,7 +6,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, useTheme } from './src/theme';
 import { isConfigured } from './src/store';
-import { warmCache } from './src/cache';
+import { warmCache, setCached, useCachedResource } from './src/cache';
 import SetupScreen from './src/screens/SetupScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MainTabs from './src/screens/MainTabs';
@@ -282,32 +282,61 @@ function TeamManageRoute({ navigation }) {
   return <TeamManageScreen onBack={() => navigation.goBack()} />;
 }
 
+function buildBoardCounts(items = []) {
+  const n = {};
+  for (const it of items) if (it.board) n[it.board] = (n[it.board] || 0) + 1;
+  return Object.keys(n).map((b) => ({ board: b, n: n[b] }));
+}
+
 function TopicsPoolRoute({ navigation }) {
   // 选题池：/api/topics 的筛选参数全被服务端忽略（total 恒 112、items 恒 30），
   // 所以 boards 的条数只能拿这 30 条自己数，minScore 也交给页面本地筛。
-  const [topics, setTopics] = useState(null);
+  const cachedTopics = useCachedResource('workbench:topics', getTopics);
+  const [topics, setTopics] = useState(() => cachedTopics.data?.items || null);
+  const [boards, setBoards] = useState(() => buildBoardCounts(cachedTopics.data?.items || []));
   const [err, setErr] = useState(null);
+  const [loading, setLoading] = useState(() => !cachedTopics.data);
 
-  const [boards, setBoards] = useState(null);
-
-  const load = useCallback(async () => {
-    setErr(null);
-    try {
-      const d = await getTopics();
-      setTopics(d.items);
-      // 板块条数：只能按拿到的 items 数（服务端不做聚合）
-      const n = {};
-      for (const it of d.items) if (it.board) n[it.board] = (n[it.board] || 0) + 1;
-      setBoards(Object.keys(n).map((b) => ({ board: b, n: n[b] })));
-    } catch (e) {
-      setTopics([]);
-      setErr(e.message);
-    }
+  const applyTopics = useCallback((d) => {
+    const items = Array.isArray(d?.items) ? d.items : [];
+    setTopics(items);
+    setBoards(buildBoardCounts(items));
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (cachedTopics.data) {
+      applyTopics(cachedTopics.data);
+      setLoading(false);
+    }
+  }, [cachedTopics.data, applyTopics]);
+
+  useEffect(() => {
+    if (cachedTopics.error) {
+      setErr(String(cachedTopics.error));
+      setLoading(false);
+    }
+  }, [cachedTopics.error]);
+
+  useEffect(() => {
+    if (!cachedTopics.data && cachedTopics.loading === false && !cachedTopics.error) {
+      setLoading(false);
+    }
+  }, [cachedTopics.data, cachedTopics.loading, cachedTopics.error]);
+
+  const load = useCallback(async () => {
+    setErr(null);
+    setLoading(true);
+    try {
+      const d = await getTopics();
+      applyTopics(d);
+      setCached('workbench:topics', d);
+    } catch (e) {
+      // 有旧数据就保留，不把已有选题清空。
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyTopics]);
 
   // 「刷新全部」：服务端没有这接口，就重拉一次 /api/topics，并用 onProgress 报真实进度
   const onRefreshAll = useCallback(
@@ -355,8 +384,9 @@ function TopicsPoolRoute({ navigation }) {
 
   return (
     <TopicsPoolScreen
-      topics={topics === null && !err ? undefined : topics}
-      boards={boards || undefined}
+      topics={topics || []}
+      boards={boards}
+      loading={loading && (topics || []).length === 0}
       error={err || undefined}
       onRetry={() => load()}
       onRefreshAll={onRefreshAll}
@@ -364,14 +394,17 @@ function TopicsPoolRoute({ navigation }) {
       onChangeStatus={onChangeStatus}
       onDelete={onDelete}
       onBack={() => navigation.goBack()}
-      
     />
   );
 }
 
-function ViewsPoolRoute({ navigation }) {
+function ViewsPoolRoute({ navigation, route }) {
   // 观点库：一条平铺流。后端 /api/list 用 `not in (my_views where kind='clash')` 过滤，
   // 所以「投过的自然消失」——投票成功后必须**重拉**，不本地删。
+  const selected = (route && route.params && Array.isArray(route.params.selected))
+    ? route.params.selected
+    : null;
+  
   const [topics, setTopics] = useState(null);
   const [left, setLeft] = useState(0);
   const [done, setDone] = useState(0);
@@ -384,7 +417,23 @@ function ViewsPoolRoute({ navigation }) {
     setErr(null);
     try {
       const d = await getList({ offset: 0, limit: 20 });
-      setTopics(d.items);
+      let items = d.items;
+      if (selected && selected.length) {
+        const want = new Set(selected);
+        const picked = items.filter((x) => want.has(x.id));
+        const rest = items.filter((x) => !want.has(x.id));
+        // 这 3 条如果不在第一页里，用 getMyView(id) 单独补
+        const missing = selected.filter((id) => !picked.some((x) => x.id === id));
+        const extra = [];
+        for (const id of missing) {
+          try {
+            const one = await getMyView(id);
+            if (one) extra.push(one);
+          } catch (e) { /* 单条取不到就跳过，不影响整页 */ }
+        }
+        items = [...extra, ...picked, ...rest];
+      }
+      setTopics(items);
       setLeft(d.left);
       setDone(d.done);
       offsetRef.current = d.nextOffset;
@@ -392,7 +441,7 @@ function ViewsPoolRoute({ navigation }) {
       setTopics([]);
       setErr(e.message);
     }
-  }, []);
+  }, [selected && selected.join(',')]);
 
   useEffect(() => {
     reload();
@@ -620,96 +669,59 @@ function MyViewsRoute({ navigation }) {
 }
 
 function CorpusRoute({ navigation }) {
-  // 语料库：纯读。onQuery 由页面自己防抖 400ms 后调用。
-  const [rows, setRows] = useState(null);
-  const [err, setErr] = useState(null);
-  const load = useCallback(async (kw) => {
-    setErr(null);
-    try {
-      const d = await getCorpusViews({ q: kw, limit: 120 });
-      setRows(d.rows);
-    } catch (e) {
-      setRows([]);
-      setErr(e.message);
-    }
-  }, []);
-  useEffect(() => {
-    load('');
-  }, [load]);
+  // 语料库：纯读。搜索词变了就换缓存 key，命中缓存先渲染，后台再静默刷新。
+  const [query, setQuery] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
+  const corpusKey = `corpus:${query || 'all'}:${retryTick}`;
+  const cachedCorpus = useCachedResource(corpusKey, () => getCorpusViews({ q: query, limit: 120 }));
+
   return (
     <CorpusScreen
-      rows={rows === null && !err ? undefined : rows}
-      onQuery={(kw) => load(kw)}
+      rows={cachedCorpus.data ? cachedCorpus.data.rows : undefined}
+      loading={!cachedCorpus.data && !cachedCorpus.error}
+      onQuery={(kw) => setQuery(kw)}
+      onRetry={() => setRetryTick((n) => n + 1)}
       onBack={() => navigation.goBack()}
-      
+      error={cachedCorpus.error || undefined}
     />
   );
 }
 
 function BooksRoute({ navigation }) {
   // 书库：纯读 + 客户端筛选。verdict 是中文（精读/翻翻/跳过），服务端按它过滤。
-  const [books, setBooks] = useState(null);
-  const [stat, setStat] = useState({});
   const [verdict, setVerdict] = useState('');
-  const [err, setErr] = useState(null);
-  const [prog, setProg] = useState({}); // { [bookId]: { chunkIdx, total } }
-  
-  const loadBooks = useCallback(async (v, kw) => {
-    setErr(null);
-    try {
-      const d = await getBookCards({ verdict: v || undefined, q: kw || undefined, limit: 120 });
-      setBooks(d.items);
-      setStat(d.stat);
-    } catch (e) {
-      setBooks([]);
-      setErr(e.message);
-    }
-  }, []);
-  
-  const loadProgress = useCallback(async () => {
-    try {
-      const progress = await getBookProgressAll();
-      setProg(progress);
-    } catch (e) {
-      // 进度取不到就传空，不阻塞页面
-      setProg({});
-    }
-  }, []);
-  
-  const loadAll = useCallback(async (v, kw) => {
-    await Promise.all([loadBooks(v, kw), loadProgress()]);
-  }, [loadBooks, loadProgress]);
-  
-  useEffect(() => {
-    loadAll('', '');
-  }, [loadAll]);
-  
+  const [query, setQuery] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
+  const booksKey = `books:${verdict || 'all'}:${query || 'all'}:${retryTick}`;
+  const cachedBooks = useCachedResource(booksKey, () => getBookCards({
+    verdict: verdict || undefined,
+    q: query || undefined,
+    limit: 120,
+  }));
+  const cachedProgress = useCachedResource('books:progress', getBookProgressAll);
+
   const handleFilter = useCallback((v) => {
     setVerdict(v);
-    loadBooks(v, ''); // 只重新加载书籍，进度不需要重新加载
-  }, [loadBooks]);
-  
+    setQuery('');
+  }, []);
+
   const handleQuery = useCallback((kw) => {
-    loadBooks(verdict, kw); // 只重新加载书籍，进度不需要重新加载
-  }, [loadBooks, verdict]);
-  
-  const handleRetry = useCallback(() => {
-    loadAll(verdict, '');
-  }, [loadAll, verdict]);
-  
+    setQuery(kw);
+  }, []);
+
   return (
     <BooksScreen
-      books={books === null && !err ? undefined : books}
-      prog={prog}
-      stat={Object.keys(stat).length ? stat : undefined}
+      books={cachedBooks.data ? cachedBooks.data.items : undefined}
+      prog={cachedProgress.data || {}}
+      stat={cachedBooks.data ? cachedBooks.data.stat : undefined}
       verdict={verdict}
+      loading={!cachedBooks.data && !cachedBooks.error}
       onFilter={handleFilter}
       onQuery={handleQuery}
       onOpenBook={(item) => navigation.navigate('BookReader', { book: item })}
       onBack={() => navigation.goBack()}
-      
-      error={err}
-      onRetry={handleRetry}
+      error={cachedBooks.error || undefined}
+      onRetry={() => setRetryTick((n) => n + 1)}
     />
   );
 }

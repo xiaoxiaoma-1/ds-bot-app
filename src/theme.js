@@ -35,9 +35,10 @@ export const darkPalette = {
   glass: 'rgba(20,20,22,0.88)',
 };
 
+// 2026-11-14：投影归零，老板规矩「界面不许投影」
 export const shadow = {
-  card: { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 7, elevation: 3 },
-  float: { shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.55, shadowRadius: 16, elevation: 6 },
+  card: { shadowColor: '#000000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
+  float: { shadowColor: '#000000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
 };
 
 export const lightPalette = {

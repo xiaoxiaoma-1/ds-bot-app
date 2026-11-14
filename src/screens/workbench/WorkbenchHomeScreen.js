@@ -38,6 +38,13 @@ function numberText(value, suffix) {
   return `${Math.round(Number(value))}${suffix}`;
 }
 
+// 「—」是数据没接上时的占位符，不是副标题；渲染出来就是气泡下面那根横杠。
+function realSub(value) {
+  const text = String(value === undefined || value === null ? '' : value).trim();
+  if (!text || text === '—' || text === '-' || text === '--') return '';
+  return text;
+}
+
 export default function WorkbenchHomeScreen({
   greeting = '下午好，金屿',
   dateText = '11月12日 周四',
@@ -90,19 +97,20 @@ export default function WorkbenchHomeScreen({
 
   const renderFeature = (item) => {
     const Icon = LINE_ICONS[item.key] || FileStack;
+    const sub = realSub(item.sub);
     return (
       <Pressable
         key={item.key}
         style={s.block}
         onPress={() => onOpenFeature && onOpenFeature(item.key)}
         accessibilityRole="button"
-        accessibilityLabel={item.sub ? `${item.title}，${item.sub}` : item.title}
+        accessibilityLabel={sub ? `${item.title}，${sub}` : item.title}
       >
         <Icon size={24} strokeWidth={1.6} color={C.ink2} />
         <View style={s.blockText}>
           <Text style={s.blockTitle} numberOfLines={1} allowFontScaling={false}>{item.title}</Text>
-          {item.sub ? (
-            <Text style={s.blockSub} numberOfLines={1} allowFontScaling={false}>{item.sub}</Text>
+          {sub ? (
+            <Text style={s.blockSub} numberOfLines={1} allowFontScaling={false}>{sub}</Text>
           ) : null}
         </View>
       </Pressable>

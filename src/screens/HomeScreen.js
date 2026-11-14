@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,57 +17,50 @@ import {
   loadHotDaily,
   loadIdeas,
   loadTopics,
-  loadTrainToday,
-  loadTodayWords,
-  loadTodayBlocks,
 } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
 
-const HERO_H = 470;
-const HERO_W = 333;
+const BOARD_STATUS = [
+  { key: 'todo', label: '待完成' },
+  { key: 'doing', label: '进行中' },
+  { key: 'stage', label: '阶段完成' },
+  { key: 'done', label: '已完成' },
+];
 
 export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
-  const { width: winWidth } = useWindowDimensions();
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
 
   const manualRefresh = useRef(false);
   const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
-  const hot = useCachedResource('home:hot', loadHotDaily, { refreshOnMount: !manualRefresh.current });
+  const hot = useCachedResource('home:hot:list', loadHotDaily, { refreshOnMount: !manualRefresh.current });
   const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
-  const ideas = useCachedResource('home:ideas', loadIdeas, { refreshOnMount: !manualRefresh.current });
+  const ideas = useCachedResource('home:ideas:views', loadIdeas, { refreshOnMount: !manualRefresh.current });
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
-  const train = useCachedResource('home:train', loadTrainToday, { refreshOnMount: !manualRefresh.current });
-  const words = useCachedResource('home:words', loadTodayWords, { refreshOnMount: !manualRefresh.current });
-  const blocks = useCachedResource('home:blocks', loadTodayBlocks, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
+  const [hotOpen, setHotOpen] = useState(true);
+  const [boardOpen, setBoardOpen] = useState(null);  // 'todo' | 'stage' | 'done' | 'doing' | null
 
   const loadAll = useCallback(async () => {
     manualRefresh.current = true;
     try {
-      const [b, h, d, i, t, tr, w, bl] = await Promise.all([
+      const [b, h, d, i, t] = await Promise.all([
         loadBoardSummary(),
         loadHotDaily(),
         loadDraftResume(),
         loadIdeas(),
         loadTopics(),
-        loadTrainToday(),
-        loadTodayWords(),
-        loadTodayBlocks(),
       ]);
       setCached('home:board', b);
-      setCached('home:hot', h);
+      setCached('home:hot:list', h);
       setCached('home:draft', d);
-      setCached('home:ideas', i);
+      setCached('home:ideas:views', i);
       setCached('home:topics', t);
-      setCached('home:train', tr);
-      setCached('home:words', w);
-      setCached('home:blocks', bl);
     } catch {
       // 保留旧数据，失败不打断当前页面
     }
@@ -80,14 +72,67 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
     loadAll().finally(() => setRefreshing(false));
   }, [loadAll]);
 
+  const go = useCallback((name, params) => {
+    if (navigation && navigation.navigate) navigation.navigate(name, params);
+  }, [navigation]);
+
   const b = board.data;
   const h = hot.data;
   const d = draft.data;
   const i = ideas.data;
   const tp = topics.data;
-  const hotTitle = h ? (h.isToday ? '今日热点' : (h.date ? h.date + ' 热点' : '热点')) : '今日热点';
-  const cardW = Math.min(HERO_W, Math.max(260, winWidth - S.page * 2));
-  const snap = cardW + S.x3;
+
+  const hotItems = h && Array.isArray(h.items) && h.items.length
+    ? h.items.slice(0, 5)  // 首页显示前5条
+    : (h && h.picked ? [h.picked] : []);
+  const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 3) : [];
+  const ideaItems = (i && Array.isArray(i.items)) ? i.items : [];
+
+  // 服务端 posts 记录不算「我的稿子」，显示空态；只有 my_drafts 才显示接着写。
+  const draftOrigin = String((d && (d.origin || d.source || d.table)) || '');
+  // origin 字段没上线前，source==='opened'/'latest' 当作不确定，先显示稿子
+  const draftMine = Boolean(d && d.id && (
+    draftOrigin.toLowerCase().includes('my_drafts') || 
+    (draftOrigin === 'opened' || draftOrigin === 'latest')
+  ));
+
+  const openDraft = () => {
+    if (draftMine && d && d.id && onOpenDraft) {
+      onOpenDraft(d.id);
+      return;
+    }
+    if (draftMine && d && d.id) {
+      go('DraftLibrary', { draftId: d.id });
+      return;
+    }
+    go('DraftLibrary');
+  };
+
+  const openBoard = (status) => setBoardOpen((v) => (v === status ? null : status));
+
+  // 根据 boardOpen 状态过滤对应类别的卡片
+  const categoryCards = useMemo(() => {
+    if (!boardOpen || !b || !Array.isArray(b.cards)) return [];
+    const list = b.cards.filter((c) => c.status === boardOpen);
+    return list.slice(0, 30);
+  }, [boardOpen, b]);
+
+  const openIdeas = () => {
+    const selected = ideaItems.map((x) => x && x.id).filter(Boolean);
+    go('ViewsPool', selected.length ? { selected } : undefined);
+  };
+
+  const scoreFor = (topic) => {
+    if (topic && topic.score !== null && topic.score !== undefined && topic.score !== '') {
+      const n = Number(topic.score);
+      if (Number.isFinite(n)) return n + ' 分';
+    }
+    if (tp && tp.minScore !== null && tp.minScore !== undefined) {
+      const n = Number(tp.minScore);
+      if (Number.isFinite(n)) return n + ' 分';
+    }
+    return '—';
+  };
 
   const StateLine = ({ st, empty }) =>
     st && st.loading ? (
@@ -101,34 +146,14 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
       </Text>
     );
 
-  const HeroCard = ({ tint, kicker, title, body, meta, footer, onPress }) => {
-    const content = (
-      <View style={[s.heroCard, { backgroundColor: tint }]}>
-        <View>
-          <Text style={s.heroKicker} allowFontScaling={false}>{kicker}</Text>
-          <Text style={s.heroTitle} numberOfLines={3} allowFontScaling={false}>{title}</Text>
-          {body ? (
-            <Text style={s.heroBody} numberOfLines={4} allowFontScaling={false}>{body}</Text>
-          ) : null}
-        </View>
-        <View style={s.heroBottom}>
-          {meta ? (
-            <Text style={s.heroMeta} numberOfLines={2} allowFontScaling={false}>{meta}</Text>
-          ) : (
-            <View />
-          )}
-          {footer ? (
-            <Text style={s.heroFooter} allowFontScaling={false}>{footer}</Text>
-          ) : null}
-        </View>
-      </View>
-    );
-    return onPress ? (
-      <Pressable onPress={onPress} style={{ width: cardW, height: HERO_H }}>{content}</Pressable>
-    ) : (
-      <View style={{ width: cardW, height: HERO_H }}>{content}</View>
-    );
-  };
+  const ErrorBlock = ({ st }) => (
+    <View style={s.centerBlock}>
+      <Text style={s.stateText} allowFontScaling={false}>数据没来：{st && st.error ? st.error : '未知错误'}</Text>
+      <Pressable onPress={loadAll} style={s.retryBtn} accessibilityRole="button">
+        <Text style={s.retryText} allowFontScaling={false}>重试</Text>
+      </Pressable>
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
@@ -147,73 +172,152 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
           <Text style={s.date} allowFontScaling={false}>{dateText}</Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={snap}
-          snapToAlignment="start"
-          contentContainerStyle={s.heroRow}
+        <View style={s.sectionCard}>
+          <Pressable
+            style={s.sectionHead}
+            onPress={() => setHotOpen((v) => !v)}
+            accessibilityRole="button"
+          >
+            <Text style={s.sectionTitle} allowFontScaling={false}>
+              {h && !h.isToday && h.date ? h.date + ' 热点' : '今日热点'}
+            </Text>
+            <Text style={s.sectionMeta} allowFontScaling={false}>
+              {h && h.itemCount ? `${h.itemCount} 条 · ${hotOpen ? '收起' : '展开'}` : '每天更新'}
+            </Text>
+          </Pressable>
+          {hot.loading && !h ? (
+            <StateLine st={hot} empty="正在取热点" />
+          ) : hot.error && !h ? (
+            <ErrorBlock st={hot} />
+          ) : hotItems.length === 0 ? (
+            <Text style={s.stateText} allowFontScaling={false}>今天的热点还没生成</Text>
+          ) : hotOpen ? (
+            hotItems.map((it, index) => (
+              <View key={'hot-' + index + '-' + ((it && (it.url || it.title)) || '')} style={s.listRow}>
+                <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
+                <View style={s.listText}>
+                  <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                    {(it && it.title) || '（无标题）'}
+                  </Text>
+                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                    {(it && it.source) ? '来源 ' + it.source : '来源未知'}
+                  </Text>
+                </View>
+              </View>
+            ))
+          ) : null}
+        </View>
+
+        <Pressable
+          style={s.sectionCard}
+          onPress={() => go('TopicsPool')}
+          disabled={!tp || topics.loading || Boolean(topics.error) || topicItems.length === 0}
+          accessibilityRole="button"
         >
-          <HeroCard
-            tint={C.softMint}
-            kicker="今日热点"
-            title={h && h.picked ? h.picked.title : '今天的热点还没生成'}
-            body={h && h.picked && h.picked.source ? '来源 ' + h.picked.source : '打开选题池，看看今天可以写什么'}
-            meta={h && h.itemCount ? `${h.itemCount} 条候选` : '每天更新'}
-            footer="打开热点 ›"
-            onPress={() => navigation && navigation.navigate && navigation.navigate('TopicsPool')}
-          />
-          <HeroCard
-            tint={C.softBlue}
-            kicker="选题池"
-            title={tp && tp.items && tp.items[0] ? tp.items[0].title : '选题池还空着'}
-            body={tp && tp.items && tp.items[1] ? tp.items[1].title : '把想到的题目先放进来，写的时候就有得挑'}
-            meta={tp && tp.total ? `${tp.total} 条待挖` : '还没有选题'}
-            footer="去挑一个 ›"
-            onPress={() => navigation && navigation.navigate && navigation.navigate('TopicsPool')}
-          />
-          <HeroCard
-            tint={C.softOat}
-            kicker="接着写"
-            title={d ? (d.title || '（无标题）') : '还没有稿子'}
-            body={d && d.tail ? d.tail : '从上次停下的地方继续，不用重新找感觉'}
-            meta={d && d.chars ? charsLabel(d.chars) : '稿库同步'}
-            footer="继续写 ›"
-            onPress={() => {
-              if (d && onOpenDraft) onOpenDraft(d.id);
-              else if (navigation && navigation.navigate) navigation.navigate('DraftLibrary');
-            }}
-          />
-        </ScrollView>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>选题池</Text>
+            <Text style={s.sectionMeta} allowFontScaling={false}>
+              {tp && tp.total ? `${tp.total} 条` : '去挑一个'}
+            </Text>
+          </View>
+          {topics.loading && !tp ? (
+            <StateLine st={topics} empty="正在取选题" />
+          ) : topics.error && !tp ? (
+            <ErrorBlock st={topics} />
+          ) : topicItems.length === 0 ? (
+            <Text style={s.stateText} allowFontScaling={false}>选题池还空着</Text>
+          ) : (
+            topicItems.map((topic, index) => (
+              <View
+                key={(topic && topic.id) || 'topic-' + index}
+                style={s.listRow}
+              >
+                <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
+                <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
+                  {(topic && topic.title) || '（无标题）'}
+                </Text>
+                <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
+              </View>
+            ))
+          )}
+        </Pressable>
+
+        <View style={s.sectionCard}>
+          <View style={s.sectionHead}>
+            <Text style={s.sectionTitle} allowFontScaling={false}>接着写</Text>
+            <Text style={s.sectionMeta} allowFontScaling={false}>
+              {draftMine && d && d.chars ? charsLabel(d.chars) : '稿库'}
+            </Text>
+          </View>
+          {draft.loading && !d ? (
+            <StateLine st={draft} empty="正在找上次的稿子" />
+          ) : draft.error && !d ? (
+            <ErrorBlock st={draft} />
+          ) : draftMine && d ? (
+            <Pressable style={s.listRow} onPress={openDraft} accessibilityRole="button">
+              <View style={s.listText}>
+                <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
+                  {d.title || '（无标题）'}
+                </Text>
+                {d.tail ? (
+                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                    上次写到：{d.tail}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={s.rowSub} allowFontScaling={false}>继续写 ›</Text>
+            </Pressable>
+          ) : (
+            <View style={s.draftEmpty}>
+              <Text style={s.stateText} allowFontScaling={false}>还没有稿子，赶紧去写一篇。</Text>
+              <Pressable onPress={openDraft} style={s.emptyAction} accessibilityRole="button">
+                <Text style={s.emptyActionText} allowFontScaling={false}>去写一篇</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
 
         <View style={s.sectionCard}>
           <View style={s.sectionHead}>
             <Text style={s.sectionTitle} allowFontScaling={false}>今天动哪件</Text>
-            {b ? (
-              <Text style={s.sectionMeta} allowFontScaling={false}>
-                待办 {b.todo} · 在等你 {b.waiting.length}
-              </Text>
-            ) : null}
+            <Text style={s.sectionMeta} allowFontScaling={false}>看板</Text>
           </View>
-          {!b ? (
-            <StateLine st={board} empty="今天没有待办" />
-          ) : b.waiting.length === 0 ? (
-            <Text style={s.stateText} allowFontScaling={false}>今天没有在等你的</Text>
-          ) : (
-            b.waiting.map((it, index) => {
-              if (!it || typeof it !== 'object') return null;
-              return (
-                <View key={String(it.id != null ? it.id : 'w' + index)} style={s.row}>
-                  <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-                    {it.title || '（无标题）'}
-                  </Text>
-                  {it.nextStep ? (
-                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{it.nextStep}</Text>
-                  ) : null}
+          {board.loading && !b ? (
+            <StateLine st={board} empty="正在取看板" />
+          ) : board.error && !b ? (
+            <ErrorBlock st={board} />
+          ) : b ? (
+            <>
+              <View style={s.boardGrid}>
+                {BOARD_STATUS.map((item) => (
+                  <Pressable
+                    key={item.key}
+                    style={[s.boardCell, boardOpen === item.key ? s.boardCellOn : null]}
+                    onPress={() => openBoard(item.key)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: boardOpen === item.key }}
+                  >
+                    <Text style={s.boardCount} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
+                    <Text style={s.boardLabel} allowFontScaling={false}>{item.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              {boardOpen && b && categoryCards.length === 0 ? (
+                <Text style={s.stateText} allowFontScaling={false}>这一类现在没有卡片</Text>
+              ) : null}
+              {boardOpen && categoryCards.length > 0 ? categoryCards.map((c) => (
+                <View key={c.id} style={s.listRow}>
+                  <View style={s.listText}>
+                    <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>{c.title || '（无标题）'}</Text>
+                    {c.nextStep ? (
+                      <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{c.nextStep}</Text>
+                    ) : null}
+                  </View>
                 </View>
-              );
-            })
+              )) : null}
+            </>
+          ) : (
+            <Text style={s.stateText} allowFontScaling={false}>今天没有待办</Text>
           )}
         </View>
 
@@ -221,109 +325,28 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
           <View style={s.sectionHead}>
             <Text style={s.sectionTitle} allowFontScaling={false}>今日灵感</Text>
             {i && i.total ? (
-              <Text style={s.sectionMeta} allowFontScaling={false}>{i.total} 条</Text>
+              <Text style={s.sectionMeta} allowFontScaling={false}>{i.total} 条观点</Text>
             ) : null}
           </View>
-          {ideas.loading ? (
+          {ideas.loading && !i ? (
             <StateLine st={ideas} empty="正在取灵感" />
-          ) : ideas.error ? (
-            <View style={s.centerBlock}>
-              <Text style={s.stateText} allowFontScaling={false}>灵感没取到</Text>
-              <Pressable onPress={loadAll} style={s.retryBtn}>
-                <Text style={s.retryText} allowFontScaling={false}>重试</Text>
-              </Pressable>
-            </View>
-          ) : i && i.items && i.items.length === 0 ? (
-            <Text style={[s.stateText, { textAlign: 'center' }]} allowFontScaling={false}>
-              还没有灵感，去工作台记一条。
-            </Text>
-          ) : i && i.items ? (
-            i.items.slice(0, 3).map((idea) => (
-              <View key={idea.id} style={s.row}>
-                <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                  {idea.content || '（无内容）'}
-                </Text>
-              </View>
-            ))
-          ) : null}
-        </View>
-
-        <View style={s.sectionCard}>
-          <View style={s.sectionHead}>
-            <Text style={s.sectionTitle} allowFontScaling={false}>快速开始</Text>
-          </View>
-          <View style={s.quickGrid}>
-            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('DraftLibrary')}>
-              <Text style={s.quickText} allowFontScaling={false}>写新稿</Text>
-            </Pressable>
-            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('Expression')}>
-              <Text style={s.quickText} allowFontScaling={false}>练表达</Text>
-            </Pressable>
-            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('Books')}>
-              <Text style={s.quickText} allowFontScaling={false}>翻书</Text>
-            </Pressable>
-            <Pressable style={s.quickBtn} onPress={() => navigation && navigation.navigate && navigation.navigate('BotList')}>
-              <Text style={s.quickText} allowFontScaling={false}>问顾问</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={s.sectionCard}>
-          <View style={s.sectionHead}>
-            <Text style={s.sectionTitle} allowFontScaling={false}>今日进度</Text>
-          </View>
-          <View style={s.progressGrid}>
-            <View style={s.progressCell}>
-              <Text style={s.progressCount} allowFontScaling={false}>{train.data?.count ?? '—'}</Text>
-              <Text style={s.progressLabel} allowFontScaling={false}>练了几次</Text>
-            </View>
-            <View style={s.progressCell}>
-              <Text style={s.progressCount} allowFontScaling={false}>
-                {(() => {
-                  const n = words.data?.words;
-                  if (n === undefined || n === null) return '—';
-                  const num = Number(n);
-                  if (num >= 10000) return (num / 10000).toFixed(1) + ' 万';
-                  if (num >= 1000) return Math.round(num / 1000) + ' 千';
-                  return num + ' 字';
-                })()}
-              </Text>
-              <Text style={s.progressLabel} allowFontScaling={false}>今日采集</Text>
-            </View>
-            <View style={s.progressCell}>
-              <Text style={s.progressCount} allowFontScaling={false}>
-                {(() => {
-                  const n = blocks.data?.blocks;
-                  if (n === undefined || n === null) return '—';
-                  return Math.round(Number(n)) + ' 块';
-                })()}
-              </Text>
-              <Text style={s.progressLabel} allowFontScaling={false}>看了几块</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={s.sectionCard}>
-          <View style={s.sectionHead}>
-            <Text style={s.sectionTitle} allowFontScaling={false}>选题池</Text>
-            {tp && tp.total ? (
-              <Text style={s.sectionMeta} allowFontScaling={false}>{tp.total} 条</Text>
-            ) : null}
-          </View>
-          {!tp ? (
-            <StateLine st={topics} empty="选题池空的" />
-          ) : tp.items.length === 0 ? (
-            <Text style={s.stateText} allowFontScaling={false}>没有待挖的选题</Text>
+          ) : ideas.error && !i ? (
+            <ErrorBlock st={ideas} />
+          ) : ideaItems.length === 0 ? (
+            <Text style={s.stateText} allowFontScaling={false}>观点库还空着，先去记一条。</Text>
           ) : (
-            tp.items.slice(0, 3).map((topic) => (
-              <View key={topic.id} style={s.row}>
-                <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                  {topic.title || '（无标题）'}
+            ideaItems.map((idea, index) => (
+              <Pressable
+                key={(idea && idea.id) || 'idea-' + index}
+                style={s.listRow}
+                onPress={openIdeas}
+                accessibilityRole="button"
+              >
+                <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
+                <Text style={s.listTitle} numberOfLines={2} allowFontScaling={false}>
+                  {(idea && (idea.title || idea.content)) || '（无标题）'}
                 </Text>
-                {topic.board ? (
-                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>{topic.board}</Text>
-                ) : null}
-              </View>
+              </Pressable>
             ))
           )}
         </View>
@@ -338,18 +361,6 @@ const makeStyles = (C, T, S, R) =>
     greeting: { color: C.ink, ...T.display },
     date: { color: C.ink2, ...T.meta, marginTop: S.x1 },
     heroRow: { paddingHorizontal: S.page, gap: S.x3, paddingBottom: S.x4 },
-    heroCard: {
-      flex: 1,
-      borderRadius: R.big,
-      padding: S.x6,
-      justifyContent: 'space-between',
-    },
-    heroKicker: { color: C.ink2, ...T.meta },
-    heroTitle: { color: C.ink, ...T.section, marginTop: S.x2 },
-    heroBody: { color: C.ink2, ...T.body, marginTop: S.x3 },
-    heroBottom: { gap: S.x2 },
-    heroMeta: { color: C.ink3, ...T.meta },
-    heroFooter: { color: C.accent, ...T.meta },
     sectionCard: {
       marginHorizontal: S.page,
       marginBottom: S.x3,
@@ -363,29 +374,46 @@ const makeStyles = (C, T, S, R) =>
     row: { paddingVertical: S.x1, gap: S.x1 },
     rowTitle: { color: C.ink, ...T.body },
     rowSub: { color: C.ink2, ...T.meta },
+    listRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: S.x2,
+      paddingVertical: S.x1,
+    },
+    listText: { flex: 1, minWidth: 0, gap: S.x1 },
+    listTitle: { flex: 1, minWidth: 0, color: C.ink, ...T.body },
+    ordinal: {
+      minWidth: S.x5,
+      color: C.ink3,
+      ...T.meta,
+      textAlign: 'right',
+    },
+    score: { color: C.ink2, ...T.meta, marginLeft: S.x1 },
+    draftEmpty: { paddingVertical: S.x2, gap: S.x2, alignItems: 'flex-start' },
+    emptyAction: {
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x2,
+      borderRadius: R.capsule,
+      backgroundColor: C.card2,
+    },
+    emptyActionText: { color: C.ink, ...T.meta },
+    boardGrid: { flexDirection: 'row', gap: S.x2, paddingTop: S.x2 },
+    boardCell: {
+      flex: 1,
+      backgroundColor: C.card2,
+      borderRadius: R.small,
+      paddingVertical: S.x3,
+      paddingHorizontal: S.x1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: S.x1,
+    },
+    boardCellOn: { backgroundColor: C.accent, borderColor: C.accent },
+    boardCount: { color: C.ink, ...T.section },
+    boardLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
     stateRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingVertical: S.x2 },
     stateText: { color: C.ink3, ...T.meta },
     centerBlock: { alignItems: 'center', paddingVertical: S.x3, gap: S.x2 },
     retryBtn: { paddingHorizontal: S.x4, paddingVertical: S.x2, borderRadius: R.capsule, backgroundColor: C.card2 },
     retryText: { color: C.ink2, ...T.meta },
-    quickGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: S.x3 },
-    quickBtn: {
-      width: '48%',
-      height: 88,
-      backgroundColor: C.card2,
-      borderRadius: R.small,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    quickText: { color: C.ink, ...T.title },
-    progressGrid: { flexDirection: 'row', gap: S.x2, paddingTop: S.x2 },
-    progressCell: {
-      flex: 1,
-      backgroundColor: C.card2,
-      borderRadius: R.small,
-      padding: S.x3,
-      alignItems: 'center',
-    },
-    progressCount: { color: C.ink, ...T.section },
-    progressLabel: { color: C.ink3, ...T.meta, marginTop: S.x1, textAlign: 'center' },
   });

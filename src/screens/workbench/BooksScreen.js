@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
@@ -45,6 +45,7 @@ export default function BooksScreen({
   onRetry,
   onOpenBook,
   onBack,
+  loading = false,
   activeTab = 'workbench',
   onTabPress,
 }) {
@@ -156,23 +157,36 @@ export default function BooksScreen({
             </Pressable>
           ) : null}
         </View>
+      ) : loading && books.length === 0 ? (
+        <View style={s.loadingRow}>
+          <ActivityIndicator color={K.brand} />
+          <Text style={s.loadingText} allowFontScaling={false}>正在读取书库</Text>
+        </View>
       ) : books.length === 0 ? (
-        <Text style={s.empty} allowFontScaling={false}>
-          {q.trim() ? '没搜到这本书。' : '书库还是空的。'}
-        </Text>
+        <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+          <Text style={s.empty} allowFontScaling={false}>
+            {q.trim() ? '没搜到这本书。' : '书库还是空的。'}
+          </Text>
+        </TouchableWithoutFeedback>
       ) : (
-        <FlatList
-          data={books}
-          keyExtractor={(it) => it.id}
-          renderItem={renderRow}
-          getItemLayout={getItemLayout}
-          initialNumToRender={8}
-          maxToRenderPerBatch={8}
-          windowSize={7}
-          removeClippedSubviews
-          contentContainerStyle={{ paddingTop: S.x3, paddingBottom: onTabPress ? dockPadding(insets, S) : S.x3 + insets.bottom }}
-          showsVerticalScrollIndicator={false}
-        />
+        <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={books}
+              keyExtractor={(it) => it.id}
+              renderItem={renderRow}
+              getItemLayout={getItemLayout}
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={7}
+              removeClippedSubviews
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingTop: S.x3, paddingBottom: onTabPress ? dockPadding(insets, S) : S.x3 + insets.bottom }}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </TouchableWithoutFeedback>
       )}
 
       {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
@@ -241,6 +255,8 @@ const makeStyles = (C, T, S, R, K) =>
     progText: { marginTop: S.x1, color: K.brand, ...T.meta },
 
     empty: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink2, ...T.body },
+    loadingRow: { marginTop: S.x6, marginHorizontal: S.page, flexDirection: 'row', alignItems: 'center', gap: S.x2 },
+    loadingText: { color: C.ink3, ...T.meta },
     errorBox: {
       marginTop: S.x6,
       marginHorizontal: S.page,

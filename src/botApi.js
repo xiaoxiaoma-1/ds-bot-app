@@ -84,7 +84,7 @@ export const groupApi = {
       '/api/dsbot/group?group=' + encodeURIComponent(groupId) + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''),
       { method: 'GET' },
     ),
-  send: (groupId, text) => call('/api/dsbot/send', { body: { bot: groupId, text } }),
+  send: (groupId, text, media) => call('/api/dsbot/send', { body: { bot: groupId, text, ...(media && media.length ? { media } : {}) } }),
 };
 
 // 语音整理（口头文字 → 书面语）。<4 字后端原样返回且 changed=false；>4000 字直接报错。

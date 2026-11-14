@@ -10,13 +10,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
+import { getMyViews } from '../../workbenchApi';
 
-// 观点库页 · 探探式（骨架版 · 2026-11-12）
-// 左滑认同 / 右滑不认同。
+// 观点库页 · 先选入口，再左右滑（骨架版 · 2026-11-12）
+// 右滑认同 / 左滑不认同。
 //
 // 电脑端口径（pool_db.py 的 clash_list / clash_answer，不是我自己定的）：
 //   clash_list  → 一条平铺流 { id, author, claim(16–180字), type, confidence, original, url } + left + done
@@ -30,7 +32,7 @@ import Dock, { dockPadding } from './Dock';
 //   ② 理由用半屏 sheet，不做卡片翻面（翻面看不到原文，写出来的理由会飘）
 //   ③ **sheet 上沿不许盖住「在评什么」**：sheet 里带一条原文引用块，卡片区收起，
 //      键盘弹起时 sheet 是 flex 块（不是浮层），只会被压扁不会被顶出屏幕
-//   ④ 左滑认同 / 右滑不认同，与探探本义相反，卡片上固定标注「← 认同」「不认同 →」
+//   ④ 右滑认同 / 左滑不认同；卡片上固定标注「← 不认同」「认同 →」
 //   ⑤ 提交前可弹回；提交后不可撤回，sheet 里写明
 //   ⑥ 只用 RN 内置 Animated + PanResponder，归位 S3 弹簧 420/20
 //   ⑦ 滑动不能是唯一入口（手抖 / 屏幕有水 / 戴手套 / 读屏都滑不动）：卡片右上角给「用按钮代替滑动」，
@@ -54,18 +56,10 @@ const THRESHOLD = 96;
 
 const springIn = { tension: 420, friction: 20, useNativeDriver: false }; // 令牌 S3；pan.x 是 JS 驱动，弹簧必须同为 JS
 
-const DEFAULT_TOPICS = [
-  { id: 'v1', claim: '一个人赚不到钱，不是能力问题，是他不肯把自己放到能被定价的位置上。', author: '李笑来', type: '观点', confidence: 'high' },
-  { id: 'v2', claim: '写作的第一性原理不是表达欲，是「让别人看懂」。看不懂的表达，再真诚也没有价值。', author: '万维钢', type: '观点', confidence: 'high' },
-  { id: 'v3', claim: '长期主义不是熬时间，是持续做复利动作；摊位摆十年不会自己长出东西。', author: '刘润', type: '观点', confidence: 'medium' },
-  { id: 'v4', claim: '你不需要更多的时间，你需要更少的选项。选择本身比执行更耗人。', author: '张潇雨', type: '观点', confidence: 'medium' },
-  { id: 'v5', claim: '所有「准备好了再做」都是拖延的另一种说法，做起来才知道缺什么。', author: '李诞', type: '观点', confidence: 'high' },
-];
-
 export default function ViewsPoolScreen({
-  topics = DEFAULT_TOPICS,
-  done = 12,
-  left = 468,
+  topics = [],
+  done = 0,
+  left = 0,
   activeTab = 'workbench',
   onBack,
   onTabPress,
@@ -73,12 +67,16 @@ export default function ViewsPoolScreen({
   onNeedMore,
   onUndo,
   onOpenDetail,
+  onOpenMyViews,
 }) {
   const { C, T, S, R } = useTheme();
   const insets = useSafeAreaInsets();
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
+  const nav = useNavigation();
 
+  const [mode, setMode] = useState('menu'); // menu = 两个气泡；swipe = 左右滑
+  const [myTotal, setMyTotal] = useState(null);
   const [idx, setIdx] = useState(0);
   const [doneN, setDoneN] = useState(done);
   const [verdict, setVerdict] = useState(null);
@@ -94,22 +92,38 @@ export default function ViewsPoolScreen({
   const cur = topics[idx] || null;
   const next = topics[idx + 1] || null;
   const remain = Math.max(0, left - (doneN - done));
+  const pending = Math.max(0, Number(left) || 0);
+  const myCount = myTotal === null ? '…' : String(myTotal);
+
+  const refreshMyCount = useCallback(async () => {
+    try {
+      const d = await getMyViews();
+      setMyTotal(Number(d.total) || 0);
+    } catch {
+      // 计数失败不影响主流程
+    }
+  }, []);
 
   useEffect(() => {
+    refreshMyCount();
+  }, [refreshMyCount]);
+
+  useEffect(() => {
+    if (mode !== 'swipe') return;
     const remainLocal = topics.length - idx;
     if (remainLocal <= 5 && remainLocal > 0 && !asked.current && onNeedMore) {
       asked.current = true;
       Promise.resolve(onNeedMore()).catch(() => {});
     }
     if (remainLocal > 8) asked.current = false;
-  }, [idx, topics.length, onNeedMore]);
+  }, [idx, topics.length, onNeedMore, mode]);
 
   const settle = useCallback(
     (v) => {
       setErr(null);
       setVerdict(v);
       setWhy('');
-      Animated.spring(pan, { toValue: { x: v === 'agree' ? -140 : 140, y: 0 }, ...springIn }).start();
+      Animated.spring(pan, { toValue: { x: v === 'agree' ? 140 : -140, y: 0 }, ...springIn }).start();
     },
     [pan],
   );
@@ -131,8 +145,9 @@ export default function ViewsPoolScreen({
             if (onOpenDetail && cur) onOpenDetail(cur);
             return;
           }
-          if (g.vx <= -0.4 || g.dx <= -THRESHOLD) settle('agree');
-          else if (g.vx >= 0.4 || g.dx >= THRESHOLD) settle('disagree');
+          // 右滑认同，左滑不认同。
+          if (g.vx >= 0.4 || g.dx >= THRESHOLD) settle('agree');
+          else if (g.vx <= -0.4 || g.dx <= -THRESHOLD) settle('disagree');
           else springBack();
         },
         onPanResponderTerminate: () => springBack(),
@@ -170,15 +185,17 @@ export default function ViewsPoolScreen({
     try {
       await onAnswer(cur, verdict, t);
       setDoneN((n) => n + 1);
+      refreshMyCount();
       Animated.timing(pan, {
-        toValue: { x: verdict === 'agree' ? -SWIPE_OUT : SWIPE_OUT, y: 0 },
+        toValue: { x: verdict === 'agree' ? SWIPE_OUT : -SWIPE_OUT, y: 0 },
         duration: 180,
         useNativeDriver: false,
       }).start(() => {
         pan.setValue({ x: 0, y: 0 });
         setVerdict(null);
         setWhy('');
-        setIdx((i) => i + 1);
+        setIdx(0);
+        setMode('menu');
       });
     } catch (e) {
       setErr(String((e && e.message) || '没存上'));
@@ -193,6 +210,64 @@ export default function ViewsPoolScreen({
   const nextShift = pan.x.interpolate({ inputRange: [-THRESHOLD, 0, THRESHOLD], outputRange: [0, 8, 0], extrapolate: 'clamp' });
 
   const empty = !cur && !verdict;
+  const menuPending = pending || topics.length;
+
+  const goBack = () => {
+    if (mode === 'swipe') {
+      setVerdict(null);
+      setWhy('');
+      setErr(null);
+      pan.setValue({ x: 0, y: 0 });
+      setMode('menu');
+      return;
+    }
+    if (onBack) onBack();
+  };
+
+  const openMine = () => {
+    if (onOpenMyViews) {
+      onOpenMyViews();
+      return;
+    }
+    if (nav && nav.navigate) nav.navigate('MyViews');
+  };
+
+  if (mode === 'menu') {
+    return (
+      <View style={s.root}>
+        <View style={s.top}>
+          <View style={s.shape} />
+          <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
+            <Text style={s.backText} allowFontScaling={false}>‹</Text>
+          </Pressable>
+          <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
+            <Text style={s.title} allowFontScaling={false}>观点库</Text>
+            <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>选一个入口</Text>
+          </View>
+        </View>
+
+        <View style={s.menuWrap}>
+          <Pressable style={s.menuCard} onPress={() => setMode('swipe')} accessibilityRole="button">
+            <Text style={s.menuTitle} allowFontScaling={false}>观点库</Text>
+            <Text style={s.menuSub} allowFontScaling={false}>还有 {menuPending} 条待判定</Text>
+            <Text style={s.menuHint} allowFontScaling={false}>点进来左右滑</Text>
+          </Pressable>
+
+          <Pressable style={s.menuCard} onPress={openMine} accessibilityRole="button">
+            <Text style={s.menuTitle} allowFontScaling={false}>我的观点</Text>
+            <Text style={s.menuSub} allowFontScaling={false}>{myCount} 条</Text>
+            <Text style={s.menuHint} allowFontScaling={false}>看我自己写的</Text>
+          </Pressable>
+        </View>
+
+        {onTabPress ? (
+          <Dock activeTab={activeTab} onTabPress={onTabPress} />
+        ) : (
+          <View style={{ height: S.x3 + insets.bottom }} />
+        )}
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -202,7 +277,7 @@ export default function ViewsPoolScreen({
     >
       <View style={s.top}>
         <View style={s.shape} />
-        <Pressable style={[s.back, { top: insets.top }]} onPress={onBack} accessibilityRole="button" accessibilityLabel="返回">
+        <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
           <Text style={s.backText} allowFontScaling={false}>
             ‹
           </Text>
@@ -268,11 +343,11 @@ export default function ViewsPoolScreen({
                 </Text>
 
                 <View style={s.dirRow}>
-                  <Animated.Text style={[s.dirText, { opacity: leftOp, color: K.brand }]} allowFontScaling={false}>
-                    ← 认同
+                  <Animated.Text style={[s.dirText, { opacity: leftOp, color: C.bad }]} allowFontScaling={false}>
+                    ← 不认同
                   </Animated.Text>
-                  <Animated.Text style={[s.dirText, { opacity: rightOp, color: C.bad }]} allowFontScaling={false}>
-                    不认同 →
+                  <Animated.Text style={[s.dirText, { opacity: rightOp, color: C.good }]} allowFontScaling={false}>
+                    认同 →
                   </Animated.Text>
                 </View>
               </Animated.View>
@@ -297,9 +372,14 @@ export default function ViewsPoolScreen({
       {/* 理由 sheet：flex 块，键盘只把它压扁，不会顶出屏幕；顶部引用原文，写的时候看得见在评什么 */}
       {verdict ? (
         <View style={s.sheet}>
-          <Text style={s.sheetTitle} allowFontScaling={false}>
-            {verdict === 'agree' ? '你为什么认同？' : verdict === 'disagree' ? '你为什么不认同？' : '你为什么说不清？'}
-          </Text>
+          <View style={s.sheetHead}>
+            <Text style={[s.verdictBadge, { color: verdict === 'agree' ? C.good : verdict === 'disagree' ? C.bad : C.ink2 }]} allowFontScaling={false}>
+              {verdict === 'agree' ? '认同' : verdict === 'disagree' ? '不认同' : '不确定'}
+            </Text>
+            <Text style={s.sheetTitle} allowFontScaling={false}>
+              {verdict === 'agree' ? '你为什么认同？' : verdict === 'disagree' ? '你为什么不认同？' : '你为什么说不清？'}
+            </Text>
+          </View>
           <View style={s.quote}>
             <Text style={s.quoteText} numberOfLines={2} allowFontScaling={false}>
               {cur ? cur.claim : ''}
@@ -418,6 +498,15 @@ const makeStyles = (C, T, S, R, K) =>
     emptyBox: { alignItems: 'center', gap: S.x2, paddingHorizontal: S.x5 },
     emptyTitle: { color: C.ink, ...T.section },
     emptySub: { color: C.ink2, ...T.meta, textAlign: 'center' },
+
+    menuWrap: { flex: 1, paddingHorizontal: S.page, paddingTop: S.x6, gap: S.x4 },
+    menuCard: { height: 148, borderRadius: R.big, backgroundColor: C.card, padding: S.x5, justifyContent: 'center' },
+    menuTitle: { color: C.ink, ...T.section },
+    menuSub: { marginTop: S.x2, color: C.ink2, ...T.body },
+    menuHint: { marginTop: S.x1, color: C.ink3, ...T.meta },
+
+    sheetHead: { flexDirection: 'row', alignItems: 'center', gap: S.x2 },
+    verdictBadge: { ...T.meta, fontWeight: '500' },
 
     sheet: {
       flex: 1,

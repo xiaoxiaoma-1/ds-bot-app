@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
@@ -26,32 +26,13 @@ import Dock, { dockPadding } from './Dock';
 const SHAPE_H = 196;
 const DEBOUNCE = 400;
 
-const DEFAULT_ROWS = [
-  {
-    id: 'mv_1794102193_raw',
-    kind: '原话',
-    title: '年轻的时候不认真搞钱，你可能活不到能享受的那天（原话）',
-    content:
-      '其实我觉得年轻的时候如果说你不去搞钱，你不去认认真真搞钱，不要听信那些所谓的什么「我很年轻的时候就是拿来享受」。不然的话，你老了之后，你再去想想要去享受，你会发现好多你年轻的时候想要的东西，其实你根本就没有办法享受到了。',
-    chars: 373,
-    created_at: '2026-11-08 09:43:13',
-  },
-  {
-    id: 'mv_1794154164321',
-    kind: '自写',
-    title: '嗯那个我觉得吧，普通人想赚钱其实最关键的不是找什…',
-    content: '嗯那个我觉得吧，普通人想赚钱其实最关键的不是找什么好项目，而是先把自己能干的活儿干到别人离不开你，因为你没有资源的时候只能靠手艺换机会',
-    chars: 67,
-    created_at: '2026-11-09 00:09:24',
-  },
-];
-
 export default function CorpusScreen({
-  rows = DEFAULT_ROWS,
+  rows = [],
   onQuery,
   onRefresh,
   onBack,
   error = null, // 有值就盖在空态之上：先让用户看到「加载失败」，不是「没数据」
+  loading = false,
   onRetry,
   activeTab = 'workbench',
   onTabPress,
@@ -79,7 +60,7 @@ export default function CorpusScreen({
 
   return (
     <View style={s.root}>
-      <ScrollView contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
         <View style={s.top}>
           <View style={s.shape} />
           <Pressable style={[s.back, { top: insets.top }]} onPress={onBack} accessibilityRole="button" accessibilityLabel="返回">
@@ -126,26 +107,34 @@ export default function CorpusScreen({
               </Pressable>
             ) : null}
           </View>
+        ) : loading && total === 0 ? (
+          <Text style={s.empty} allowFontScaling={false}>
+            正在读取语料库…
+          </Text>
         ) : total === 0 ? (
           <Text style={s.empty} allowFontScaling={false}>
             {q.trim() ? '没搜到这条。' : '语料库还是空的。去「我的观点」写第一条。'}
           </Text>
         ) : (
-          rows.map((v) => (
-            <View key={v.id} style={s.card}>
-              <View style={s.cardTop}>
-                <Text style={s.cardTitle} numberOfLines={2} allowFontScaling={false}>
-                  {v.title || '（无标题）'}
-                </Text>
-                <Text style={s.cardChars} allowFontScaling={false}>
-                  {v.chars || 0} 字
-                </Text>
-              </View>
-              <Text style={s.cardBody} numberOfLines={2} allowFontScaling={false}>
-                {String(v.content || '').replace(/\n/g, ' ').slice(0, 90)}
-              </Text>
+          <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+            <View>
+              {rows.map((v) => (
+                <View key={v.id} style={s.card}>
+                  <View style={s.cardTop}>
+                    <Text style={s.cardTitle} numberOfLines={2} allowFontScaling={false}>
+                      {v.title || '（无标题）'}
+                    </Text>
+                    <Text style={s.cardChars} allowFontScaling={false}>
+                      {v.chars || 0} 字
+                    </Text>
+                  </View>
+                  <Text style={s.cardBody} numberOfLines={2} allowFontScaling={false}>
+                    {String(v.content || '').replace(/\n/g, ' ').slice(0, 90)}
+                  </Text>
+                </View>
+              ))}
             </View>
-          ))
+          </TouchableWithoutFeedback>
         )}
 
         {/* 空位：导出文档、点开详情 —— 这一版不做，不画入口 */}

@@ -14,7 +14,7 @@ import { useTheme } from '../theme';
 import { advisors, models, writeModel } from '../api';
 
 function displayModelName(model) {
-  if (!model) return '';
+  if (typeof model !== 'string' || !model) return '';
   // 去掉前缀
   const m = model.replace(/^(siliconflow|opendesign|deepseek-ai)\//, '');
   // 美化显示
@@ -25,7 +25,7 @@ function displayModelName(model) {
 }
 
 function getModelSupplier(model) {
-  if (!model) return '';
+  if (typeof model !== 'string' || !model) return '';
   if (model.includes('siliconflow')) return '硅基';
   if (model.includes('opendesign')) return 'OpenDesign';
   if (model.includes('deepseek-ai')) return 'DeepSeek';
@@ -108,9 +108,9 @@ export default function TeamManageScreen({ navigation }) {
   }, []);
 
   // 批量设置逻辑
-  const handleBulkSet = useCallback(async (model) => {
+  const handleBulkSet = useCallback(async (model, name) => {
     // 先弹确认
-    const displayName = displayModelName(model);
+    const displayName = name || displayModelName(model);
     const supplier = getModelSupplier(model);
     const targetCount = bots.filter(bot => bot.model !== model).length;
     
@@ -202,16 +202,17 @@ export default function TeamManageScreen({ navigation }) {
       {showBulkMenu && (
         <View style={s.bulkMenu}>
           <ScrollView style={s.bulkMenuScroll}>
-            {allModels.map(model => {
-              const display = displayModelName(model);
-              const supplier = getModelSupplier(model);
+            {allModels.map(item => {
+              const ref = item.ref;
+              const display = item.name || displayModelName(ref);
+              const supplier = getModelSupplier(ref);
               return (
                 <Pressable
-                  key={model}
+                  key={ref}
                   style={s.bulkMenuItem}
                   onPress={() => {
                     setShowBulkMenu(false);
-                    handleBulkSet(model);
+                    handleBulkSet(ref, display);
                   }}
                 >
                   <Text style={s.bulkMenuItemText}>{display}（{supplier}）</Text>
@@ -299,17 +300,18 @@ export default function TeamManageScreen({ navigation }) {
                     </View>
                     <Text style={s.chooseLabel}>改为：</Text>
                     
-                    {allModels.map((model) => {
-                      const displayName = displayModelName(model);
-                      const supplier = getModelSupplier(model);
-                      const isCurrent = model === bot.model;
-                      const willChangeSupplier = getModelSupplier(model) !== getModelSupplier(bot.model);
+                    {allModels.map((item) => {
+                      const ref = item.ref;
+                      const displayName = item.name || displayModelName(ref);
+                      const supplier = getModelSupplier(ref);
+                      const isCurrent = ref === bot.model;
+                      const willChangeSupplier = supplier !== getModelSupplier(bot.model);
                       
                       return (
                         <Pressable
-                          key={model}
+                          key={ref}
                           style={[s.modelOption, isCurrent && s.modelOptionCurrent]}
-                          onPress={() => handleSaveModel(bot.id, model, bot.model)}
+                          onPress={() => handleSaveModel(bot.id, ref, bot.model)}
                           disabled={isSaving || isCurrent}
                         >
                           <View style={s.radio}>

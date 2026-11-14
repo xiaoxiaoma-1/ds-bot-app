@@ -25,6 +25,7 @@ import {
   postMoment,
 } from '../api';
 import { getBase } from '../store';
+import { setCached, useCachedResource } from '../cache';
 
 const AVATAR_SIZE = 104;
 const MEDIA_LIMIT = 9;
@@ -80,10 +81,39 @@ function mimeFor(asset, kind) {
   return 'image/jpeg';
 }
 
-function nameFor(asset, kind, index) {
+function withExtension(name, kind) {
+  const value = String(name || '').trim();
+  if (/\.[a-z0-9]{2,5}$/i.test(value)) return value;
+  return `${value || kind}.${kind === 'video' ? 'mp4' : 'jpg'}`;
+}
+
+function isUploadPath(value) {
+  if (typeof value !== 'string') return false;
+  const v = value.trim();
+  return Boolean(v) && !/^[a-z][a-z0-9+.-]*:/i.test(v) && !v.includes('/') && !v.includes('\\');
+}
+
+function nameFor(asset, kind) {
   if (asset && asset.fileName) return asset.fileName;
-  const ext = kind === 'video' ? 'mp4' : 'jpg';
-  return `${kind}-${Date.now()}-${index}.${ext}`;
+  return kind === 'video' ? 'video.mp4' : 'photo.jpg';
+}
+
+function errorHttpStatus(e) {
+  if (!e) return null;
+  const direct = e.status || e.httpStatus || e.statusCode;
+  if (direct !== undefined && direct !== null && Number.isFinite(Number(direct))) {
+    return Number(direct);
+  }
+  const hit = /(?:HTTP|状态码)\s*(\d{3})/i.exec(String(e.message || ''));
+  return hit ? Number(hit[1]) : null;
+}
+
+function failureFor(step, e, fallback) {
+  const status = errorHttpStatus(e);
+  return {
+    step: status ? `${step}（HTTP ${status}）：` : `${step}：`,
+    message: (e && e.message) || fallback || '未知错误',
+  };
 }
 
 function VideoThumb({ uri, style, s }) {
@@ -112,12 +142,20 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+  const cachedProfile = useCachedResource('me:profile', fetchMe);
+  const cachedMoments = useCachedResource('me:moments:first', () => fetchMoments(PAGE_SIZE, 0));
 
-  const [me, setMe] = useState({ nickname: '', avatarUrl: '', signature: '' });
+  const [me, setMe] = useState(() => ({
+    nickname: cachedProfile.data?.nickname || '',
+    avatarUrl: /^https?:\/\//i.test(String(cachedProfile.data?.avatarUrl || ''))
+      ? cachedProfile.data.avatarUrl
+      : '',
+    signature: cachedProfile.data?.signature || '',
+  }));
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !cachedProfile.data);
   const [err, setErr] = useState(null);
 
   const [moments, setMoments] = useState([]);
@@ -125,6 +163,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   const [loadingMore, setLoadingMore] = useState(false);
   const [showMoments, setShowMoments] = useState(false);
   const [viewer, setViewer] = useState(null);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
 
   const [showComposer, setShowComposer] = useState(false);
   const [postText, setPostText] = useState('');
@@ -134,40 +173,64 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
 
   const loadMomentsPage = useCallback(async (reset) => {
     const offset = reset ? 0 : moments.length;
-    if (reset) setLoading(true);
-    else setLoadingMore(true);
+    // 只让朋友圈自己转圈，不把已经加载好的个人资料整页清空。
+    setLoadingMore(true);
     try {
       const items = await fetchMoments(PAGE_SIZE, offset);
       const normalized = await Promise.all(items.map(normalizeMoment));
       setMoments((prev) => (reset ? normalized : [...prev, ...normalized]));
       setHasMore(items.length === PAGE_SIZE);
-      if (reset) setShowMoments(true);
+      if (reset) {
+        setShowMoments(true);
+        setCached('me:moments:first', items);
+      }
       setErr(null);
     } catch (e) {
       setErr({ step: '朋友圈加载失败', message: e.message || '未知错误' });
     } finally {
-      if (reset) setLoading(false);
-      else setLoadingMore(false);
+      setLoadingMore(false);
     }
   }, [moments.length]);
 
   useEffect(() => {
+    let alive = true;
+    if (!cachedProfile.data) return undefined;
     (async () => {
-      setLoading(true);
-      try {
-        const [profile, items] = await Promise.all([fetchMe(), fetchMoments(PAGE_SIZE, 0)]);
-        setMe({ ...profile, avatarUrl: await toFullUrl(profile.avatarUrl) });
-        const normalized = await Promise.all(items.map(normalizeMoment));
-        setMoments(normalized);
-        setHasMore(items.length === PAGE_SIZE);
-        setErr(null);
-      } catch (e) {
-        setErr({ step: '我的页面加载失败', message: e.message || '未知错误' });
-      } finally {
-        setLoading(false);
-      }
+      const profile = cachedProfile.data;
+      const avatarUrl = await toFullUrl(profile.avatarUrl);
+      if (!alive) return;
+      setMe({
+        nickname: profile.nickname || '',
+        avatarUrl,
+        signature: profile.signature || '',
+      });
+      setLoading(false);
+      setErr(null);
     })();
-  }, []);
+    return () => { alive = false; };
+  }, [cachedProfile.data]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!cachedMoments.data) return undefined;
+    (async () => {
+      const normalized = await Promise.all(cachedMoments.data.map(normalizeMoment));
+      if (!alive) return;
+      setMoments(normalized);
+      setHasMore(cachedMoments.data.length === PAGE_SIZE);
+    })();
+    return () => { alive = false; };
+  }, [cachedMoments.data]);
+
+  useEffect(() => {
+    if (!cachedProfile.data && cachedProfile.error) {
+      setErr({ step: '我的页面加载失败', message: cachedProfile.error });
+      setLoading(false);
+    }
+    if (!cachedMoments.data && cachedMoments.error) {
+      setErr({ step: '朋友圈加载失败', message: cachedMoments.error });
+    }
+  }, [cachedProfile.data, cachedProfile.error, cachedMoments.data, cachedMoments.error]);
 
   const goBack = useCallback(() => {
     if (onBack) onBack();
@@ -178,6 +241,14 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
     if (onOpenSettings) onOpenSettings();
     else if (navigation && navigation.navigate) navigation.navigate('Setup');
   }, [navigation, onOpenSettings]);
+
+  const rememberProfile = (next) => {
+    setCached('me:profile', {
+      nickname: next.nickname || '',
+      avatarUrl: next.avatarUrl || '',
+      signature: next.signature || '',
+    });
+  };
 
   const saveField = async (field) => {
     const next = draft.trim();
@@ -191,7 +262,9 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
     try {
       const patch = field === 'nickname' ? { nickname: next } : { signature: next };
       await updateMe(patch);
-      setMe((prev) => ({ ...prev, [field]: next }));
+      const nextMe = { ...me, [field]: next };
+      setMe(nextMe);
+      rememberProfile(nextMe);
       setEditing(null);
       setErr(null);
     } catch (e) {
@@ -201,32 +274,58 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
     }
   };
 
-  const pickAvatar = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      setErr({ step: '权限不足', message: '需要相册权限才能选择头像' });
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (result.canceled) return;
-    const uri = result.assets[0].uri;
+  const applyAvatar = async (uri) => {
+    if (!uri || saving) return;
     setSaving(true);
     try {
       const { path, url } = await uploadImage(uri);
       await updateMe({ avatar_path: path });
       const fullUrl = await toFullUrl(url || path);
-      setMe((prev) => ({ ...prev, avatarUrl: fullUrl }));
+      const nextMe = { ...me, avatarUrl: fullUrl };
+      setMe(nextMe);
+      rememberProfile(nextMe);
       setErr(null);
     } catch (e) {
-      setErr({ step: '换头像失败', message: e.message || '未知错误' });
+      setErr(failureFor('换头像失败', e));
     } finally {
       setSaving(false);
     }
+  };
+
+  const chooseAvatar = async (source) => {
+    setShowAvatarMenu(false);
+    if (saving) return;
+    if (source === 'view') {
+      if (!me.avatarUrl) {
+        setErr({ step: '看大图失败', message: '还没有头像，先拍一张或从相册选一张' });
+        return;
+      }
+      setViewer({ type: 'image', url: me.avatarUrl });
+      return;
+    }
+
+    const permission = source === 'camera'
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== 'granted') {
+      setErr({
+        step: '权限不足',
+        message: source === 'camera' ? '需要相机权限才能拍头像' : '需要相册权限才能选择头像',
+      });
+      return;
+    }
+
+    const options = {
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    };
+    const result = source === 'camera'
+      ? await ImagePicker.launchCameraAsync(options)
+      : await ImagePicker.launchImageLibraryAsync(options);
+    if (result.canceled || !result.assets || !result.assets[0]) return;
+    await applyAvatar(result.assets[0].uri);
   };
 
   const pickImages = async () => {
@@ -247,7 +346,7 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
       kind: 'image',
       uri: asset.uri,
       type: mimeFor(asset, 'image'),
-      name: nameFor(asset, 'image', i),
+      name: nameFor(asset, 'image'),
       path: '',
       cover: '',
     }));
@@ -272,11 +371,79 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
       kind: 'video',
       uri: asset.uri,
       type: mimeFor(asset, 'video'),
-      name: nameFor(asset, 'video', i),
+      name: nameFor(asset, 'video'),
       path: '',
       cover: '',
     }));
     setDraftMedia((prev) => [...prev, ...picked].slice(0, MEDIA_LIMIT));
+  };
+
+  const pickCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      setErr({ step: '权限不足', message: '需要相机权限才能拍照' });
+      return;
+    }
+    // 录视频时 iOS 还要麦克风权限；拒绝也不影响拍照，所以只做一次静默申请。
+    try {
+      await ImagePicker.requestMicrophonePermissionsAsync();
+    } catch (e) {
+      // 没有麦克风权限时仍可拍照，忽略。
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images', 'videos'],
+      quality: 0.8,
+      videoMaxDuration: 60,
+    });
+    if (result.canceled) return;
+    const picked = (result.assets || []).map((asset, i) => {
+      const kind = asset.type === 'video' || /^video\//.test(String(asset.mimeType || ''))
+        ? 'video'
+        : 'image';
+      return {
+        id: `${Date.now()}-c-${i}-${Math.random().toString(36).slice(2, 6)}`,
+        kind,
+        uri: asset.uri,
+        type: mimeFor(asset, kind),
+        name: nameFor(asset, kind),
+        path: '',
+        cover: '',
+      };
+    });
+    setDraftMedia((prev) => [...prev, ...picked].slice(0, MEDIA_LIMIT));
+  };
+
+  const pickCover = async (id) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      setErr({ step: '权限不足', message: '需要相册权限才能选封面' });
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets || !result.assets[0]) return;
+    const asset = result.assets[0];
+    try {
+      setPostingText('正在上传封面');
+      const up = await uploadFile(asset.uri, {
+        type: mimeFor(asset, 'image'),
+        name: withExtension(asset.fileName || 'cover.jpg', 'image'),
+        timeoutMs: 60000,
+      });
+      const coverPath = String(up.path || '').trim();
+      if (!coverPath) throw new Error('封面上传成功但没有返回文件名');
+      setDraftMedia((prev) => prev.map((m) => (
+        m.id === id ? { ...m, cover: coverPath, coverName: asset.fileName || '' } : m
+      )));
+      setErr(null);
+    } catch (e) {
+      setErr({ step: '封面上传失败', message: e.message || '未知错误' });
+    } finally {
+      setPostingText('');
+    }
   };
 
   const removeDraftMedia = (id) => {
@@ -286,24 +453,46 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   const submitMoment = async () => {
     const text = postText.trim();
     if (posting || (!text && draftMedia.length === 0)) return;
+    if (draftMedia.some((m) => m.kind === 'video' && !isUploadPath(m.cover))) {
+      setErr({ step: '发朋友圈失败', message: '视频需要先选封面再发布' });
+      return;
+    }
     setPosting(true);
     setPostingText('准备上传');
     try {
       const media = [];
       for (let i = 0; i < draftMedia.length; i += 1) {
         const item = draftMedia[i];
+        const kind = item.kind === 'video' ? 'video' : 'image';
         setPostingText(`正在上传 ${i + 1}/${draftMedia.length}`);
-        let path = item.path;
+
+        // 只认 upload 返回的文件名；本地 uri / 完整 url 都不能直接进 media.path。
+        let path = isUploadPath(item.path) ? item.path.trim() : '';
         if (!path) {
+          const uploadType = kind === 'video'
+            ? (/^video\//.test(item.type || '') ? item.type : 'video/mp4')
+            : (/^image\//.test(item.type || '') ? item.type : 'image/jpeg');
           const up = await uploadFile(item.uri, {
-            type: item.type,
-            name: item.name,
-            timeoutMs: item.kind === 'video' ? 180000 : 60000,
+            type: uploadType,
+            name: withExtension(item.name, kind),
+            timeoutMs: kind === 'video' ? 180000 : 60000,
           });
-          path = up.path;
+          path = String(up.path || '').trim();
+          if (!path) throw new Error('上传成功但没有返回文件名');
         }
-        const mediaItem = { type: item.kind, path };
-        if (item.cover) mediaItem.cover = item.cover;
+
+        const mediaItem = { type: kind, path };
+        // 视频封面必须同样是 upload 返回的 path；本地 uri 先补传。
+        let cover = isUploadPath(item.cover) ? item.cover.trim() : '';
+        if (kind === 'video' && !cover && item.cover) {
+          const coverUp = await uploadFile(item.cover, {
+            type: 'image/jpeg',
+            name: withExtension(item.coverName || 'cover.jpg', 'image'),
+            timeoutMs: 60000,
+          });
+          cover = String(coverUp.path || '').trim();
+        }
+        if (kind === 'video' && cover) mediaItem.cover = cover;
         media.push(mediaItem);
       }
       setPostingText('正在发布');
@@ -431,7 +620,12 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.profileBlock}>
-            <Pressable onPress={pickAvatar} disabled={saving} style={s.avatarWrap}>
+            <Pressable
+              onPress={() => setShowAvatarMenu(true)}
+              disabled={saving}
+              style={s.avatarWrap}
+              hitSlop={8}
+            >
               {me.avatarUrl ? (
                 <Image source={{ uri: me.avatarUrl }} style={s.avatar} resizeMode="cover" />
               ) : (
@@ -519,6 +713,46 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
           </Pressable>
         </ScrollView>
       )}
+
+      <Modal
+        visible={showAvatarMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAvatarMenu(false)}
+      >
+        <View style={s.sheetBackdrop}>
+          <View style={[s.sheet, { paddingBottom: insets.bottom + S.x4 }]}>
+            <Text style={s.sheetTitle} allowFontScaling={false}>更换头像</Text>
+            <Pressable
+              style={s.menuItem}
+              onPress={() => chooseAvatar('camera')}
+              disabled={saving}
+            >
+              <Text style={s.menuItemText} allowFontScaling={false}>拍照</Text>
+            </Pressable>
+            <Pressable
+              style={s.menuItem}
+              onPress={() => chooseAvatar('library')}
+              disabled={saving}
+            >
+              <Text style={s.menuItemText} allowFontScaling={false}>从相册选</Text>
+            </Pressable>
+            <Pressable
+              style={[s.menuItem, !me.avatarUrl && s.menuItemDisabled]}
+              onPress={() => chooseAvatar('view')}
+              disabled={!me.avatarUrl || saving}
+            >
+              <Text style={s.menuItemText} allowFontScaling={false}>看大图</Text>
+            </Pressable>
+            <Pressable
+              style={[s.menuItem, s.menuCancel]}
+              onPress={() => setShowAvatarMenu(false)}
+            >
+              <Text style={s.menuCancelText} allowFontScaling={false}>取消</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showMoments}
@@ -653,6 +887,17 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
                     ) : (
                       <Image source={{ uri: m.uri }} style={s.draftImage} resizeMode="cover" />
                     )}
+                    {m.kind === 'video' ? (
+                      <Pressable
+                        style={s.coverBtn}
+                        onPress={() => pickCover(m.id)}
+                        disabled={posting}
+                      >
+                        <Text style={s.coverBtnText} allowFontScaling={false}>
+                          {m.cover ? '换封面' : '选封面'}
+                        </Text>
+                      </Pressable>
+                    ) : null}
                     <Pressable
                       style={s.removeMedia}
                       onPress={() => removeDraftMedia(m.id)}
@@ -665,6 +910,9 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
               </ScrollView>
             ) : null}
             <View style={s.composerActions}>
+              <Pressable style={s.addBtn} onPress={pickCamera} disabled={posting}>
+                <Text style={s.addBtnText} allowFontScaling={false}>拍照</Text>
+              </Pressable>
               <Pressable style={s.addBtn} onPress={pickImages} disabled={posting}>
                 <Text style={s.addBtnText} allowFontScaling={false}>加图片</Text>
               </Pressable>
@@ -846,6 +1094,15 @@ const makeStyles = (C, T, S, R) =>
       paddingBottom: S.x3,
     },
     sheetTitle: { color: C.ink, ...T.section },
+    menuItem: {
+      minHeight: 52,
+      justifyContent: 'center',
+      paddingHorizontal: S.x2,
+    },
+    menuItemDisabled: { opacity: 0.4 },
+    menuItemText: { color: C.ink, ...T.body },
+    menuCancel: { marginTop: S.x2, backgroundColor: C.card, borderRadius: R.capsule, alignItems: 'center' },
+    menuCancelText: { color: C.ink2, ...T.body },
     sheetClose: { color: C.ink2, ...T.body },
     sheetToolbar: {
       flexDirection: 'row',
@@ -917,6 +1174,18 @@ const makeStyles = (C, T, S, R) =>
       justifyContent: 'center',
     },
     removeMediaText: { color: C.ink, fontSize: 15, lineHeight: 18 },
+    coverBtn: {
+      position: 'absolute',
+      left: 4,
+      bottom: 4,
+      minHeight: 18,
+      paddingHorizontal: S.x2,
+      borderRadius: R.capsule,
+      backgroundColor: C.scrim,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    coverBtnText: { color: C.onAccent, ...T.meta, lineHeight: 18 },
     composerActions: {
       flexDirection: 'row',
       alignItems: 'center',

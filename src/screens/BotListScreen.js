@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DeviceMotion } from 'expo-sensors';
-import { avatarInk, inkOn, useTheme } from '../theme';
+import { useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
@@ -99,11 +99,13 @@ const AdvisorRow = memo(function AdvisorRow({
 }) {
   const avatar = item.avatar || {};
   const shape = avatar.shape || 'gumdrop';
-  const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
+  // 统一成 BotAvatar 气泡：深色圆角底 + 白色图形（不再跟随 avatar.color 变白/变彩）。
+  const tint = '#FFFFFF';
+  const faceInk = C.hero;
 
-  // 眼睛跟着倾斜走：单轴最多 1.2pt（不超过 1.5pt，再大就飞出脸）；嘴不参与
+  // 眼睛跟着倾斜走：单轴最多 3pt（老板要看得出来，又不至于飞出脸）；嘴不参与
   const tilt = useTilt();
-  const maxShift = 1.2;
+  const maxShift = 3;
   const dx = Math.max(-maxShift, Math.min(maxShift, tilt.x * maxShift * 4));
   const dy = Math.max(-maxShift, Math.min(maxShift, tilt.y * maxShift * 4));
   return (
@@ -129,17 +131,17 @@ const AdvisorRow = memo(function AdvisorRow({
                 style={[
                   s.eye,
                   s.eyeL,
-                  { backgroundColor: inkOn(tint), transform: [{ translateX: dx }, { translateY: dy }] },
+                  { backgroundColor: faceInk, transform: [{ translateX: dx }, { translateY: dy }] },
                 ]}
               />
               <View
                 style={[
                   s.eye,
                   s.eyeR,
-                  { backgroundColor: inkOn(tint), transform: [{ translateX: dx }, { translateY: dy }] },
+                  { backgroundColor: faceInk, transform: [{ translateX: dx }, { translateY: dy }] },
                 ]}
               />
-              <View style={[s.mouth, { backgroundColor: inkOn(tint), opacity: 0.75 }]} />
+              <View style={[s.mouth, { backgroundColor: faceInk, opacity: 0.75 }]} />
             </>
           ) : null}
         </View>
@@ -618,7 +620,14 @@ const makeStyles = (C, T, S, R) =>
       gap: S.x4,
     },
     mark: { width: 40, height: 40 },
-    markWrap: { width: 40, height: 40, position: 'relative' },
+    markWrap: {
+      width: 40,
+      height: 40,
+      position: 'relative',
+      borderRadius: 14,
+      overflow: 'hidden',
+      backgroundColor: C.hero,
+    },
     eye: { width: 2.5, height: 6.5, borderRadius: 1.2, position: 'absolute' },
     eyeL: { left: 13.75, top: 12 },
     eyeR: { right: 13.75, top: 12 },

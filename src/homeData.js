@@ -28,48 +28,77 @@ async function get(path) {
 export async function loadBoardSummary() {
   const d = await get('/api/board/summary');
   const counts = d.counts || {};
+  const cards = Array.isArray(d.cards) ? d.cards.map((x) => ({
+    id: String((x && x.id) || ''),
+    title: String((x && x.title) || ''),
+    status: String((x && x.status) || ''),
+    nextStep: String((x && x.nextStep) || ''),
+    workspace: String((x && x.workspace) || ''),
+  })) : [];
+  
   return {
     todo: Number(counts.todo) || 0,
     doing: Number(counts.doing) || 0,
     stage: Number(counts.stage) || 0,
     done: Number(counts.done) || 0,
     waiting: Array.isArray(d.waiting) ? d.waiting.slice(0, 5) : [],
+    cards,
   };
 }
 
 // ② 今日热点（isToday=false 时不能假装是今天的，标题要用返回的 date）
 export async function loadHotDaily() {
   const d = await get('/api/hot/daily');
-  const items = Array.isArray(d.items) ? d.items : [];
-  const picked = d.picked && typeof d.picked === 'object' ? d.picked : null;
+  const rawItems = Array.isArray(d.items) ? d.items : [];
+  const items = rawItems
+    .map((x) => ({
+      title: String((x && x.title) || ''),
+      source: String((x && x.source) || ''),
+      url: String((x && x.url) || ''),
+    }))
+    .filter((x) => x.title);
+  const rawPicked = d.picked && typeof d.picked === 'object' ? d.picked : null;
+  const picked = rawPicked
+    ? {
+      title: String(rawPicked.title || ''),
+      source: String(rawPicked.source || ''),
+      url: String(rawPicked.url || ''),
+    }
+    : (items[0] || null);
   return {
     date: typeof d.date === 'string' ? d.date : '',
     isToday: Boolean(d.isToday),
     itemCount: items.length,
-    picked: picked ? { title: picked.title || '', source: picked.source || '', url: picked.url || '' } : null,
+    items: items.slice(0, 5), // 首页显示前 5 条
+    picked,
   };
 }
 
 // ③ 接着写
 export async function loadDraftResume() {
   const d = await get('/api/draft/resume');
+  // 原样保留服务端的来源标记：首页要靠它判断 posts / my_drafts。
   return {
     id: d.id || '',
     title: d.title || '',
     tail: d.tail || '',
     chars: Number(d.chars) || 0,
-    source: d.source === 'opened' ? 'opened' : 'latest',
+    source: typeof d.source === 'string' ? d.source : '',
+    table: typeof d.table === 'string' ? d.table : '',
   };
 }
 
-// ④ 今日灵感
+// ④ 今日灵感：观点库随机 3 条
 export async function loadIdeas() {
-  const d = await get('/api/ideas');
-  const items = Array.isArray(d.ideas) ? d.ideas : [];
+  const d = await get('/api/dsh-media/views/list?limit=120');
+  const raw = Array.isArray(d.views) ? d.views : [];
+  const shuffled = raw
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
   return {
-    newest: items.length > 0 ? items[0] : null,
-    total: items.length,
-    items: items.slice(0, 5), // 首页显示最多 5 条
+    total: Number(d.total) || raw.length,
+    items: shuffled,
   };
 }
 
@@ -79,6 +108,7 @@ export async function loadTopics() {
   const items = Array.isArray(d.items) ? d.items : [];
   return {
     total: Number(d.total) || 0,
+    minScore: d.minScore === undefined || d.minScore === null ? null : Number(d.minScore),
     items: items.slice(0, 5), // 首页显示最近 5 条
   };
 }
