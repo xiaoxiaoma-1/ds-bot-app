@@ -348,6 +348,14 @@ export default function ViewsPoolScreen({
             已表态 {doneN} · 还剩 {remain}
           </Text>
         </View>
+        <Pressable
+          style={[s.exitVote, { top: insets.top }]}
+          onPress={cancelVote}
+          accessibilityRole="button"
+          accessibilityLabel="退出投票回到列表"
+        >
+          <Text style={s.exitVoteText} allowFontScaling={false}>退出投票</Text>
+        </Pressable>
       </View>
 
       {/* 卡片区：写理由时整块收起，把高度让给 sheet */}
@@ -524,6 +532,8 @@ const makeStyles = (C, T, S, R, K) =>
       justifyContent: 'center',
     },
     backText: { color: C.ink, ...T.title, marginTop: -2 },
+    exitVote: { position: 'absolute', right: S.page, height: 44, justifyContent: 'center' },
+    exitVoteText: { color: C.ink2, ...T.meta },
     headText: { position: 'absolute', left: S.page, right: S.page },
     title: { color: K.onBrand, ...T.display },
     subTitle: { marginTop: S.x1, color: K.onBrand, opacity: 0.78, ...T.meta, fontWeight: '500' },
