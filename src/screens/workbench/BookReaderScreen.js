@@ -42,10 +42,13 @@ export default function BookReaderScreen({
   err = null,
   onNeedMore,
   onProgress,
+  onRetry,
   onBack,
 }) {
   const { C, T, S, R } = useTheme();
   const insets = useSafeAreaInsets();
+
+  
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
 
@@ -109,13 +112,6 @@ export default function BookReaderScreen({
         </Text>
       </View>
 
-      {/* 临时调试条，定位黑屏用，查完删除 */}
-      <View style={{ backgroundColor: '#FF6B6B', paddingHorizontal: S.page, paddingVertical: 4, height: 20, justifyContent: 'center' }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 11, lineHeight: 13, fontFamily: 'monospace' }} allowFontScaling={false}>
-          {`${book?.id || '(no id)'} | blk=${blocks.length} | load=${initialLoading} | err=${err ? 'yes' : 'no'} | total=${total}`}
-        </Text>
-      </View>
-
       <ScrollView
         style={s.scroll}
         contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: S.x4, paddingBottom: insets.bottom + 96 }}
@@ -124,9 +120,14 @@ export default function BookReaderScreen({
         onScroll={onScroll}
       >
         {err ? (
-          <Text style={[s.body, { color: C.bad }]} allowFontScaling={false}>
-            读不到正文：{err}
-          </Text>
+          <Pressable onPress={onRetry} accessibilityRole="button">
+            <Text style={[s.body, { color: C.bad }]} allowFontScaling={false}>
+              读不到正文：{err}
+            </Text>
+            <Text style={[s.body, { color: C.accent, marginTop: S.x2 }]} allowFontScaling={false}>
+              点这里重试
+            </Text>
+          </Pressable>
         ) : initialLoading && blocks.length === 0 ? (
           <Text style={[s.body, { color: C.ink2 }]} allowFontScaling={false}>
             正在加载…

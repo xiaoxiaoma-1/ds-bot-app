@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../theme';
+import { useRoles } from './workbench/roles';
 import { usePressScale } from '../motion';
 import { DOCK_INSET, IND_DOT, IND_H, IND_PILL, RADIUS, cellCenter, leftForCenter } from '../dockGeometry';
 import { buildGreetingAndDate } from '../greeting';
@@ -83,7 +84,7 @@ function Placeholder({ name, C, T, S }) {
 }
 
 // 底部 tab 只有文字，不放图标（老板 2026-11-13 定：「不要有图标就简单的文字就行了」）
-function DockItem({ tab, active, onPress, C, T, scheme }) {
+function DockItem({ tab, active, onPress, C, T, dockOn, dockIdle }) {
   const press = usePressScale(0.94);
   return (
     <Pressable
@@ -98,7 +99,7 @@ function DockItem({ tab, active, onPress, C, T, scheme }) {
         <Text
           style={[
             s.label,
-            { color: active ? (scheme === 'light' ? C.onHero : C.hero) : C.ink3 },
+            { color: active ? dockOn : dockIdle },
             active ? T.body : null,
           ]}
           allowFontScaling={false}
@@ -113,6 +114,7 @@ function DockItem({ tab, active, onPress, C, T, scheme }) {
 
 export default function MainTabs({ navigation }) {
   const { C, T, S, R, scheme } = useTheme();
+  const K = useRoles();
   const insets = useSafeAreaInsets();
   const { width: winWidth } = useWindowDimensions();
 
@@ -353,7 +355,7 @@ export default function MainTabs({ navigation }) {
             bottom: dockBottom,
             borderRadius: R.capsule,
             overflow: 'hidden',
-            backgroundColor: C.glass,
+            backgroundColor: C.hero,
           },
         ]}
         accessibilityRole="tablist"
@@ -374,7 +376,8 @@ export default function MainTabs({ navigation }) {
               onPress={() => switchTab(t.key)}
               C={C}
               T={T}
-              scheme={scheme}
+              dockOn={K.dockOn}
+              dockIdle={K.dockIdle}
             />
           ))}
         </View>

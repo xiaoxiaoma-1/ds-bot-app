@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { BookOpen, Database, FileStack, Lightbulb, MessageSquareQuote, Mic, PenLine } from 'lucide-react-native';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
-import { loadTodayWords, loadTrainToday, loadTodayBlocks } from '../../homeData';
 
 const DEFAULT_INSPIRATION = {
   tag: '今天先做',
@@ -33,11 +32,6 @@ const LINE_ICONS = {
   ability: Mic,
 };
 
-function numberText(value, suffix) {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
-  return `${Math.round(Number(value))}${suffix}`;
-}
-
 // 「—」是数据没接上时的占位符，不是副标题；渲染出来就是气泡下面那根横杠。
 function realSub(value) {
   const text = String(value === undefined || value === null ? '' : value).trim();
@@ -62,27 +56,6 @@ export default function WorkbenchHomeScreen({
   const K = useRoles();
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
 
-  const [done, setDone] = useState({ words: null, train: null, blocks: null });
-
-  useEffect(() => {
-    let alive = true;
-    Promise.allSettled([loadTodayWords(), loadTrainToday(), loadTodayBlocks()]).then((results) => {
-      if (!alive) return;
-      const val = (r) => (r.status === 'fulfilled' ? r.value : null);
-      const words = val(results[0]);
-      const train = val(results[1]);
-      const blocks = val(results[2]);
-      setDone({
-        words: words ? words.words : null,
-        train: train ? train.count : null,
-        blocks: blocks ? blocks.blocks : null,
-      });
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
   const featureRows = useMemo(() => {
     const list = Array.isArray(features) && features.length > 0 ? features : DEFAULT_FEATURES;
     return [
@@ -91,9 +64,6 @@ export default function WorkbenchHomeScreen({
       list.slice(5, 7),
     ].filter((row) => row.length > 0);
   }, [features]);
-
-  const draftFeature = (Array.isArray(features) ? features : []).find((f) => f.key === 'drafts');
-  const draftSub = draftFeature && draftFeature.sub && draftFeature.sub !== '—' ? draftFeature.sub : '';
 
   const renderFeature = (item) => {
     const Icon = LINE_ICONS[item.key] || FileStack;
@@ -160,40 +130,6 @@ export default function WorkbenchHomeScreen({
             </View>
           ))}
         </View>
-
-        <View style={s.doneCard}>
-          <View style={s.doneHead}>
-            <Text style={s.doneTitle} allowFontScaling={false}>今日完成</Text>
-            <Text style={s.doneHint} allowFontScaling={false}>今天干了些什么</Text>
-          </View>
-          <View style={s.doneRow}>
-            <View style={s.doneCell}>
-              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.words, ' 字')}</Text>
-              <Text style={s.doneLabel} allowFontScaling={false}>写下的字</Text>
-            </View>
-            <View style={s.doneCell}>
-              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.train, ' 次')}</Text>
-              <Text style={s.doneLabel} allowFontScaling={false}>练表达</Text>
-            </View>
-            <View style={s.doneCell}>
-              <Text style={s.doneNumber} allowFontScaling={false}>{numberText(done.blocks, ' 块')}</Text>
-              <Text style={s.doneLabel} allowFontScaling={false}>看过的书</Text>
-            </View>
-          </View>
-        </View>
-
-        <Pressable
-          style={s.lastWork}
-          onPress={() => onOpenFeature && onOpenFeature('drafts')}
-          accessibilityRole="button"
-          accessibilityLabel="接着上次工作"
-        >
-          <Text style={s.lastKicker} allowFontScaling={false}>接着上次工作</Text>
-          <Text style={s.lastTitle} numberOfLines={1} allowFontScaling={false}>
-            {draftSub ? `稿库里还有 ${draftSub}` : '回稿库，接着写'}
-          </Text>
-          <Text style={s.lastHint} allowFontScaling={false}>打开稿库 ›</Text>
-        </Pressable>
       </ScrollView>
 
       {onTabPress && !embedded ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
@@ -210,7 +146,7 @@ const makeStyles = (C, T, S, R, K) =>
     date: { marginTop: S.x1, color: C.ink2, ...T.meta },
     hero: {
       marginHorizontal: S.page,
-      height: 124,
+      height: 260,
       borderRadius: R.big,
       backgroundColor: C.hero,
       padding: S.card,
@@ -246,32 +182,4 @@ const makeStyles = (C, T, S, R, K) =>
     blockText: { minWidth: 0 },
     blockTitle: { color: C.ink, ...T.title },
     blockSub: { color: C.ink3, ...T.meta, marginTop: S.x1 },
-    doneCard: {
-      marginHorizontal: S.page,
-      marginTop: S.x6,
-      padding: S.x4,
-      borderRadius: R.small,
-      backgroundColor: C.card,
-    },
-    doneHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    doneTitle: { color: C.ink, ...T.section },
-    doneHint: { color: C.ink3, ...T.meta, marginLeft: S.x2 },
-    doneRow: { flexDirection: 'row', gap: S.x2, marginTop: S.x3 },
-    doneCell: {
-      flex: 1,
-      padding: S.x2,
-      alignItems: 'center',
-    },
-    doneNumber: { color: C.ink, ...T.section },
-    doneLabel: { color: C.ink3, ...T.meta, marginTop: S.x1, textAlign: 'center' },
-    lastWork: {
-      marginHorizontal: S.page,
-      marginTop: S.x4,
-      padding: S.x4,
-      borderRadius: R.small,
-      backgroundColor: C.card,
-    },
-    lastKicker: { color: C.ink3, ...T.meta },
-    lastTitle: { color: C.ink, ...T.title, marginTop: S.x1 },
-    lastHint: { color: C.accent, ...T.meta, marginTop: S.x2 },
   });

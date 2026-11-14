@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DeviceMotion } from 'expo-sensors';
-import { useTheme } from '../theme';
+import { avatarInk, inkOn, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
@@ -99,9 +99,9 @@ const AdvisorRow = memo(function AdvisorRow({
 }) {
   const avatar = item.avatar || {};
   const shape = avatar.shape || 'gumdrop';
-  // 统一成 BotAvatar 气泡：深色圆角底 + 白色图形（不再跟随 avatar.color 变白/变彩）。
-  const tint = '#FFFFFF';
-  const faceInk = C.hero;
+  // 跟随 bot.avatar.color，与 DS Bot 桌面端 BotMark 一致（图形填色 + 透明底）
+  const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
+  const faceInk = inkOn(tint);
 
   // 眼睛跟着倾斜走：单轴最多 3pt（老板要看得出来，又不至于飞出脸）；嘴不参与
   const tilt = useTilt();
@@ -624,9 +624,6 @@ const makeStyles = (C, T, S, R) =>
       width: 40,
       height: 40,
       position: 'relative',
-      borderRadius: 14,
-      overflow: 'hidden',
-      backgroundColor: C.hero,
     },
     eye: { width: 2.5, height: 6.5, borderRadius: 1.2, position: 'absolute' },
     eyeL: { left: 13.75, top: 12 },

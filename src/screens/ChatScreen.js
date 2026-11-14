@@ -199,7 +199,6 @@ export default function ChatScreen({ bot, onBack }) {
   const backPress = usePressScale(0.94);
 
   const [draft, setDraft] = useState('');
-  const [inputH, setInputH] = useState(44);
   const [err, setErr] = useState(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
@@ -501,7 +500,7 @@ export default function ChatScreen({ bot, onBack }) {
           </View>
         )}
         
-        <View style={[s.composer, { paddingBottom: insets.bottom }]}>
+        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x2 }]}>
           <Pressable
             style={s.attachBtn}
             onPress={() => {
@@ -513,17 +512,13 @@ export default function ChatScreen({ bot, onBack }) {
             <Text style={s.attachText}>+</Text>
           </Pressable>
           <TextInput
-            style={[s.input, { height: inputH }]}
+            style={s.input}
             value={draft}
             onChangeText={setDraft}
             placeholder="说点什么"
             placeholderTextColor={C.placeholder}
             multiline
             scrollEnabled
-            onContentSizeChange={(e) => {
-              const raw = e.nativeEvent.contentSize.height;
-              setInputH(Math.min(120, Math.max(44, raw + 24)));
-            }}
           />
           <Animated.View style={sendPress.scale}>
             <Pressable
@@ -614,13 +609,16 @@ const makeStyles = (C, T, S, R) =>
     bubbleText: { color: C.ink, ...T.body },
     composer: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       gap: S.x2,
       paddingHorizontal: S.page,
       paddingTop: S.x3,
     },
     input: {
-      flexGrow: 1,
+      flex: 1,
+      width: 0,
+      minHeight: 44,
+      maxHeight: 120,
       backgroundColor: C.card,
       borderRadius: R.capsule,
       color: C.ink,

@@ -292,51 +292,24 @@ function TopicsPoolRoute({ navigation }) {
   // 选题池：/api/topics 的筛选参数全被服务端忽略（total 恒 112、items 恒 30），
   // 所以 boards 的条数只能拿这 30 条自己数，minScore 也交给页面本地筛。
   const cachedTopics = useCachedResource('workbench:topics', getTopics);
-  const [topics, setTopics] = useState(() => cachedTopics.data?.items || null);
-  const [boards, setBoards] = useState(() => buildBoardCounts(cachedTopics.data?.items || []));
+  const [patch, setPatch] = useState(null);
   const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(() => !cachedTopics.data);
 
-  const applyTopics = useCallback((d) => {
-    const items = Array.isArray(d?.items) ? d.items : [];
-    setTopics(items);
-    setBoards(buildBoardCounts(items));
-  }, []);
-
-  useEffect(() => {
-    if (cachedTopics.data) {
-      applyTopics(cachedTopics.data);
-      setLoading(false);
-    }
-  }, [cachedTopics.data, applyTopics]);
-
-  useEffect(() => {
-    if (cachedTopics.error) {
-      setErr(String(cachedTopics.error));
-      setLoading(false);
-    }
-  }, [cachedTopics.error]);
-
-  useEffect(() => {
-    if (!cachedTopics.data && cachedTopics.loading === false && !cachedTopics.error) {
-      setLoading(false);
-    }
-  }, [cachedTopics.data, cachedTopics.loading, cachedTopics.error]);
+  const topics = patch ? patch.items : cachedTopics.data ? cachedTopics.data.items : null;
+  const boards = useMemo(() => buildBoardCounts(topics || []), [topics]);
+  const loading = !topics && !cachedTopics.error;
 
   const load = useCallback(async () => {
     setErr(null);
-    setLoading(true);
     try {
       const d = await getTopics();
-      applyTopics(d);
       setCached('workbench:topics', d);
+      setPatch({ items: Array.isArray(d.items) ? d.items : [] });
     } catch (e) {
       // 有旧数据就保留，不把已有选题清空。
       setErr(e.message);
-    } finally {
-      setLoading(false);
     }
-  }, [applyTopics]);
+  }, []);
 
   // 「刷新全部」：服务端没有这接口，就重拉一次 /api/topics，并用 onProgress 报真实进度
   const onRefreshAll = useCallback(
@@ -363,31 +336,34 @@ function TopicsPoolRoute({ navigation }) {
     async (topic, next) => {
       try {
         await setTopicStatus(topic.id, next);
-        setTopics((prev) => (prev || []).map((x) => (x.id === topic.id ? { ...x, status: next } : x)));
+        setPatch((prev) => ({
+          items: (prev ? prev.items : topics || []).map((x) => (x.id === topic.id ? { ...x, status: next } : x)),
+        }));
       } catch (e) {
         setErr(e.message);
       }
     },
-    [],
+    [topics],
   );
 
   const onDelete = useCallback(async (topic) => {
     try {
       const r = await delTopic(topic.id);
-      // 「找不到」= 别处已删，本地也移除，不弹错误
-      setTopics((prev) => (prev || []).filter((x) => x.id !== topic.id));
+      setPatch((prev) => ({
+        items: (prev ? prev.items : topics || []).filter((x) => x.id !== topic.id),
+      }));
       if (!r.ok && !r.gone) setErr('删不掉');
     } catch (e) {
       setErr(e.message);
     }
-  }, []);
+  }, [topics]);
 
   return (
     <TopicsPoolScreen
       topics={topics || []}
       boards={boards}
       loading={loading && (topics || []).length === 0}
-      error={err || undefined}
+      error={err || (!topics ? cachedTopics.error : null) || undefined}
       onRetry={() => load()}
       onRefreshAll={onRefreshAll}
       onWriteDraft={onWriteDraft}
@@ -404,60 +380,73 @@ function ViewsPoolRoute({ navigation, route }) {
   const selected = (route && route.params && Array.isArray(route.params.selected))
     ? route.params.selected
     : null;
-  
-  const [topics, setTopics] = useState(null);
-  const [left, setLeft] = useState(0);
-  const [done, setDone] = useState(0);
+  const selectedKey = selected && selected.length ? selected.join(',') : 'all';
+  // key 不带 selected：首页每次随机 3 条也不换缓存，第二次进来第一帧仍有内容；
+  // selected 只在装载函数里重排，后台刷新再替换。
+  const cacheKey = 'workbench:views:all';
+
+  const loadPool = useCallback(async () => {
+    // 带 selected（从首页「今日灵感」那 3 条进来）时，首屏一次拉 120 条：
+    // 那 3 条是首页从 /api/list?limit=120 里随机抽的，只拉 20 条大概率筛不到，
+    // 筛不到就会掉进下面 getMyView 那条死路（getMyView 查的是 my_views 表，atoms id 永远查不到）。
+    const limit = selected && selected.length ? 120 : 20;
+    const d = await getList({ offset: 0, limit });
+    let items = d.items;
+    if (selected && selected.length) {
+      const want = new Set(selected);
+      const picked = items.filter((x) => want.has(x.id));
+      const rest = items.filter((x) => !want.has(x.id));
+      // 120 条里还筛不到，说明那几条已经被别人表态过、被 /api/list 的
+      // `not in (select topic_id from my_views where kind='clash')` 过滤掉了。
+      // 这种情况下不补、不报错，直接少显示，别去 getMyView 那条查 my_views 的死路。
+      const missing = selected.filter((id) => !picked.some((x) => x.id === id));
+      if (missing.length) {
+        console.log('[views] selected not in list (already voted):', missing);
+      }
+      items = [...picked, ...rest];
+    }
+    return { ...d, items };
+  }, [selectedKey]);
+
+  const cachedViews = useCachedResource(cacheKey, loadPool);
+  const [live, setLive] = useState(null);
   const [err, setErr] = useState(null);
-  const offsetRef = useRef(null);
   const voteLock = useRef(false);
   const lastVoteAt = useRef(0);
+
+  const data = live || cachedViews.data;
+  const topics = data ? data.items : cachedViews.error ? [] : undefined;
+  const left = data ? data.left : 0;
+  const done = data ? data.done : 0;
 
   const reload = useCallback(async () => {
     setErr(null);
     try {
-      const d = await getList({ offset: 0, limit: 20 });
-      let items = d.items;
-      if (selected && selected.length) {
-        const want = new Set(selected);
-        const picked = items.filter((x) => want.has(x.id));
-        const rest = items.filter((x) => !want.has(x.id));
-        // 这 3 条如果不在第一页里，用 getMyView(id) 单独补
-        const missing = selected.filter((id) => !picked.some((x) => x.id === id));
-        const extra = [];
-        for (const id of missing) {
-          try {
-            const one = await getMyView(id);
-            if (one) extra.push(one);
-          } catch (e) { /* 单条取不到就跳过，不影响整页 */ }
-        }
-        items = [...extra, ...picked, ...rest];
-      }
-      setTopics(items);
-      setLeft(d.left);
-      setDone(d.done);
-      offsetRef.current = d.nextOffset;
+      const d = await loadPool();
+      setCached(cacheKey, d);
+      setLive(d);
     } catch (e) {
-      setTopics([]);
       setErr(e.message);
     }
-  }, [selected && selected.join(',')]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  }, [loadPool, cacheKey]);
 
   const onNeedMore = useCallback(async () => {
+    if (!data) return;
     try {
-      const d = await getList({ offset: offsetRef.current || 0, limit: 20 });
-      setTopics((prev) => (prev || []).concat(d.items));
-      setLeft(d.left);
-      setDone(d.done);
-      offsetRef.current = d.nextOffset;
+      const d = await getList({ offset: data.nextOffset || 0, limit: 20 });
+      const next = {
+        ...data,
+        items: (data.items || []).concat(d.items || []),
+        left: d.left,
+        done: d.done,
+        nextOffset: d.nextOffset,
+      };
+      setCached(cacheKey, next);
+      setLive(next);
     } catch (e) {
       setErr(e.message);
     }
-  }, []);
+  }, [data, cacheKey]);
 
   // 表态：1 秒防抖（created_at 秒级）+ 成功后重拉
   const onAnswer = useCallback(
@@ -498,10 +487,11 @@ function ViewsPoolRoute({ navigation, route }) {
 
   return (
     <ViewsPoolScreen
-      topics={topics === null && !err ? undefined : topics}
+      topics={topics}
       left={left}
       done={done}
-      error={err ? '加载失败：' + err : null}
+      autoSwipe={Boolean(selected && selected.length)}
+      error={err || (data ? null : cachedViews.error) || null}
       onRetry={() => {
         setErr(null);
         reload();
@@ -511,7 +501,6 @@ function ViewsPoolRoute({ navigation, route }) {
       onUndo={onUndo}
       onOpenDetail={(cur) => navigation.navigate('ViewsDetail', { topic: cur })}
       onBack={() => navigation.goBack()}
-      
     />
   );
 }
@@ -570,25 +559,26 @@ function MyViewsRoute({ navigation }) {
   // 我的观点：列表 /api/myviews（固定 30 条，含 review 对象）；
   // 展开某条再 GET /api/myview?id= 拿正文；评审 POST /api/view_review（90s）；删除 POST /api/view_del。
   // 页面要的 detail 形态照它自己的注释：{ id, loading, error, view:{content, created_at, ai_review} }
-  const [views, setViews] = useState(null);
+  const cachedMyViews = useCachedResource('workbench:myviews', getMyViews);
+  const [live, setLive] = useState(null);
   const [detail, setDetail] = useState(null);
   const [err, setErr] = useState(null);
   const reviewLock = useRef(false);
+
+  const data = live || cachedMyViews.data;
+  const views = data ? data.items : cachedMyViews.error ? [] : undefined;
 
   const load = useCallback(async () => {
     setErr(null);
     try {
       const d = await getMyViews();
-      setViews(d.items);
+      setCached('workbench:myviews', d);
+      setLive(d);
     } catch (e) {
-      setViews([]);
+      // 有缓存就保留缓存，不清空列表。
       setErr(e.message);
     }
   }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const onOpen = useCallback(async (id) => {
     const seed = (views || []).find((v) => v.id === id);
@@ -643,17 +633,19 @@ function MyViewsRoute({ navigation }) {
         setErr(e.message);
         return;
       }
-      setViews((prev) => (prev || []).filter((x) => x.id !== v.id));
+      const next = { ...(data || { total: 0 }), items: (data?.items || []).filter((x) => x.id !== v.id) };
+      setCached('workbench:myviews', next);
+      setLive(next);
       setDetail((prev) => (prev && prev.id === v.id ? null : prev));
     },
-    [],
+    [data],
   );
 
   return (
     <MyViewsScreen
-      views={views === null && !err ? undefined : views}
+      views={views}
       detail={detail}
-      error={err ? '加载失败：' + err : null}
+      error={err || (data ? null : cachedMyViews.error) || null}
       onRetry={() => {
         setErr(null);
         load();
@@ -663,7 +655,6 @@ function MyViewsRoute({ navigation }) {
       onReview={onReview}
       onDelete={onDelete}
       onBack={() => navigation.goBack()}
-      
     />
   );
 }
@@ -731,6 +722,7 @@ function BookReaderRoute({ route, navigation }) {
   // 页面要的 blocks 是 [{idx,text,heading}]；后端给的是 [{id,from,to,heading,text,chars,junk}]，
   // idx 在容器里按「本次 offset + 序号」算出来。
   const book = (route && route.params && route.params.book) || null;
+  const bookId = book && book.id ? String(book.id) : '';
   const [blocks, setBlocks] = useState([]);
   const [base, setBase] = useState(0);
   const [total, setTotal] = useState(0);
@@ -739,53 +731,60 @@ function BookReaderRoute({ route, navigation }) {
   const [err, setErr] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const moreLock = useRef(false);
+  const aliveRef = useRef(true);
+  useEffect(() => () => { aliveRef.current = false; }, []);
 
   const pack = (d, off) => (d.blocks || []).map((b, i) => ({ idx: off + i, text: b.text || '', heading: b.heading || '' }));
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      if (!book || !book.id) {
-        setErr('没有传入书籍信息');
-        setInitialLoading(false);
-        return;
-      }
-      setErr(null);
-      setInitialLoading(true);
-      try {
-        const d0 = await getBookRead({ id: book.id, offset: 0, limit: 20 });
-        if (!alive) return;
-        setTotal(d0.total);
-        const jump = d0.savedIdx || 0;
-        setSavedIdx(jump);
-        if (jump > 0) {
-          // 直接定位到上次读到的块（不再从第一块开始）
-          const d1 = await getBookRead({ id: book.id, offset: jump, limit: 20 });
-          if (!alive) return;
+  const reload = useCallback(async () => {
+    if (!bookId) {
+      setErr('没有传入书籍信息');
+      setInitialLoading(false);
+      return;
+    }
+    setErr(null);
+    setInitialLoading(true);
+    try {
+      const d0 = await getBookRead({ id: bookId, offset: 0, limit: 20 });
+      if (!aliveRef.current) return;
+      const totalN = Number(d0.total) || 0;
+      setTotal(totalN);
+      // savedIdx 越界会请求到空块；夹在 0..total-1，避免第一屏白屏。
+      const jump = Math.max(0, Math.min(Number(d0.savedIdx) || 0, Math.max(0, totalN - 1)));
+      setSavedIdx(jump);
+      if (jump > 0) {
+        try {
+          const d1 = await getBookRead({ id: bookId, offset: jump, limit: 20 });
+          if (!aliveRef.current) return;
           setBlocks(pack(d1, jump));
           setBase(jump);
-        } else {
+        } catch (jumpErr) {
+          // 定位失败时退回第一段，至少让正文能读；不把整本书卡死。
+          if (!aliveRef.current) return;
           setBlocks(pack(d0, 0));
           setBase(0);
+          setSavedIdx(0);
         }
-      } catch (e) {
-        if (alive) setErr(e.message);
-      } finally {
-        if (alive) setInitialLoading(false);
+      } else {
+        setBlocks(pack(d0, 0));
+        setBase(0);
       }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [book]);
+    } catch (e) {
+      if (aliveRef.current) setErr(`${bookId} · offset=0 · limit=20 · ${e.message}`);
+    } finally {
+      if (aliveRef.current) setInitialLoading(false);
+    }
+  }, [bookId]);
+
+  useEffect(() => { reload(); }, [reload]);
 
   const onNeedMore = useCallback(
     async (nextOffset) => {
-      if (!book || moreLock.current) return;
+      if (!bookId || moreLock.current) return;
       moreLock.current = true;
       setLoadingMore(true);
       try {
-        const d = await getBookRead({ id: book.id, offset: nextOffset, limit: 20 });
+        const d = await getBookRead({ id: bookId, offset: nextOffset, limit: 20 });
         setBlocks((prev) => prev.concat(pack(d, nextOffset)));
       } catch (e) {
         setErr(e.message);
@@ -794,16 +793,16 @@ function BookReaderRoute({ route, navigation }) {
         moreLock.current = false;
       }
     },
-    [book],
+    [bookId],
   );
 
   // 页面已防抖 500ms 才会叫到这里；失败静默（记进度不该打扰阅读）
   const onProgress = useCallback(
     (chunkIdx) => {
-      if (!book || !book.id) return;
-      postBookProgress({ id: book.id, chunkIdx, total }).catch(() => {});
+      if (!bookId) return;
+      postBookProgress({ id: bookId, chunkIdx, total }).catch(() => {});
     },
-    [book, total],
+    [bookId, total],
   );
 
   return (
@@ -818,6 +817,7 @@ function BookReaderRoute({ route, navigation }) {
       err={err}
       onNeedMore={onNeedMore}
       onProgress={onProgress}
+      onRetry={reload}
       onBack={() => navigation.goBack()}
     />
   );

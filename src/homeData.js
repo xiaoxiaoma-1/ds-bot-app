@@ -88,16 +88,21 @@ export async function loadDraftResume() {
   };
 }
 
-// ④ 今日灵感：观点库随机 3 条
+// ④ 今日灵感：观点库随机 3 条（走 /api/list，不是 my_views）
 export async function loadIdeas() {
-  const d = await get('/api/dsh-media/views/list?limit=120');
-  const raw = Array.isArray(d.views) ? d.views : [];
+  const d = await get('/api/list?limit=120');
+  const raw = Array.isArray(d.items) ? d.items : [];
   const shuffled = raw
     .slice()
     .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((it) => ({
+      id: it.id,
+      title: it.claim || '',
+      author: it.author || '',
+    }));
   return {
-    total: Number(d.total) || raw.length,
+    total: Number(d.left) || raw.length,
     items: shuffled,
   };
 }

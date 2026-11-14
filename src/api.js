@@ -1,5 +1,6 @@
 import { getBase, getPass, getSess, setSess } from './store';
 import { createFeed } from './sse';
+import { File } from 'expo-file-system';
 
 // 现状（2026-11-12，mobile_server.py，后端已实测）：
 //   POST /login  {p: 口令} -> { ok, ttl: 7200, session: "<43 位>" }
@@ -301,9 +302,37 @@ export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jp
   const sess = await getSess();
   if (!sess) throw new ApiError('没有会话凭证，需要先登录', 'auth');
 
+  // Expo 57 的 fetch 是 winter/fetch，FormData 只认 string / Blob / 有 bytes() 的对象。
+  // RN 老写法 { uri, type, name } 必抛 Unsupported FormDataPart implementation（见 expo 官方测试）。
+  // Expo 的 File 类实现了 Blob 接口（包含 bytes() 方法），正好命中它的分支，是官方支持的路径。
+  let file;
+  try {
+    file = new File(fileUri);
+  } catch (e) {
+    throw new ApiError('读不到这个文件（构造失败）：' + (e.message || ''), 'upload');
+  }
+  if (!file) throw new ApiError('读不到这个文件（File 构造返回空）', 'upload');
+  // NativeFileSystem.types.d.ts:172 —— exists 是同步布尔，文件不存在或无读权限时为 false
+  if (!file.exists) {
+    throw new ApiError('这个文件找不到（无读权限或路径不对）：' + String(fileUri).slice(-60), 'upload');
+  }
+  // NativeFileSystem.types.d.ts:222 —— size 为 0 表示空文件
+  if (!file.size) {
+    throw new ApiError('这个文件是空的（0 字节）：' + String(fileUri).slice(-60), 'upload');
+  }
+
+  // 诊断用：上传失败时看 Metro 这三个值就能定位。
+  // 通了之后删掉这一行。
+  console.log('[upload]', {
+    uri: String(fileUri).slice(-60),
+    exists: file.exists,
+    size: file.size,
+    type: file.type,
+    name: file.name,
+  });
+
   const formData = new FormData();
-  // 不手写 content-type：让 fetch 自己带 multipart boundary，否则后端解析必失败。
-  formData.append('file', { uri: fileUri, type, name });
+  formData.append('file', file, name);
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);

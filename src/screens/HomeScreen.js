@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +34,10 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+  const { width: winWidth } = useWindowDimensions();
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
+  const heroCardW = Math.max(0, winWidth - S.page * 2 - S.x3);
+  const heroSnap = heroCardW + S.x3;
 
   const manualRefresh = useRef(false);
   const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
@@ -43,7 +47,6 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
-  const [hotOpen, setHotOpen] = useState(true);
   const [boardOpen, setBoardOpen] = useState(null);  // 'todo' | 'stage' | 'done' | 'doing' | null
 
   const loadAll = useCallback(async () => {
@@ -97,15 +100,7 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   ));
 
   const openDraft = () => {
-    if (draftMine && d && d.id && onOpenDraft) {
-      onOpenDraft(d.id);
-      return;
-    }
-    if (draftMine && d && d.id) {
-      go('DraftLibrary', { draftId: d.id });
-      return;
-    }
-    go('DraftLibrary');
+    go('MyViews');
   };
 
   const openBoard = (status) => setBoardOpen((v) => (v === status ? null : status));
@@ -155,6 +150,22 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
     </View>
   );
 
+  const HeroCard = ({ title, meta, children, onPress, label }) => (
+    <Pressable
+      style={[s.heroCard, { width: heroCardW }]}
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? label : undefined}
+    >
+      <View style={s.heroHead}>
+        <Text style={s.heroTitle} allowFontScaling={false}>{title}</Text>
+        <Text style={s.heroMeta} allowFontScaling={false}>{meta}</Text>
+      </View>
+      <View style={s.heroBody}>{children}</View>
+    </Pressable>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
@@ -172,110 +183,99 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
           <Text style={s.date} allowFontScaling={false}>{dateText}</Text>
         </View>
 
-        <View style={s.sectionCard}>
-          <Pressable
-            style={s.sectionHead}
-            onPress={() => setHotOpen((v) => !v)}
-            accessibilityRole="button"
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={heroSnap}
+          snapToAlignment="start"
+          nestedScrollEnabled
+          contentContainerStyle={s.heroRow}
+        >
+          <HeroCard
+            title={h && !h.isToday && h.date ? h.date + ' 热点' : '今日热点'}
+            meta={h && h.itemCount ? `${h.itemCount} 条` : '每天更新'}
           >
-            <Text style={s.sectionTitle} allowFontScaling={false}>
-              {h && !h.isToday && h.date ? h.date + ' 热点' : '今日热点'}
-            </Text>
-            <Text style={s.sectionMeta} allowFontScaling={false}>
-              {h && h.itemCount ? `${h.itemCount} 条 · ${hotOpen ? '收起' : '展开'}` : '每天更新'}
-            </Text>
-          </Pressable>
-          {hot.loading && !h ? (
-            <StateLine st={hot} empty="正在取热点" />
-          ) : hot.error && !h ? (
-            <ErrorBlock st={hot} />
-          ) : hotItems.length === 0 ? (
-            <Text style={s.stateText} allowFontScaling={false}>今天的热点还没生成</Text>
-          ) : hotOpen ? (
-            hotItems.map((it, index) => (
-              <View key={'hot-' + index + '-' + ((it && (it.url || it.title)) || '')} style={s.listRow}>
-                <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
+            {hot.loading && !h ? (
+              <StateLine st={hot} empty="正在取热点" />
+            ) : hot.error && !h ? (
+              <ErrorBlock st={hot} />
+            ) : hotItems.length === 0 ? (
+              <Text style={s.stateText} allowFontScaling={false}>今天的热点还没生成</Text>
+            ) : (
+              hotItems.map((it, index) => (
+                <View key={'hot-' + index + '-' + ((it && (it.url || it.title)) || '')} style={s.listRow}>
+                  <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
+                  <View style={s.listText}>
+                    <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
+                      {(it && it.title) || '（无标题）'}
+                    </Text>
+                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                      {(it && it.source) ? '来源 ' + it.source : '来源未知'}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </HeroCard>
+
+          <HeroCard
+            title="选题池"
+            meta={tp && tp.total ? `${tp.total} 条` : '去挑一个'}
+            onPress={!topics.loading && !topics.error && topicItems.length ? () => go('TopicsPool') : undefined}
+            label="选题池"
+          >
+            {topics.loading && !tp ? (
+              <StateLine st={topics} empty="正在取选题" />
+            ) : topics.error && !tp ? (
+              <ErrorBlock st={topics} />
+            ) : topicItems.length === 0 ? (
+              <Text style={s.stateText} allowFontScaling={false}>选题池还空着</Text>
+            ) : (
+              topicItems.map((topic, index) => (
+                <View key={(topic && topic.id) || 'topic-' + index} style={s.listRow}>
+                  <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
+                  <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
+                    {(topic && topic.title) || '（无标题）'}
+                  </Text>
+                  <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
+                </View>
+              ))
+            )}
+          </HeroCard>
+
+          <HeroCard
+            title="接着写"
+            meta={draftMine && d && d.chars ? charsLabel(d.chars) : '我的观点'}
+            onPress={openDraft}
+            label="接着写，去我的观点"
+          >
+            {draft.loading && !d ? (
+              <StateLine st={draft} empty="正在找上次的稿子" />
+            ) : draft.error && !d ? (
+              <ErrorBlock st={draft} />
+            ) : draftMine && d ? (
+              <View style={s.listRow}>
                 <View style={s.listText}>
-                  <Text style={s.rowTitle} numberOfLines={2} allowFontScaling={false}>
-                    {(it && it.title) || '（无标题）'}
+                  <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
+                    {d.title || '（无标题）'}
                   </Text>
-                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                    {(it && it.source) ? '来源 ' + it.source : '来源未知'}
-                  </Text>
+                  {d.tail ? (
+                    <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
+                      上次写到：{d.tail}
+                    </Text>
+                  ) : null}
+                  <Text style={s.rowSub} allowFontScaling={false}>继续写 ›</Text>
                 </View>
               </View>
-            ))
-          ) : null}
-        </View>
-
-        <Pressable
-          style={s.sectionCard}
-          onPress={() => go('TopicsPool')}
-          disabled={!tp || topics.loading || Boolean(topics.error) || topicItems.length === 0}
-          accessibilityRole="button"
-        >
-          <View style={s.sectionHead}>
-            <Text style={s.sectionTitle} allowFontScaling={false}>选题池</Text>
-            <Text style={s.sectionMeta} allowFontScaling={false}>
-              {tp && tp.total ? `${tp.total} 条` : '去挑一个'}
-            </Text>
-          </View>
-          {topics.loading && !tp ? (
-            <StateLine st={topics} empty="正在取选题" />
-          ) : topics.error && !tp ? (
-            <ErrorBlock st={topics} />
-          ) : topicItems.length === 0 ? (
-            <Text style={s.stateText} allowFontScaling={false}>选题池还空着</Text>
-          ) : (
-            topicItems.map((topic, index) => (
-              <View
-                key={(topic && topic.id) || 'topic-' + index}
-                style={s.listRow}
-              >
-                <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
-                <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
-                  {(topic && topic.title) || '（无标题）'}
-                </Text>
-                <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
+            ) : (
+              <View style={s.draftEmpty}>
+                <Text style={s.stateText} allowFontScaling={false}>还没有稿子，赶紧去写一篇。</Text>
+                <Text style={s.emptyActionText} allowFontScaling={false}>点这里去我的观点 ›</Text>
               </View>
-            ))
-          )}
-        </Pressable>
-
-        <View style={s.sectionCard}>
-          <View style={s.sectionHead}>
-            <Text style={s.sectionTitle} allowFontScaling={false}>接着写</Text>
-            <Text style={s.sectionMeta} allowFontScaling={false}>
-              {draftMine && d && d.chars ? charsLabel(d.chars) : '稿库'}
-            </Text>
-          </View>
-          {draft.loading && !d ? (
-            <StateLine st={draft} empty="正在找上次的稿子" />
-          ) : draft.error && !d ? (
-            <ErrorBlock st={draft} />
-          ) : draftMine && d ? (
-            <Pressable style={s.listRow} onPress={openDraft} accessibilityRole="button">
-              <View style={s.listText}>
-                <Text style={s.rowTitle} numberOfLines={1} allowFontScaling={false}>
-                  {d.title || '（无标题）'}
-                </Text>
-                {d.tail ? (
-                  <Text style={s.rowSub} numberOfLines={1} allowFontScaling={false}>
-                    上次写到：{d.tail}
-                  </Text>
-                ) : null}
-              </View>
-              <Text style={s.rowSub} allowFontScaling={false}>继续写 ›</Text>
-            </Pressable>
-          ) : (
-            <View style={s.draftEmpty}>
-              <Text style={s.stateText} allowFontScaling={false}>还没有稿子，赶紧去写一篇。</Text>
-              <Pressable onPress={openDraft} style={s.emptyAction} accessibilityRole="button">
-                <Text style={s.emptyActionText} allowFontScaling={false}>去写一篇</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
+            )}
+          </HeroCard>
+        </ScrollView>
 
         <View style={s.sectionCard}>
           <View style={s.sectionHead}>
@@ -360,7 +360,23 @@ const makeStyles = (C, T, S, R) =>
     head: { paddingHorizontal: S.page, paddingBottom: S.x4 },
     greeting: { color: C.ink, ...T.display },
     date: { color: C.ink2, ...T.meta, marginTop: S.x1 },
-    heroRow: { paddingHorizontal: S.page, gap: S.x3, paddingBottom: S.x4 },
+    heroRow: { paddingHorizontal: S.page, gap: S.x3, paddingBottom: S.x4, alignItems: 'flex-start' },
+    heroCard: {
+      minHeight: 220,
+      flexShrink: 0,
+      backgroundColor: C.card,
+      borderRadius: R.small,
+      padding: S.x4,
+    },
+    heroHead: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      marginBottom: S.x2,
+    },
+    heroTitle: { color: C.ink, ...T.section },
+    heroMeta: { color: C.ink3, ...T.meta },
+    heroBody: { gap: S.x2 },
     sectionCard: {
       marginHorizontal: S.page,
       marginBottom: S.x3,
@@ -390,12 +406,6 @@ const makeStyles = (C, T, S, R) =>
     },
     score: { color: C.ink2, ...T.meta, marginLeft: S.x1 },
     draftEmpty: { paddingVertical: S.x2, gap: S.x2, alignItems: 'flex-start' },
-    emptyAction: {
-      paddingHorizontal: S.x4,
-      paddingVertical: S.x2,
-      borderRadius: R.capsule,
-      backgroundColor: C.card2,
-    },
     emptyActionText: { color: C.ink, ...T.meta },
     boardGrid: { flexDirection: 'row', gap: S.x2, paddingTop: S.x2 },
     boardCell: {

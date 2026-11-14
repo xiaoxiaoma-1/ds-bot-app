@@ -372,7 +372,7 @@ export default function GroupChatScreen({ group, onBack }) {
             </View>
           )}
 
-          <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x6 }]}>
+          <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x2 }]}>
             <Pressable
               style={s.attachBtn}
               onPress={() => setShowAttach(true)}
@@ -457,6 +457,7 @@ const makeStyles = (C, T, S, R) =>
     input: {
       flex: 1,
       width: 0, // RN中强制换行的写法
+      minHeight: 44,
       maxHeight: 120,
       backgroundColor: C.card,
       borderRadius: R.capsule,

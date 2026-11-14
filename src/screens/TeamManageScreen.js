@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { advisors, models, writeModel } from '../api';
+import { setCached, useCachedResource } from '../cache';
 
 function displayModelName(model) {
   if (typeof model !== 'string' || !model) return '';
@@ -37,10 +38,11 @@ export default function TeamManageScreen({ navigation }) {
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
 
-  const [bots, setBots] = useState([]);
+  const cached = useCachedResource('dsbot:advisors', advisors);
+  const [bots, setBots] = useState(() => (cached.data || []).filter(b => b.id && b.name));
   const [allModels, setAllModels] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !cached.data);
   const [savingIds, setSavingIds] = useState([]);
   const [err, setErr] = useState(null);
   const [bulkOp, setBulkOp] = useState(null);
@@ -53,9 +55,12 @@ export default function TeamManageScreen({ navigation }) {
         advisors(),
         models(),
       ]);
-      setBots(botsRes?.filter(b => b.id && b.name) || []);
+      const filteredBots = botsRes?.filter(b => b.id && b.name) || [];
+      setBots(filteredBots);
       setAllModels(modelsRes || []);
       setErr(null);
+      // 成功后写回缓存，下次点进来直接命中
+      setCached('dsbot:advisors', filteredBots);
     } catch (e) {
       setErr(e.message || '加载失败');
     } finally {
@@ -171,7 +176,7 @@ export default function TeamManageScreen({ navigation }) {
 
   const mostCommonModel = getMostCommonModel();
 
-  if (loading) {
+  if (loading && bots.length === 0 && !err) {
     return (
       <View style={s.loading}>
         <ActivityIndicator color={C.accent} />
@@ -231,7 +236,10 @@ export default function TeamManageScreen({ navigation }) {
 
       {err && (
         <View style={s.error}>
-          <Text style={s.errorText}>{err}</Text>
+          <Text style={s.errorText} numberOfLines={3}>{err}</Text>
+          <Pressable style={[s.btn, s.btnPrimary, { alignSelf: 'flex-start', marginTop: S.x2 }]} onPress={load} accessibilityRole="button">
+            <Text style={s.btnPrimaryText}>重试</Text>
+          </Pressable>
         </View>
       )}
 
@@ -272,7 +280,9 @@ export default function TeamManageScreen({ navigation }) {
       )}
 
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
-        {bots.map((bot) => {
+        {!loading && !err && bots.length === 0 ? (
+          <Text style={s.emptyText}>读不到 Bot 列表，点上面重试</Text>
+        ) : bots.map((bot) => {
           const isExpanded = expandedId === bot.id;
           const isSaving = savingIds.includes(bot.id);
           const isDifferent = bot.model !== mostCommonModel;
@@ -389,14 +399,14 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     ...T.body,
   },
   error: {
-    backgroundColor: C.dangerLight,
+    backgroundColor: C.card,
     marginHorizontal: S.x6,
     marginVertical: S.x3,
     padding: S.x3,
     borderRadius: R.small,
   },
   errorText: {
-    color: C.danger,
+    color: C.bad,
     ...T.body,
   },
   bulkProgress: {
@@ -527,7 +537,7 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     flex: 1,
   },
   supplierWarning: {
-    color: C.danger,
+    color: C.bad,
     fontSize: 12,
   },
   savingIndicator: {
@@ -647,4 +657,5 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     color: C.onAccent,
     ...T.body,
   },
+  emptyText: { color: C.ink3, textAlign: 'center', marginTop: S.x8 },
 });

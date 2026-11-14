@@ -1,5 +1,14 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { getBase, getSess } from '../../store';
@@ -101,12 +110,15 @@ export default function MyViewsScreen({
   const [corpusBusy, setCorpusBusy] = useState(null);
   const [corpusDone, setCorpusDone] = useState({});
   const [corpusErr, setCorpusErr] = useState(null);
+  const scrollRef = useRef(null);
+  const inputFocused = useRef(false);
 
   const loading = views === undefined;
   const baseList = Array.isArray(views) ? views : [];
   const all = [...optimistic, ...baseList].filter((v, i, arr) => v && arr.findIndex((x) => x && x.id === v.id) === i);
-  const selfList = all.filter((v) => v.kind === '自写');
-  const poolList = all.filter((v) => v.kind !== '自写');
+  // 「观点库里的观点」只放表态（clash）；自写 / 原话 / 有感都是自己的，进「我自己写的观点」。
+  const poolList = all.filter((v) => String(v.kind || '') === 'clash');
+  const selfList = all.filter((v) => String(v.kind || '') !== 'clash');
   const openId = detail && detail.id;
   const countText = (n) => (loading && n === 0 ? '…' : String(n));
 
@@ -234,11 +246,17 @@ export default function MyViewsScreen({
   };
 
   return (
-    <View style={s.root}>
+    <KeyboardAvoidingView
+      style={s.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}
+    >
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <View style={s.top}>
           <View style={s.shape} />
@@ -268,6 +286,16 @@ export default function MyViewsScreen({
             placeholder="写点你自己的"
             placeholderTextColor={C.placeholder}
             multiline
+            scrollEnabled
+            onFocus={() => {
+              inputFocused.current = true;
+            }}
+            onBlur={() => {
+              inputFocused.current = false;
+            }}
+            onContentSizeChange={() => {
+              if (inputFocused.current) scrollRef.current?.scrollToEnd({ animated: true });
+            }}
             textAlignVertical="top"
             autoComplete="off"
             textContentType="none"
@@ -323,7 +351,7 @@ export default function MyViewsScreen({
       </ScrollView>
 
       {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -357,6 +385,7 @@ const makeStyles = (C, T, S, R, K) =>
     compose: { marginTop: S.x4, marginHorizontal: S.page, backgroundColor: C.card, borderRadius: R.small, padding: S.x4 },
     composeInput: {
       minHeight: 84,
+      maxHeight: 120,
       backgroundColor: C.card2,
       borderRadius: R.small,
       padding: S.x3,

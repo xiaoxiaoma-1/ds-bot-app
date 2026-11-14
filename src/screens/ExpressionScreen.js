@@ -2,13 +2,17 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Keyboard,
+  PanResponder,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { useKeyboardShift, useKeyboardShiftJS } from '../keyboard';
@@ -37,6 +41,36 @@ const STATS = [
 
 const SPAN_RE = /<span class="(vague|filler|hedge)">([\s\S]*?)<\/span>/g;
 const MARK_CAP = 2000; // 标色最多吃这么多字，其余按纯文本跟在后面
+
+const HISTORY_KEY = '@expression_train_history_v1';
+const HISTORY_MAX = 30;
+
+function timeText(d = new Date()) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// 句级标注：后端 /api/expression/marks 给 golden / cut，前端统一成 gold / cut。
+async function fetchMarks(text, signal) {
+  const base = await getBase();
+  const sess = await getSess();
+  if (!base || !sess) return [];
+  const res = await fetch(String(base).replace(/\/+$/, '') + '/api/expression/marks', {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + sess, 'content-type': 'application/json' },
+    body: JSON.stringify({ fullText: text }),
+    credentials: 'include',
+    signal,
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || data.ok === false || !Array.isArray(data.marks)) return [];
+  return data.marks
+    .map((m) => ({
+      ...m,
+      kind: m.kind === 'golden' ? 'gold' : m.kind,
+    }))
+    .filter((m) => (m.kind === 'gold' || m.kind === 'cut') && m.text);
+}
 
 // 后端给的是已经拼好 span 的 HTML（不转义、不按分词），这儿只做「切成片段」，
 // 不在前端重写标色规则。切不出片段就整段当纯文本，不报错。
@@ -182,6 +216,55 @@ const MdText = memo(function MdText({ text, style }) {
   );
 });
 
+// 训练历史单条：左滑露出「删除」，点删除才真正删。参考微信消息左滑。
+function HistoryRow({ item, s, onDelete }) {
+  const tx = useRef(new Animated.Value(0)).current;
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (e, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+        onMoveShouldSetPanResponderCapture: (e, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+        onPanResponderMove: (e, g) => {
+          if (g.dx < 0) tx.setValue(Math.max(-96, g.dx));
+        },
+        onPanResponderRelease: (e, g) => {
+          const opened = g.dx < -56;
+          Animated.spring(tx, {
+            toValue: opened ? -96 : 0,
+            useNativeDriver: false,
+            tension: 420,
+            friction: 20,
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(tx, { toValue: 0, useNativeDriver: false, tension: 420, friction: 20 }).start();
+        },
+      }),
+    [tx],
+  );
+
+  return (
+    <View style={s.historyItem}>
+      <View style={s.historyDelete}>
+        <Pressable onPress={() => onDelete && onDelete(item.id)} accessibilityRole="button" accessibilityLabel="删除这条训练记录">
+          <Text style={s.historyDeleteText} allowFontScaling={false}>删除</Text>
+        </Pressable>
+      </View>
+      <Animated.View {...responder.panHandlers} style={[s.historyRow, { transform: [{ translateX: tx }] }]}>
+        <View style={s.historyTop}>
+          <Text style={s.historyTime} allowFontScaling={false}>{item.at}</Text>
+          <Text style={s.historyScore} allowFontScaling={false}>
+            {item.score === null || item.score === undefined ? '未评' : item.score}
+          </Text>
+        </View>
+        <Text style={s.historySummary} numberOfLines={1} allowFontScaling={false}>
+          {item.summary}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function ExpressionScreen({ onBack }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
@@ -200,8 +283,39 @@ export default function ExpressionScreen({ onBack }) {
   // 点评：流式。text 只往后拼，chars 是已收字数，interrupted 表示没等到 done
   const [report, setReport] = useState({ streaming: false, chunks: [], chars: 0, err: null, interrupted: false });
   const [err, setErr] = useState(null);
-  
-  const [sentMarks] = useState([]); // 句级标注数据源暂缺，恒为空
+  const [sentMarks, setSentMarks] = useState([]);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    AsyncStorage.getItem(HISTORY_KEY)
+      .then((raw) => {
+        if (!alive || !raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setHistory(parsed.slice(0, HISTORY_MAX));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const addHistory = useCallback((rec) => {
+    setHistory((prev) => {
+      const next = [rec, ...prev.filter((x) => x && x.id !== rec.id)].slice(0, HISTORY_MAX);
+      AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const deleteHistory = useCallback((id) => {
+    setHistory((prev) => {
+      const next = prev.filter((x) => x && x.id !== id);
+      AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   const abortRef = useRef(null);
   const scrollRef = useRef(null);
   const inputScrollRef = useRef(null);
@@ -256,6 +370,7 @@ export default function ExpressionScreen({ onBack }) {
     setA(null);
     setAnalyzeMs(null);
     setSegs([]);
+    setSentMarks([]);
     setPolish({ loading: false, text: '', err: null });
     setReport({ streaming: false, text: '', chars: 0, err: null, interrupted: false, chunks: [] });
     try {
@@ -265,10 +380,18 @@ export default function ExpressionScreen({ onBack }) {
       setSegs(parsed.segs);
       setCut(parsed.cut);
       setAnalyzeMs(Date.now() - t0);
+      addHistory({
+        id: `${Date.now()}`,
+        at: timeText(),
+        summary: text.replace(/\s+/g, ' ').slice(0, 20),
+        score: typeof d.density === 'number' ? d.density : null,
+      });
+      // 金句 / 可删是独立模型接口，慢一点，不挡 analyze 首屏。
+      fetchMarks(text).then((marks) => setSentMarks(marks)).catch(() => {});
     } catch (e) {
       setErr(e.message);
     }
-  }, [draft, stage]);
+  }, [draft, stage, addHistory]);
 
   const runPolish = useCallback(() => {
     setTab('polish');
@@ -349,7 +472,7 @@ export default function ExpressionScreen({ onBack }) {
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.head}>
-        <Pressable onPress={onBack} hitSlop={12}>
+        <Pressable onPress={stage === 'marked' ? backToInput : onBack} hitSlop={12}>
           <Text style={s.back} allowFontScaling={false}>
             返回
           </Text>
@@ -362,28 +485,42 @@ export default function ExpressionScreen({ onBack }) {
 
       {stage === 'input' ? (
         <Animated.View style={[s.body, { paddingBottom: kbShiftJS }]}>
-          <ScrollView
-            ref={inputScrollRef}
-            style={s.scrollFlex}
-            contentContainerStyle={s.inputWrap}
-            keyboardDismissMode="interactive"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => stickRef.current && inputScrollRef.current && inputScrollRef.current.scrollToEnd({ animated: false })}
-          >
-            <TextInput
-              style={s.input}
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="点这里，然后按键盘上的麦克风说话"
-              placeholderTextColor={C.placeholder}
-              multiline
-              textAlignVertical="top"
-              allowFontScaling={false}
-              autoComplete="off"
-              textContentType="none"
-            />
-          </ScrollView>
+          <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+            <ScrollView
+              ref={inputScrollRef}
+              style={s.scrollFlex}
+              contentContainerStyle={s.inputWrap}
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => stickRef.current && inputScrollRef.current && inputScrollRef.current.scrollToEnd({ animated: false })}
+            >
+              <TextInput
+                style={s.input}
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="点这里，然后按键盘上的麦克风说话"
+                placeholderTextColor={C.placeholder}
+                multiline
+                textAlignVertical="top"
+                allowFontScaling={false}
+                autoComplete="off"
+                textContentType="none"
+              />
+
+              <View style={s.historyHead}>
+                <Text style={s.historyTitle} allowFontScaling={false}>过往训练</Text>
+                <Text style={s.historyCount} allowFontScaling={false}>{history.length} 条</Text>
+              </View>
+              {history.length === 0 ? (
+                <Text style={s.historyEmpty} allowFontScaling={false}>还没有训练记录</Text>
+              ) : (
+                history.map((item) => (
+                  <HistoryRow key={item.id} item={item} s={s} onDelete={deleteHistory} />
+                ))
+              )}
+            </ScrollView>
+          </TouchableWithoutFeedback>
           <Animated.View>
             <Text style={s.hint} allowFontScaling={false}>
               按键盘上的麦克风说，说完点讲完了
@@ -590,6 +727,18 @@ const makeStyles = (C, T, S, R) =>
     headSlot: { width: 32 },
     inputWrap: { paddingHorizontal: S.page, paddingTop: S.x3, paddingBottom: S.x6, minHeight: 240 },
     input: { backgroundColor: C.card, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body, minHeight: 200 },
+    historyHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: S.x6, marginBottom: S.x2 },
+    historyTitle: { color: C.ink, ...T.title },
+    historyCount: { color: C.ink3, ...T.meta },
+    historyEmpty: { color: C.ink3, ...T.meta },
+    historyItem: { marginTop: S.x2, borderRadius: R.small, overflow: 'hidden' },
+    historyDelete: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 96, backgroundColor: C.bad, alignItems: 'center', justifyContent: 'center' },
+    historyDeleteText: { color: '#FFFFFF', ...T.meta, fontWeight: '600' },
+    historyRow: { backgroundColor: C.card, borderRadius: R.small, paddingHorizontal: S.x3, paddingVertical: S.x2 },
+    historyTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    historyTime: { color: C.ink3, ...T.meta },
+    historyScore: { color: C.accent, ...T.meta, fontWeight: '600' },
+    historySummary: { marginTop: S.x1, color: C.ink, ...T.body },
     hint: { color: C.ink3, ...T.meta, paddingHorizontal: S.page, paddingTop: S.x2, paddingBottom: S.x3 },
     primary: {
       marginHorizontal: S.page,
@@ -615,7 +764,7 @@ const makeStyles = (C, T, S, R) =>
     sentBox: { marginTop: S.x4, gap: S.x2 },
     sentRow: { gap: S.x1 },
     sentText: { color: C.ink, ...T.body },
-    sentGoldLine: { textDecorationLine: 'underline', textDecorationColor: '#C8A24A' },
+    sentGoldLine: { color: '#C8A24A', textDecorationLine: 'underline', textDecorationColor: '#C8A24A' },
     sentCutLine: { textDecorationLine: 'underline', textDecorationStyle: 'dashed', textDecorationColor: C.ink3 },
     sentTag: { color: '#C8A24A', ...T.meta },
     panel: { marginTop: S.x6, backgroundColor: C.card, borderRadius: R.small, padding: S.x4, gap: S.x2 },

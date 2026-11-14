@@ -68,6 +68,7 @@ export default function ViewsPoolScreen({
   onUndo,
   onOpenDetail,
   onOpenMyViews,
+  autoSwipe = false,
 }) {
   const { C, T, S, R } = useTheme();
   const insets = useSafeAreaInsets();
@@ -75,7 +76,15 @@ export default function ViewsPoolScreen({
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
   const nav = useNavigation();
 
-  const [mode, setMode] = useState('menu'); // menu = 两个气泡；swipe = 左右滑
+  const [mode, setMode] = useState(() => (autoSwipe ? 'swipe' : 'menu')); // menu = 两个气泡；swipe = 左右滑
+  
+  // 带 selected 参数进来（autoSwipe=true）时，数据一到就自动进 swipe
+  useEffect(() => {
+    if (autoSwipe && mode === 'menu' && Array.isArray(topics) && topics.length > 0) {
+      setMode('swipe');
+    }
+  }, [autoSwipe, topics, mode]);
+
   const [myTotal, setMyTotal] = useState(null);
   const [idx, setIdx] = useState(0);
   const [doneN, setDoneN] = useState(done);
@@ -121,9 +130,20 @@ export default function ViewsPoolScreen({
   const settle = useCallback(
     (v) => {
       setErr(null);
-      setVerdict(v);
       setWhy('');
-      Animated.spring(pan, { toValue: { x: v === 'agree' ? 140 : -140, y: 0 }, ...springIn }).start();
+      // 先把卡片送出去，再切到理由 sheet；否则 setVerdict 会立刻卸载卡片，弹簧位移看不见。
+      if (v === 'unsure') {
+        setVerdict(v);
+        return;
+      }
+      Animated.timing(pan, {
+        toValue: { x: v === 'agree' ? SWIPE_OUT : -SWIPE_OUT, y: 0 },
+        duration: 180,
+        useNativeDriver: false,
+      }).start(() => {
+        pan.setValue({ x: 0, y: 0 });
+        setVerdict(v);
+      });
     },
     [pan],
   );
@@ -137,7 +157,9 @@ export default function ViewsPoolScreen({
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => !verdict,
+        onStartShouldSetPanResponderCapture: () => !verdict,
         onMoveShouldSetPanResponder: (e, g) => !verdict && Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
+        onMoveShouldSetPanResponderCapture: (e, g) => !verdict && Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
         onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
         onPanResponderRelease: (e, g) => {
           // 轻点不滑：展开详情整页（老板要的「点一下变成完整页面」）

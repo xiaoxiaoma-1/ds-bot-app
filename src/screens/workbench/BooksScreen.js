@@ -119,30 +119,32 @@ export default function BooksScreen({
         </View>
       </View>
 
-      <View style={s.controls}>
-        <TextInput
-          style={s.search}
-          value={q}
-          onChangeText={setQ}
-          placeholder="搜书名或一句话概括"
-          placeholderTextColor={C.placeholder}
-          returnKeyType="search"
-          allowFontScaling={false}
-        />
-        <View style={s.chips}>
-          {VERDICTS.map((v) => {
-            const on = verdict === v;
-            return (
-              <Pressable key={v || 'all'} style={[s.chip, on ? s.chipOn : null]} onPress={() => onFilter && onFilter(v)} accessibilityRole="button">
-                <Text style={[s.chipText, on ? s.chipTextOn : null]} allowFontScaling={false}>
-                  {v || '全部'}
-                  {stat[v] != null ? ` ${stat[v]}` : ''}
-                </Text>
-              </Pressable>
-            );
-          })}
+      <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+        <View style={s.controls}>
+          <TextInput
+            style={s.search}
+            value={q}
+            onChangeText={setQ}
+            placeholder="搜书名或一句话概括"
+            placeholderTextColor={C.placeholder}
+            returnKeyType="search"
+            allowFontScaling={false}
+          />
+          <View style={s.chips}>
+            {VERDICTS.map((v) => {
+              const on = verdict === v;
+              return (
+                <Pressable key={v || 'all'} style={[s.chip, on ? s.chipOn : null]} onPress={() => onFilter && onFilter(v)} accessibilityRole="button">
+                  <Text style={[s.chipText, on ? s.chipTextOn : null]} allowFontScaling={false}>
+                    {v || '全部'}
+                    {stat[v] != null ? ` ${stat[v]}` : ''}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
 
       {error ? (
         <View style={s.errorBox}>

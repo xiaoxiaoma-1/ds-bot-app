@@ -30,7 +30,7 @@ export function roleOf(C, scheme) {
     onHeroSubOpacity: light ? 1 : 0.75,
     halftone: light ? C.card : C.ink,
     dock: light ? C.hero : C.card,
-    dockIdle: light ? C.ink2 : C.ink,
+    dockIdle: C.dockIdle,
     dockIdleOpacity: light ? 1 : 0.75,
     dockOn: C.onHero,
     circle: C.onHero,

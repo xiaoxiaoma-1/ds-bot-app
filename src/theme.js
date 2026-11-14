@@ -33,6 +33,7 @@ export const darkPalette = {
   softOat: '#211D17',
   scrim: 'rgba(0,0,0,0.62)',
   glass: 'rgba(20,20,22,0.88)',
+  dockIdle: '#9A9A9A',
 };
 
 // 2026-11-14：投影归零，老板规矩「界面不许投影」
@@ -66,6 +67,7 @@ export const lightPalette = {
   softOat: '#EFEAE0',
   scrim: 'rgba(0,0,0,0.42)',
   glass: 'rgba(255,255,255,0.9)',
+  dockIdle: '#9A9A9A',
 };
 
 export const type = {
