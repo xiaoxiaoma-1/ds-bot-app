@@ -21,6 +21,8 @@ import { THUMB_W } from '../imgCache';
 import { useTheme } from '../theme';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import * as WebBrowser from 'expo-web-browser';
 import * as FileSystem from 'expo-file-system';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import {
@@ -366,6 +368,41 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
       setSavingImg(false);
     }
   }, [savingImg]);
+
+  // 分享出去（2026-11-15 老板：「还得有一个分享按钮，分享出去或者转发到微信上」）
+  // 图片走系统分享面板（能发微信、存文件、发邮件…）；文档同理，分享的是原文件。
+  const shareItem = useCallback(async (m) => {
+    const url = m && (m.url || m.coverUrl);
+    if (!url) return;
+    try {
+      const ok = await Sharing.isAvailableAsync();
+      if (!ok) {
+        setErr({ step: '分享', message: '这台设备不支持系统分享' });
+        return;
+      }
+      const ext = (String(url).split('?')[0].match(/\.([a-z0-9]{2,5})$/i) || [null, 'jpg'])[1];
+      const tmp = FileSystem.cacheDirectory + 'share_' + Date.now() + '.' + ext;
+      const dl = await FileSystem.downloadAsync(url, tmp);
+      if (!dl || dl.status !== 200) throw new Error('下载失败');
+      await Sharing.shareAsync(dl.uri, { dialogTitle: '分享到' });
+    } catch (e) {
+      setErr({ step: '分享失败', message: String((e && e.message) || e) });
+    }
+  }, []);
+
+  // 文档预览：Office / PDF / Markdown 交给系统浏览器（服务端转好的 HTML/PDF）
+  const openDoc = useCallback(async (url) => {
+    if (!url) return;
+    try {
+      await WebBrowser.openBrowserAsync(url, {
+        toolbarColor: '#151518',
+        controlsColor: '#ffffff',
+        enableBarCollapsing: true,
+      });
+    } catch (e) {
+      setErr({ step: '打不开这个文件', message: String((e && e.message) || e) });
+    }
+  }, []);
 
   // 删一条朋友圈：先问一次，删成功后本地立刻移除（不等重拉）
   const confirmDelMoment = useCallback((item) => {
@@ -1153,7 +1190,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
               <Text style={s.viewerCloseText} allowFontScaling={false}>这张图没有地址</Text>
             )}
           </Pressable>
-          {/* 2026-11-15：看图时能存到相册（存的是原图，不压缩） */}
+          {/* 2026-11-15：看图时能存到相册（存的是原图，不压缩）+ 分享出去 */}
           {viewer && viewer.type !== 'video' && viewer.url ? (
             <Pressable
               style={s.viewerSave}
@@ -1166,6 +1203,17 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
               <Text style={s.viewerCloseText} allowFontScaling={false}>
                 {savingImg ? '正在存…' : '保存到相册'}
               </Text>
+            </Pressable>
+          ) : null}
+          {viewer && viewer.url ? (
+            <Pressable
+              style={s.viewerShare}
+              onPress={() => shareItem(viewer)}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="分享"
+            >
+              <Text style={s.viewerCloseText} allowFontScaling={false}>分享</Text>
             </Pressable>
           ) : null}
           <Pressable style={s.viewerClose} onPress={() => setViewer(null)} hitSlop={12}>
@@ -1464,6 +1512,7 @@ const makeStyles = (C, T, S, R) =>
     viewerBackdrop: { flex: 1, backgroundColor: C.bg, justifyContent: 'center' },
     viewerClose: { position: 'absolute', top: 48, right: S.page, zIndex: 20 },
     viewerSave: { position: 'absolute', top: 48, left: S.page, zIndex: 20 },
+    viewerShare: { position: 'absolute', top: 48, right: S.page + 72, zIndex: 20 },
     viewerCloseText: { color: C.ink, ...T.body },
     viewerStage: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' },
     // 从 80% 高改成满屏可用高度：小图也尽量撑满，看起来是「放大」
