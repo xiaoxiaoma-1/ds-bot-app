@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useEdgeBack from '../../components/useEdgeBack';
 import LiveInput, { inputMaxHeight } from '../../components/LiveInput';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
@@ -304,28 +303,14 @@ export default function ViewsPoolScreen({
   const goBackRef = useRef(goBack);
   goBackRef.current = goBack;
 
-  // 两条右滑分开管，互不干扰：
-  //   ① 在卡片上右滑 = 不认同（卡片自己的 responder，touch-start 就抢走）
-  //   ② 贴屏幕最左边缘那条竖窄条往右滑 = 整页跟手退出（独立窄条，见下面的 edgeStrip）
-  //
-  // 2026-11-15 第四版（前三版都没生效）：不再靠「在祖先上抢 move 阶段」，
-  // 改成在屏幕最左边铺一条 24px 宽的独立 View，它画在卡片之上、绝对定位，
-  // 手指落进去时卡片不在命中路径里 —— 这是唯一可靠的办法。
-  // 卡片宽 353、屏宽约 393，左右各留 20，所以 24 只吃到卡片最外 4px，不影响滑卡片。
-  const EDGE_W = 24;
-  const edgeBack = useEdgeBack({
-    onBack: () => {
-      if (goBackRef.current) goBackRef.current();
-    },
-    enabled: mode === 'swipe',
-    edgeWidth: EDGE_W,
-  });
+  
 
-  // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
-  // 内层关掉原生手势，左滑交给上面的 edgeBack：只退一层，落到「选一个入口」。
+  // 边缘右滑退回上一屏：交给 iOS 原生手势（App.js 里 fullScreenGestureEnabled:false，
+  // 只在屏幕最左边缘 20~30pt 生效，正好是老板要的「贴边」）。
+  // 只有进了表态页（verdict 有值）才临时关掉，避免一层层被 pop 出去。
   useEffect(() => {
-    if (nav && nav.setOptions) nav.setOptions({ gestureEnabled: mode !== 'swipe' });
-  }, [mode, nav]);
+    if (nav && nav.setOptions) nav.setOptions({ gestureEnabled: !verdict });
+  }, [verdict, nav]);
 
   // 安卓实体返回键同理：内层这一下先自己吃掉，走 goBack()，不让导航栈直接把整屏弹掉
   useEffect(() => {
@@ -386,17 +371,16 @@ export default function ViewsPoolScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}
     >
-      {/* 底衬层：跟手时不能露白 */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: C.bg }} />
       
-      {/* 跟手动画层：整屏平移。
-          注意：这一层**不挂** panHandlers —— 手势全部交给底下那条独立窄条。
-          挂在这里会和卡片抢同一个 touch，前几版就是因为这个一直不生效。 */}
+      
+      
+          
+          
       <Animated.View 
         style={{ 
           flex: 1, 
           backgroundColor: C.bg,          // iOS 上给 View 加阴影必须有底色，否则阴影不渲染
-          transform: [{ translateX: edgeBack.x }],
+          
           shadowColor: '#000000',
           shadowOffset: { width: -6, height: 0 },
           shadowOpacity: 0.18,
@@ -634,19 +618,14 @@ export default function ViewsPoolScreen({
       )}
       </Animated.View>
 
-      {/* 屏幕最左边缘的手势窄条（2026-11-15 第四版）。
-          为什么要一条独立窄条：卡片自己在 touch-start 就抢走 responder（本文件的
-          onStartShouldSetPanResponder），挂在祖先上靠 move 阶段去抢在真机上不可靠。
-          这条窄条画在卡片之上、绝对定位，手指落进来时卡片根本不在命中路径里，
-          所以它能稳稳拿到 touch-start，两条手势不会再打架。
-          它跟着页面一起平移，所以滑出去时不会挡住下一页。
-          上边界往下让 60（insets.top + 60），避开左上角那个返回按钮，不然会把按钮左半边吃掉。 */}
-      {mode === 'swipe' && !verdict ? (
-        <Animated.View
-          style={[s.edgeStrip, { top: insets.top + 60, transform: [{ translateX: edgeBack.x }] }]}
-          {...edgeBack.panHandlers}
-        />
-      ) : null}
+      
+          
+          
+          
+          
+          
+          
+      
     </KeyboardAvoidingView>
   );
 }
@@ -655,16 +634,7 @@ const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
 
-    // 屏幕最左边缘的手势窄条：绝对定位、画在最上层、透明（不挡视线）。
-    // 宽度必须和 useEdgeBack 的 edgeWidth 一致（都用 EDGE_W = 24）。
-    edgeStrip: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 24,
-      zIndex: 30,
-    },
+    
 
     top: { position: 'relative' },
     shape: {

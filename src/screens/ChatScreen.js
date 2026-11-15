@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LiveInput, { inputMaxHeight } from '../components/LiveInput';
-import { useTheme } from '../theme';
+import { useTheme, inkOn } from '../theme';
 import { setCached, useCachedResource } from '../cache';
 import { chat, openFeed, send, uploadImage } from '../api';
 import CachedImage from '../components/CachedImage';
@@ -112,7 +112,7 @@ const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s, C, onOpenI
         isLast ? bounce : null,
       ]}
     >
-      <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
+      <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs, item.failed && s.bubbleFailed]}>
         {att.clean ? (
           <Text style={s.bubbleText} allowFontScaling={false}>
             {att.clean}
@@ -135,6 +135,11 @@ const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s, C, onOpenI
             <Text style={s.docHint} allowFontScaling={false}>点开预览</Text>
           </Pressable>
         ))}
+      {item.failed && (
+          <View style={s.failedIndicator}>
+            <Text style={s.failedText}>!</Text>
+          </View>
+        )}
       </View>
     </Animated.View>
   );
@@ -339,7 +344,16 @@ export default function ChatScreen({ bot, onBack }) {
 
   const applyMessages = useCallback((msgs) => {
     seqs.current = new Set(msgs.map((m) => m.seq).filter((x) => x !== undefined && x !== null));
-    setItems(msgs);
+    setItems((prev) => {
+      // 服务端列表里还没有的本地气泡（local=true）必须留着，否则发消息时会被旧快照抹掉
+      const pending = prev.filter((m) => m && m.local);
+      const merged = msgs.slice();
+      pending.forEach((m) => {
+        const dup = merged.some((x) => x.who === '我' && x.text === m.text);
+        if (!dup) merged.push(m);
+      });
+      return merged;
+    });
   }, []);
 
   // 首次拉会话走缓存：有缓存直接渲染上次内容，后台静默刷新；key 按会话分开
@@ -554,10 +568,14 @@ export default function ChatScreen({ bot, onBack }) {
     const local = { who: '我', text: finalText, local: true };
     setItems((prev) => [...prev, local]);
     try {
-      await send(bot.id, finalText);
+      const msgs = await send(bot.id, finalText);
+      // 服务端回了完整列表就用它（此时本地气泡已在列表里，会被替换成真消息）
+      if (Array.isArray(msgs) && msgs.length) applyMessages(msgs);
     } catch (e) {
       setErr({ step: e.step || 'send', message: e.message || '发送失败' });
-      setItems((prev) => prev.filter((m) => m !== local));
+      // 不撤气泡：撤掉之后用户完全看不出这条到底发没发出去。
+      // 标成 failed，气泡自己显示一个红点，用户知道要重发。
+      setItems((prev) => prev.map((m) => (m === local ? { ...m, failed: true } : m)));
     }
   }
 
@@ -797,6 +815,19 @@ const makeStyles = (C, T, S, R) =>
     },
     bubbleMine: { backgroundColor: C.me },
     bubbleTheirs: { backgroundColor: C.card },
+    bubbleFailed: { opacity: 0.55 },
+    failedIndicator: {
+      position: 'absolute',
+      top: -6,
+      left: -6,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: C.bad,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    failedText: { color: inkOn(C.bad), fontSize: 12, lineHeight: 14, fontWeight: '700' },
     bubbleImgWrap: { marginTop: S.x1, borderRadius: 8, overflow: 'hidden' },
     bubbleImg: { width: 180, height: 180 },
     docCard: {

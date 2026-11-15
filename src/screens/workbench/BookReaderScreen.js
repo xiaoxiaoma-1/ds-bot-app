@@ -157,17 +157,31 @@ export default function BookReaderScreen({
       let cursor = 0;
       const out = raw.map((l) => {
         const t = String((l && l.text) || '');
-        const found = t ? winText.indexOf(t, cursor) : -1;
-        const start = (found >= 0 ? found : cursor) + winStart;
-        cursor = (found >= 0 ? found : cursor) + t.length;
-        return { text: t, height: Number(l && l.height) || step.lineHeight, start, end: cursor + winStart };
+        let pos = t ? winText.indexOf(t, cursor) : -1;
+        // indexOf 命中「更早出现过的同样短句」时 pos 会跳回去，让分页切点错位。
+        // 行一定是按顺序来的，允许的间隔只有中间被跳过的换行符（0~3 个），超过就当没找到。
+        if (pos < 0 || pos < cursor || pos - cursor > 3) {
+          pos = cursor;
+          while (pos < winText.length && (winText[pos] === '\n' || winText[pos] === '\r')) pos += 1;
+        }
+        const start = pos;
+        cursor = pos + t.length;
+        return { text: t, height: Number(l && l.height) || step.lineHeight, start: start + winStart, end: cursor + winStart };
       });
       setLines(out);
     },
     [winText, winStart, step.lineHeight],
   );
 
-  const pages = useMemo(() => paginate(lines, pageH), [lines, pageH]);
+  const pages = useMemo(() => {
+  const raw = paginate(lines, pageH);
+  // 任何相邻两页之间的空洞都补掉：上一页末尾直接延到下一页开头。
+  // 老板看到的是「第一页和第二页连不上、中间差了很多内容」，那就是洞。
+  for (let i = 1; i < raw.length; i += 1) {
+    if (raw[i].start > raw[i - 1].end) raw[i - 1].end = raw[i].start;
+  }
+  return raw;
+}, [lines, pageH]);
 
   const blockAt = useCallback(
     (offset) => {
@@ -345,7 +359,15 @@ export default function BookReaderScreen({
                 不响应点击、不参与滚动，opacity 0 但仍然参与布局。 */}
             {winText && pageW > 0 ? (
               <Text
-                style={s.ruler}
+                style={[
+                  s.ruler,
+                  {
+                    width: pageW,
+                    fontSize: step.fontSize,
+                    lineHeight: step.lineHeight,
+                    letterSpacing: LETTER_SPACING,
+                  },
+                ]}
                 onTextLayout={onTextLayout}
                 allowFontScaling={false}
                 pointerEvents="none"

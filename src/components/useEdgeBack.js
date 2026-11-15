@@ -1,6 +1,8 @@
 import { useMemo, useRef } from 'react';
 import { Animated, Dimensions, PanResponder } from 'react-native';
 
+// 已停用：边缘返回改用原生 gestureEnabled，见 ViewsPoolScreen.js
+
 // 屏幕左边缘「右滑返回」的手势层（2026-11-15 第四版，改成窄条抢 touch-start）
 //
 // ── 为什么前几版都失败 ──────────────────────────────

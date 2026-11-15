@@ -122,15 +122,28 @@ export default function BooksScreen({
 
       <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
         <View style={s.controls}>
-          <TextInput
-            style={s.search}
-            value={q}
-            onChangeText={setQ}
-            placeholder="搜书名或一句话概括"
-            placeholderTextColor={C.placeholder}
-            returnKeyType="search"
-            allowFontScaling={false}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={s.search}
+              value={q}
+              onChangeText={setQ}
+              placeholder="搜书名或一句话概括"
+              placeholderTextColor={C.placeholder}
+              returnKeyType="search"
+              allowFontScaling={false}
+              onSubmitEditing={() => Keyboard.dismiss()}
+            />
+            {q.trim() ? (
+              <Pressable
+                style={s.clearSearch}
+                onPress={() => { setQ(''); Keyboard.dismiss(); }}
+                accessibilityRole="button"
+                accessibilityLabel="清空搜索"
+              >
+                <Text style={s.clearSearchText} allowFontScaling={false}>×</Text>
+              </Pressable>
+            ) : null}
+          </View>
           <View style={s.chips}>
             {VERDICTS.map((v) => {
               const on = verdict === v;
@@ -163,17 +176,33 @@ export default function BooksScreen({
       ) : loading && books.length === 0 ? (
         <View style={s.loadingRow}>
           <ActivityIndicator color={K.brand} />
-          <Text style={s.loadingText} allowFontScaling={false}>正在读取书库</Text>
+          <Text style={s.loadingText} allowFontScaling={false}>{q.trim() ? '正在搜…' : '正在读取书库'}</Text>
         </View>
       ) : books.length === 0 ? (
-        <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
+        <View style={s.emptyContainer}>
           <Text style={s.empty} allowFontScaling={false}>
-            {q.trim() ? '没搜到这本书。' : '书库还是空的。'}
+            {q.trim() ? `没搜到「${q.trim()}」。试试少打几个字。` : '书库还是空的。'}
           </Text>
-        </TouchableWithoutFeedback>
+          {q.trim() ? (
+            <Pressable
+              style={s.clearAllButton}
+              onPress={() => { setQ(''); if (onQuery) onQuery(''); }}
+              accessibilityRole="button"
+              accessibilityLabel="清空搜索，看全部书籍"
+            >
+              <Text style={s.clearAllText} allowFontScaling={false}>清空搜索，看全部书籍</Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : (
         <TouchableWithoutFeedback accessible={false} onPress={Keyboard.dismiss}>
           <View style={{ flex: 1 }}>
+            {loading && q.trim() ? (
+              <View style={s.searchingRow}>
+                <ActivityIndicator color={K.brand} size="small" />
+                <Text style={s.searchingText} allowFontScaling={false}>正在搜…</Text>
+              </View>
+            ) : null}
             <FlatList
               data={books}
               keyExtractor={(it) => it.id}
@@ -232,7 +261,9 @@ const makeStyles = (C, T, S, R, K) =>
     subTitle: { marginTop: S.x1, color: K.onBrand, opacity: 0.78, ...T.meta, fontWeight: '500' },
 
     controls: { marginTop: S.x4, marginHorizontal: S.page },
-    search: { height: 44, borderRadius: R.capsule, backgroundColor: C.card, paddingHorizontal: S.x4, color: C.ink, ...T.body },
+    search: { flex: 1, height: 44, borderRadius: R.capsule, backgroundColor: C.card, paddingHorizontal: S.x4, color: C.ink, ...T.body },
+    clearSearch: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: S.x2 },
+    clearSearchText: { color: C.ink3, fontSize: 24, lineHeight: 28 },
     chips: { flexDirection: 'row', gap: S.x2, marginTop: S.x3 },
     chip: { height: 32, paddingHorizontal: S.x3, borderRadius: R.capsule, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
     chipOn: { backgroundColor: K.brand },
@@ -257,9 +288,14 @@ const makeStyles = (C, T, S, R, K) =>
     progFill: { height: 4, backgroundColor: K.brand },
     progText: { marginTop: S.x1, color: K.brand, ...T.meta },
 
-    empty: { marginTop: S.x6, marginHorizontal: S.page, color: C.ink2, ...T.body },
+    emptyContainer: { marginTop: S.x6, marginHorizontal: S.page, gap: S.x3 },
+    empty: { color: C.ink2, ...T.body },
+    clearAllButton: { paddingVertical: S.x2, alignItems: 'center' },
+    clearAllText: { color: K.brand, ...T.meta },
     loadingRow: { marginTop: S.x6, marginHorizontal: S.page, flexDirection: 'row', alignItems: 'center', gap: S.x2 },
     loadingText: { color: C.ink3, ...T.meta },
+    searchingRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingHorizontal: S.page, paddingVertical: S.x3 },
+    searchingText: { color: C.ink3, ...T.meta },
     errorBox: {
       marginTop: S.x6,
       marginHorizontal: S.page,
