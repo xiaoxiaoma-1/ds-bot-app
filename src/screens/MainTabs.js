@@ -344,13 +344,19 @@ export default function MainTabs({ navigation }) {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ flex: 1, paddingBottom: IND_H + 20 + dockBottom }}>
         <View style={s.stack}>
-          {TABS.map((t) =>
-            tab === t.key ? (
-              <View key={t.key} style={{ flex: 1 }}>
-                {renderPage(t.key, true)}
-              </View>
-            ) : null,
-          )}
+          {/* 2026-11-15（老板报「头像切走再回来又空白」）：
+              以前这里条件渲染 —— 非当前 tab 返回 null，等于把整页卸载。
+              于是每次切回「我的」都是全新 ProfileScreen：重新 fetchMe、重新拉朋友圈、
+              头像还要重等磁盘缓存。改成四页都挂载，用 opacity + pointerEvents 切。 */}
+          {TABS.map((t) => (
+            <View
+              key={t.key}
+              style={[StyleSheet.absoluteFill, { opacity: tab === t.key ? 1 : 0 }]}
+              pointerEvents={tab === t.key ? 'auto' : 'none'}
+            >
+              {renderPage(t.key, tab === t.key)}
+            </View>
+          ))}
         </View>
       </View>
 

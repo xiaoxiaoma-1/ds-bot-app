@@ -25,6 +25,17 @@ export function memImageUri(url) {
   return (url && mem.get(url)) || '';
 }
 
+// 2026-11-15（老板报「进去要等一会儿才出头像」）：
+// fileName 是纯函数（url 哈希），所以磁盘路径**同步**就能算出来。
+// 以前第一帧只能拿到远程 url → 空白，必须等 cachedImageUri 异步 getInfoAsync 回来才换成本地。
+// 现在先按算出来的路径直接渲染，文件在就直接出、不在就由 Image 自己失败后回退（见 CachedImage）。
+export function guessedLocalUri(url) {
+  if (!url || !DIR) return '';
+  if (mem.has(url)) return mem.get(url);
+  if (!/^https?:/i.test(url)) return url;
+  return DIR + fileName(url);
+}
+
 export async function cachedImageUri(url) {
   if (!url || !DIR) return url;
   if (mem.has(url)) return mem.get(url);
