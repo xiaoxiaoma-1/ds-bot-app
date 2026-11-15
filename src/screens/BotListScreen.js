@@ -20,9 +20,9 @@ import { eyeInkFor } from '../components/CharacterIcon';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
 import { botApi } from '../botApi';
-import { advisorsFull } from '../api';
+import { advisorsFull, botFolders } from '../api';
 import { groupsUnreadCount, normalizeGroups } from '../groups';
-import { setCached, useCachedResource } from '../cache';
+import { readCached, setCached, useCachedResource } from '../cache';
 import GroupSection from './GroupSection';
 
 // Bot 列表：未读珊瑚橙胶囊、一键全部已读、长按弹菜单（移动/编辑/隐藏/删除）。
@@ -232,6 +232,14 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
   const [rows, setRows] = useState([]);
+  // 2026-11-15（老板）：「这个群组的功能要移到第一页。点顾问页面就有我创建的那几个组，
+  // 点展开就能看到里面的 Bot，直接跟他聊天 —— 不是要进到管理里才看到分组」。
+  // 所以顾问列表首页按分组显示，组可折叠；管理页那套拖拽分组留着不动。
+  const [folderList, setFolderList] = useState(() => {
+    const c = readCached('dsbot:folders');
+    return Array.isArray(c) ? c : [];
+  });
+  const [openFolders, setOpenFolders] = useState(() => new Set());
   const [order, setOrder] = useState([]);
   const [unread, setUnread] = useState({});
   const [hidden, setHidden] = useState(() => new Set());
@@ -262,6 +270,19 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
 
   useEffect(() => {
     loadOrder().then(setOrder);
+  }, []);
+
+  // 拉分组列表：有缓存先用，随后静默更新。失败不打扰用户（分组拿不到就退化成平铺）。
+  useEffect(() => {
+    let alive = true;
+    botFolders()
+      .then((list) => {
+        if (!alive || !Array.isArray(list)) return;
+        setFolderList(list);
+        setCached('dsbot:folders', list);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   // 拿到 advisorsFull 之后的落库动作：首次加载和静默刷新必须走同一段，避免两套逻辑走偏
@@ -354,6 +375,36 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
 
   const visible = useMemo(() => rows.filter((it) => !hidden.has(String(it.id))), [rows, hidden]);
   const sorted = useMemo(() => applyOrder(visible, order), [visible, order]);
+
+  // 把列表折成「组标题 + 组内 Bot」的扁平数组，交给同一个 FlatList 渲染。
+  // 组标题是一条 kind='folder' 的伪行；点它展开/收起。
+  // 未归组的 Bot 放最后一段「未分组」，不藏起来。
+  const feed = useMemo(() => {
+    if (!folderList.length) return sorted.map((b) => ({ kind: 'bot', bot: b }));
+    const byFolder = new Map();
+    folderList.forEach((f) => byFolder.set(String(f.id), []));
+    const loose = [];
+    sorted.forEach((b) => {
+      const ids = Array.isArray(b.folders) ? b.folders.map(String) : [];
+      const hit = ids.filter((id) => byFolder.has(id));
+      if (!hit.length) { loose.push(b); return; }
+      hit.forEach((id) => byFolder.get(id).push(b));
+    });
+    const out = [];
+    folderList.forEach((f) => {
+      const items = byFolder.get(String(f.id)) || [];
+      if (!items.length) return;            // 空组不占地方
+      const open = openFolders.has(String(f.id));
+      out.push({ kind: 'folder', id: String(f.id), name: f.name, n: items.length, open });
+      if (open) items.forEach((b) => out.push({ kind: 'bot', bot: b }));
+    });
+    if (loose.length) {
+      const open = openFolders.has('__loose');
+      out.push({ kind: 'folder', id: '__loose', name: '未分组', n: loose.length, open });
+      if (open) loose.forEach((b) => out.push({ kind: 'bot', bot: b }));
+    }
+    return out;
+  }, [sorted, folderList, openFolders]);
   const unreadTotal = useMemo(
     () => sorted.reduce((sum, it) => sum + (unread[String(it.id)] || 0), 0),
     [sorted, unread],
@@ -431,37 +482,61 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
     [dragY, reorder],
   );
 
-  const renderItem = useCallback(
-    ({ item, index }) => (
+  const toggleFolder = useCallback((id) => {
+    setOpenFolders((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }, []);
+
+  const renderFolder = (row) => (
+    <Pressable
+      style={s.folderRow}
+      onPress={() => toggleFolder(row.id)}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: row.open }}
+      accessibilityLabel={`${row.name}，${row.n} 个，${row.open ? '收起' : '展开'}`}
+    >
+      <Text style={s.folderArrow} allowFontScaling={false}>{row.open ? '▾' : '▸'}</Text>
+      <Text style={s.folderName} numberOfLines={1} allowFontScaling={false}>{row.name}</Text>
+      <Text style={s.folderCount} allowFontScaling={false}>{row.n}</Text>
+    </Pressable>
+  );
+
+  const renderRow = useCallback(
+    ({ item, index }) => {
+      if (item && item.kind === 'folder') return renderFolder(item);
+      const bot = item && item.bot ? item.bot : item;
+      return (
       <AdvisorRow
-        item={item}
-        unread={unread[String(item.id)] || 0}
+        item={bot}
+        unread={unread[String(bot.id)] || 0}
         s={s}
         C={C}
         scheme={scheme}
         dragMode={dragMode}
-        dragging={dragId === String(item.id)}
+        dragging={dragId === String(bot.id)}
         onOpen={openBot}
-        onLongPress={() => setMenuFor(item)}
+        onLongPress={() => setMenuFor(bot)}
         onMeasured={(e) => {
           const h = e.nativeEvent.layout.height;
           if (h > 0) rowH.current = h;
         }}
-        panHandlers={makePan(item, index).panHandlers}
+        panHandlers={makePan(bot, index).panHandlers}
         translateY={dragY}
       />
-    ),
-    [s, C, scheme, unread, dragMode, dragId, openBot, makePan, dragY],
+      );
+    },
+    [s, C, scheme, unread, dragMode, dragId, openBot, makePan, dragY, toggleFolder],
   );
 
-  const keyExtractor = useCallback((it) => String(it.id), []);
-  const getItemLayout = useCallback(
-    (_, index) => {
-      const stride = rowH.current + gapRef.current;
-      return { length: stride, offset: stride * index, index };
-    },
+  // 组标题也要有稳定 key：「f:<组id>」；Bot 行仍然用 id
+  const keyExtractor = useCallback(
+    (it) => (it && it.kind === 'folder' ? 'f:' + it.id : String(it && it.bot ? it.bot.id : it.id)),
     [],
   );
+  // getItemLayout 已删：分组后组标题行和 Bot 行高度不一致，固定 offset 会算错滚动位置。
 
   // 菜单：先改本地那一行，再发请求；失败回滚，错误原文交给顶部横幅（行内看不见）
   const patchRow = (id, patch) =>
@@ -603,10 +678,9 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
         </View>
       ) : (
         <FlatList
-          data={sorted}
+          data={feed}
           keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
+          renderItem={renderRow}
           initialNumToRender={12}
           maxToRenderPerBatch={12}
           windowSize={9}
@@ -645,6 +719,18 @@ const makeStyles = (C, T, S, R) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     noteLine: { color: C.ink3, ...T.meta, paddingHorizontal: S.page, paddingBottom: S.x2 },
+    // 分组标题行（2026-11-15）：顾问首页直接按组展示，点标题展开/收起
+    folderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: S.x2,
+      paddingHorizontal: S.page,
+      paddingTop: S.x4,
+      paddingBottom: S.x2,
+    },
+    folderArrow: { color: C.ink3, ...T.meta, width: 12 },
+    folderName: { flex: 1, minWidth: 0, color: C.ink2, ...T.meta, fontWeight: '600' },
+    folderCount: { color: C.ink3, ...T.meta },
     flash: {
       position: 'absolute',
       left: S.page,
