@@ -124,16 +124,11 @@ export default function BoardScreen({
     <View style={s.root}>
       <Head />
 
-      {/* 四栏切换：数量跟着分栏走，切栏只换列表不换页 */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        // 2026-11-15（老板第 N 次说「四个胶囊贴着上面的框太密」）：
-        // 以前这里只有左右和底部 padding，四个胶囊紧贴 Head 色带下沿，一点空隙都没有。
-        // 上一轮改的是首页「今天动哪件」那张卡（marginBottom:46），改错对象了 —— 老板说的是本页。
-        contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: S.x6, gap: S.x2, paddingBottom: S.x5 }}
-        style={s.tabScroll}
-      >
+      {/* 四栏切换：数量跟着分栏走，切栏只换列表不换页。
+          2026-11-15（老板）：「一点进去四个按钮都要在屏幕里，不许有出界的。可以缩小一点。」
+          以前是 horizontal ScrollView + 每个胶囊自带左右 20 内边距，四个加起来宽度超屏，
+          最右边那个划到屏幕外。现在改成等分四格，全部塞进一屏，永不出界。 */}
+      <View style={s.tabRow}>
         {BOARD_TABS.map((t) => {
           const on = t.key === tab;
           return (
@@ -147,13 +142,17 @@ export default function BoardScreen({
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
             >
-              <Text style={[s.tabText, on ? s.tabTextOn : null]} allowFontScaling={false}>
+              <Text
+                style={[s.tabText, on ? s.tabTextOn : null]}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
                 {t.label} {countOf(t.key)}
               </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       <ScrollView
         style={s.scroll}
@@ -238,14 +237,26 @@ const makeStyles = (C, T, S, R, K) =>
     title: { color: K.headOn, ...T.display },
     subTitle: { marginTop: S.x1, color: K.headOnSub, ...T.meta, fontWeight: '500' },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    tabScroll: { flexGrow: 0 },
-    // 2026-11-15：胶囊本身也抬高一点 —— 老板说「排版散开一点」，
-    // 不只是上方留白，「待完成 32」这类内容挤在 8px 竖内边距里也显得闷。8 → 12。
+    // 四格等分：屏宽减两边 page 再减三个 gap，正好铺满一行，绝不溢出
+    tabRow: {
+      flexDirection: 'row',
+      paddingHorizontal: S.page,
+      paddingTop: S.x6,
+      paddingBottom: S.x5,
+      gap: S.x1,
+    },
+    // 2026-11-15（老板）：可以缩小，但不许出界。
+    // 竖向仍留 12（上一轮定的呼吸感），横向收到 4 —— 四个等分后每个约 85px，
+    // 「阶段完成 17」这种最长的一行（4 汉字 + 空格 + 2 位数 ≈ 59px）放得下。
     tab: {
-      paddingHorizontal: S.x5,
+      flex: 1,
+      minWidth: 0,
+      paddingHorizontal: S.x1,
       paddingVertical: S.x3,
       borderRadius: R.capsule,
       backgroundColor: C.card2,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     tabOn: { backgroundColor: K.headBg },
     tabText: { color: C.ink2, ...T.meta, fontWeight: '500' },
