@@ -1,6 +1,6 @@
 {
   "name": "app-dsbot",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "index.js",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "expo-blur": "~57.0.3",
     "expo-file-system": "~57.0.7",
     "expo-image-picker": "~57.0.21",
+    "expo-media-library": "~57.0.0",
     "expo-secure-store": "~57.0.4",
     "expo-sensors": "~57.0.3",
     "expo-status-bar": "~57.0.1",

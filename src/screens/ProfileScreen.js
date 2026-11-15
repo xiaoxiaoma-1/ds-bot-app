@@ -20,6 +20,8 @@ import CachedImage from '../components/CachedImage';
 import { THUMB_W } from '../imgCache';
 import { useTheme } from '../theme';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import {
   fetchMe,
@@ -334,6 +336,36 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
     if (onBack) onBack();
     else if (navigation && navigation.goBack) navigation.goBack();
   }, [navigation, onBack]);
+
+  // 保存到相册（2026-11-15 老板：「没有保存到相册吗？那就加一个」）
+  // 存进去的是**原图**：先把原图下到临时文件，再交给系统相册，全程不重新编码。
+  const [savingImg, setSavingImg] = useState(false);
+  const [toast, setToast] = useState('');
+  const saveToAlbum = useCallback(async (m) => {
+    const url = m && (m.url || m.coverUrl);
+    if (!url || savingImg) return;
+    setSavingImg(true);
+    try {
+      const perm = await MediaLibrary.requestPermissionsAsync();
+      if (!perm || !perm.granted) {
+        setErr({ step: '保存到相册', message: '没给相册权限，去手机设置里允许一下' });
+        return;
+      }
+      // 临时文件：按原扩展名存，避免转码
+      const ext = (String(url).split('?')[0].match(/\.([a-z0-9]{2,5})$/i) || [null, 'jpg'])[1];
+      const tmp = FileSystem.cacheDirectory + 'save_' + Date.now() + '.' + ext;
+      const dl = await FileSystem.downloadAsync(url, tmp);
+      if (!dl || dl.status !== 200) throw new Error('下载失败');
+      await MediaLibrary.saveToLibraryAsync(dl.uri);
+      setToast('已存到相册');
+      setTimeout(() => setToast(''), 2000);
+      FileSystem.deleteAsync(dl.uri, { idempotent: true }).catch(() => {});
+    } catch (e) {
+      setErr({ step: '保存到相册失败', message: String((e && e.message) || e) });
+    } finally {
+      setSavingImg(false);
+    }
+  }, [savingImg]);
 
   // 删一条朋友圈：先问一次，删成功后本地立刻移除（不等重拉）
   const confirmDelMoment = useCallback((item) => {
@@ -1121,11 +1153,32 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
               <Text style={s.viewerCloseText} allowFontScaling={false}>这张图没有地址</Text>
             )}
           </Pressable>
+          {/* 2026-11-15：看图时能存到相册（存的是原图，不压缩） */}
+          {viewer && viewer.type !== 'video' && viewer.url ? (
+            <Pressable
+              style={s.viewerSave}
+              onPress={() => saveToAlbum(viewer)}
+              disabled={savingImg}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="保存到相册"
+            >
+              <Text style={s.viewerCloseText} allowFontScaling={false}>
+                {savingImg ? '正在存…' : '保存到相册'}
+              </Text>
+            </Pressable>
+          ) : null}
           <Pressable style={s.viewerClose} onPress={() => setViewer(null)} hitSlop={12}>
             <Text style={s.viewerCloseText} allowFontScaling={false}>关闭</Text>
           </Pressable>
         </View>
       </Modal>
+
+      {toast ? (
+        <View style={s.toast} pointerEvents="none">
+          <Text style={s.toastText} allowFontScaling={false}>{toast}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -1410,8 +1463,26 @@ const makeStyles = (C, T, S, R) =>
     postingText: { color: C.ink3, ...T.meta, marginTop: S.x2, textAlign: 'right' },
     viewerBackdrop: { flex: 1, backgroundColor: C.bg, justifyContent: 'center' },
     viewerClose: { position: 'absolute', top: 48, right: S.page, zIndex: 20 },
+    viewerSave: { position: 'absolute', top: 48, left: S.page, zIndex: 20 },
     viewerCloseText: { color: C.ink, ...T.body },
     viewerStage: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' },
     // 从 80% 高改成满屏可用高度：小图也尽量撑满，看起来是「放大」
     viewerImage: { width: '100%', height: '100%' },
+    toast: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 96,
+      alignItems: 'center',
+      zIndex: 99,
+    },
+    toastText: {
+      color: C.ink,
+      ...T.meta,
+      backgroundColor: C.card2,
+      paddingHorizontal: S.x4,
+      paddingVertical: S.x2,
+      borderRadius: R.capsule,
+      overflow: 'hidden',
+    },
   });
