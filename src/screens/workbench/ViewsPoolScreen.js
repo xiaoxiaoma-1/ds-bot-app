@@ -285,15 +285,17 @@ export default function ViewsPoolScreen({
   const goBackRef = useRef(goBack);
   goBackRef.current = goBack;
 
-  // 表态页的右滑必须留给卡片（右滑 = 不认同），不许被边缘返回抢走。
-  // 老板 2026-11-15：「在观点库里面只能左滑，一右滑直接退出去了」—— 真因就是这里
-  // 在整屏容器上接了边缘右滑 → goBack()，优先级压过卡片自己的 responder。
-  // 现在只在不表态的时候（verdict 已定、卡片已送走）才允许边缘右滑返回。
+  // 两条右滑要分清楚，各管一块（老板 2026-11-15 两次要求的合并版）：
+  //   ① 在卡片上右滑 = 不认同（卡片自己的 responder，它在 touch 开始就抢走了，优先级最高）
+  //   ② 贴着屏幕最左边那一窄条往右滑 = 退回上一页（这一层接，只认极窄的一条）
+  // 之前把 ② 整个关掉，老板说「这个功能就没有保留」；现在恢复，但把宽度收到 16
+  // （卡片本身左右各留 20，16 < 20，所以起手在卡片上时永远轮不到这一层）。
   const edgeBack = useEdgeBack({
     onBack: () => {
       if (goBackRef.current) goBackRef.current();
     },
-    enabled: mode === 'swipe' && Boolean(verdict),
+    enabled: mode === 'swipe',
+    edgeWidth: 16,
   });
 
   // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
