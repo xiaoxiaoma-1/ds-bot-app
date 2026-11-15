@@ -19,6 +19,11 @@ import { advisors, models, writeModel, botFolders, botFolderCreate, writeBotFold
 import { readCached, setCached } from '../cache';
 import { eyeInkFor } from '../components/CharacterIcon';
 
+// 2026-11-15（老板）：「加个这个参数吧，到时候调试好了再把它去掉」
+// 打点开关：调试期 true，调好后改 false（只改这一个字就消失）。
+// ★ 原来写的是 __DEV__，但老板装的是正式包，__DEV__ 恒 false → 他根本看不到这行字。
+export const SHOW_PERF = true;
+
 // 问题 3 的教训（0.3.0 版「顾问页管理点什么都闪退」）：/api/dsbot/models 回的是
 // 对象数组 [{ref,name,provider}]，当时前端按字符串用（item.replace）直接崩。
 // 这里两种形态都认，哪天真回字符串也不会再空一片：
@@ -191,13 +196,13 @@ export default function TeamManageScreen({ navigation, onBack }) {
   }, []);
 
   // ── 打点（老板 2026-11-15 要的「点进管理→模型列表出现」实际毫秒数）──
-  // 拆成两段：三个请求各自耗时 + 列表首帧渲染耗时。只在 __DEV__ 显示，
-  // 正式包里不出现这行字（通则 41：不往界面塞自证文案）。
+  // 拆成两段：三个请求各自耗时 + 列表首帧渲染耗时。由 SHOW_PERF 控制，
+  // 现在是 true（老板要看数字），调好后改成 false 就彻底消失。
   const perf = useRef({ t0: Date.now(), advisorsMs: 0, modelsMs: 0, foldersMs: 0, firstPaintMs: 0 });
   const [perfText, setPerfText] = useState('');
 
   useEffect(() => {
-    if (!__DEV__) return undefined;
+    if (!SHOW_PERF) return undefined;
     if (!bots.length) return undefined;
     let raf1 = null;
     let raf2 = null;
@@ -505,8 +510,9 @@ export default function TeamManageScreen({ navigation, onBack }) {
         </View>
       </View>
 
-      {/* 只在开发模式下出现：把「点进来 → 列表出来」拆成请求/渲染两段毫秒数 */}
-      {__DEV__ && perfText ? (
+      {/* 由 SHOW_PERF 控制：把「点进来 → 列表出来」拆成请求/渲染两段毫秒数。
+          现在 true（老板要看数字），调好后改 SHOW_PERF = false 就消失。 */}
+      {SHOW_PERF && perfText ? (
         <Text style={s.perfHint} allowFontScaling={false}>
           {perfText}
         </Text>
