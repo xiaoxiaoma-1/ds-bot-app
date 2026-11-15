@@ -281,12 +281,15 @@ export default function ViewsPoolScreen({
   const goBackRef = useRef(goBack);
   goBackRef.current = goBack;
 
-  // 内层（表态页）的左滑：容器接住「从左边往右滑」，转给 goBack() —— 只退到「入口页」
+  // 表态页的右滑必须留给卡片（右滑 = 不认同），不许被边缘返回抢走。
+  // 老板 2026-11-15：「在观点库里面只能左滑，一右滑直接退出去了」—— 真因就是这里
+  // 在整屏容器上接了边缘右滑 → goBack()，优先级压过卡片自己的 responder。
+  // 现在只在不表态的时候（verdict 已定、卡片已送走）才允许边缘右滑返回。
   const edgeBack = useEdgeBack({
     onBack: () => {
       if (goBackRef.current) goBackRef.current();
     },
-    enabled: mode === 'swipe',
+    enabled: mode === 'swipe' && Boolean(verdict),
   });
 
   // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。

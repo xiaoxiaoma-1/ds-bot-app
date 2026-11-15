@@ -81,6 +81,11 @@ export default function TopicsPoolScreen({
   const [openId, setOpenId] = useState(null);
   const [note, setNote] = useState(null);
   const [follow, setFollow] = useState(true); // 流式是否自动跟随
+  // 2026-11-15（老板报「选题池点进去闪退」）：0.3.7 清死代码时把这两行连无关的 state
+  // 一起删了，但 draft / setDraft / scrollRef 还在用（AI 写稿的内容与流式跟随滚动）。
+  // parser 只查语法，查不出「用了没声明」——补回来。
+  const [draft, setDraft] = useState(null); // { id, text, streaming, error }
+  const scrollRef = useRef(null);
 
   const followRef = useRef(true);
   followRef.current = follow;
@@ -148,20 +153,33 @@ export default function TopicsPoolScreen({
   // 2026-11-15（老板）：「只要今天这 30 条没出完，刷新全部板块就不该出现；出完了才出现；
   // 退出再进来 100 次也一样」。所以判据只有一个 —— 服务端 /api/topics/refresh/status，
   // 本地 state 不作为判据（它一会被清、一会是旧的，正是老板一直看到按钮的原因）。
+  // 2026-11-15：0.3.7 把「二次确认」连同旧 state 一起删掉了，这里补回来 ——
+  // 老板原话要看到「会调用 6 次模型，约 6~12 分钟，期间可以点取消」再决定。
   const refreshAll = useCallback(async () => {
     if (jobBusy || running) return;
-    setJobBusy(true);
-    setNote(null);
-    try {
-      const d = await startTopicsRefresh();
-      setJob(d);
-      // 开始这一轮也顺手把列表按当前真数据重读一遍
-      if (onRefreshAll) Promise.resolve(onRefreshAll({})).catch(() => {});
-    } catch (e) {
-      setNote('没能开始刷新：' + String((e && e.message) || e));
-    } finally {
-      setJobBusy(false);
-    }
+    Alert.alert(
+      '刷新全部板块？',
+      '会调用 6 次模型，约 6–12 分钟。期间可以离开，进度在服务端继续跑；已经出的选题不会丢。',
+      [
+        { text: '先不刷', style: 'cancel' },
+        {
+          text: '开始',
+          onPress: async () => {
+            setJobBusy(true);
+            setNote(null);
+            try {
+              const d = await startTopicsRefresh();
+              setJob(d);
+              if (onRefreshAll) Promise.resolve(onRefreshAll({})).catch(() => {});
+            } catch (e) {
+              setNote('没能开始刷新：' + String((e && e.message) || e));
+            } finally {
+              setJobBusy(false);
+            }
+          },
+        },
+      ],
+    );
   }, [jobBusy, running, onRefreshAll]);
 
   const goBack = () => {

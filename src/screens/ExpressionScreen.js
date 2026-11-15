@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import LiveInput from '../components/LiveInput';
+import LiveInput, { inputMaxHeight } from '../components/LiveInput';
 import { useTheme } from '../theme';
 import { useKeyboardShiftJS } from '../keyboard';
 import { expressionApi } from '../botApi';
