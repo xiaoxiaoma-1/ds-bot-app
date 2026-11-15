@@ -17,7 +17,6 @@ import {
   loadBoardSummary,
   loadDraftResume,
   loadHotDaily,
-  loadIdeas,
   loadTopics,
 } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
@@ -52,7 +51,6 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
   const board = useCachedResource('home:board', loadBoardSummary, { refreshOnMount: !manualRefresh.current });
   const hot = useCachedResource('home:hot:list', loadHotDaily, { refreshOnMount: !manualRefresh.current });
   const draft = useCachedResource('home:draft', loadDraftResume, { refreshOnMount: !manualRefresh.current });
-  const ideas = useCachedResource('home:ideas:views', loadIdeas, { refreshOnMount: !manualRefresh.current });
   const topics = useCachedResource('home:topics', loadTopics, { refreshOnMount: !manualRefresh.current });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -79,13 +77,11 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
         loadBoardSummary(),
         loadHotDaily(),
         loadDraftResume(),
-        loadIdeas(),
         loadTopics(),
       ]);
       setCached('home:board', b);
       setCached('home:hot:list', h);
       setCached('home:draft', d);
-      setCached('home:ideas:views', i);
       setCached('home:topics', t);
     } catch {
       // 保留旧数据，失败不打断当前页面
@@ -105,14 +101,12 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
   const b = board.data;
   const h = hot.data;
   const d = draft.data;
-  const i = ideas.data;
   const tp = topics.data;
 
   const hotItems = h && Array.isArray(h.head) && h.head.length
     ? h.head // 数据层已经给了 head（前 5 条）
     : (h && h.picked ? [h.picked] : []);
   const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 10) : [];
-  const ideaItems = (i && Array.isArray(i.items)) ? i.items : [];
 
   // 选题池行数：5 条填不满今日热点的高度，有 10 条就显示 10 条（老板说 5 或 10 都行）。
   // 6–9 条按实际条数显示；不足 5 条补齐 5 行占位，不让卡片缩成一小截。
@@ -140,11 +134,6 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
 
   const openBoard = (status) => go('Board', status ? { status } : undefined);
 
-  // 今日观点 → 进观点库的第一页（第一页最上面就是首页这 3 条观点，左滑认同/右滑不认同）。
-  // 不再带 selected：带进去 App 会把 autoSwipe 打开，直接跳到左右滑，跳过第一页。
-  const openIdeas = () => {
-    go('ViewsPool');
-  };
 
   // B2：热点条目点开 = 卡片里原地展开一栏，两项：「查看原文」「AI 怎么看」
   const openHotItem = (index, it) => {
@@ -420,41 +409,6 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
           )}
         </View>
 
-        <View style={s.sectionCard}>
-          <View style={[s.sectionHead, s.headTight]}>
-            {/* D1：「今日灵感」改名「今日观点」 */}
-            <Text style={s.sectionTitle} allowFontScaling={false}>今日观点</Text>
-            <Pressable onPress={openIdeas} hitSlop={12} accessibilityRole="button" accessibilityLabel="打开观点库">
-              <Text style={s.sectionMeta} allowFontScaling={false}>
-                {i && i.total ? `${i.total} 条观点 ›` : '观点库 ›'}
-              </Text>
-            </Pressable>
-          </View>
-          {ideas.loading && !i ? (
-            <StateLine st={ideas} empty="正在取观点" />
-          ) : ideas.error && !i ? (
-            <ErrorBlock st={ideas} />
-          ) : ideaItems.length === 0 ? (
-            // D2：空态那块以前是一句死文本，点了没反应；现在整块可点，一样进观点库
-            <Pressable onPress={openIdeas} accessibilityRole="button" style={s.ideaEmpty}>
-              <Text style={s.stateText} allowFontScaling={false}>观点库还空着，去记一条 ›</Text>
-            </Pressable>
-          ) : (
-            ideaItems.map((idea, index) => (
-              <Pressable
-                key={(idea && idea.id) || 'idea-' + index}
-                style={s.listRow}
-                onPress={openIdeas}
-                accessibilityRole="button"
-              >
-                <Text style={s.ordinal} allowFontScaling={false}>{index + 1}</Text>
-                <Text style={s.listTitle} numberOfLines={2} allowFontScaling={false}>
-                  {(idea && (idea.title || idea.content)) || '（无标题）'}
-                </Text>
-              </Pressable>
-            ))
-          )}
-        </View>
       </ScrollView>
     </View>
   );
