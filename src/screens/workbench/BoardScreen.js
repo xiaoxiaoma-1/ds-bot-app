@@ -271,7 +271,8 @@ const makeStyles = (C, T, S, R, K) =>
       gap: S.x1,
     },
     cardTitle: { color: C.ink, ...T.body },
-    cardNext: { color: C.ink2, ...T.meta },
+    // 「下一步：」原来 C.ink2 + 小字，跟标题（C.ink）对比太弱几乎读不出（F3）→ 提到 ink 并加一点字重
+    cardNext: { color: C.ink, ...T.meta, fontWeight: '500' },
     cardMore: { marginTop: S.x2, gap: S.x1 },
     cardMeta: { color: C.ink3, ...T.meta },
   });

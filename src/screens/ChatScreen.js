@@ -205,6 +205,13 @@ export default function ChatScreen({ bot, onBack }) {
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
   const [attachHint, setAttachHint] = useState(false);
+  // 问题 5（2026-11-15）：加号面板照微信重做。
+  // attachHint 只是「在不在树上」，真正的出场/退场交给 attachAnim（24px 上滑 + 淡入）。
+  const attachAnim = useRef(new Animated.Value(0)).current;
+  const attachArmAt = useRef(0); // 面板刚挂上那一下不吃点击（通则 6：点外关闭要晚一帧）
+  // 收起的动画比人慢：动画途中又点了一次加号时，必须让旧的「收起」作废，
+  // 否则它播完把 attachHint 关掉，刚弹出的面板会被这一下顺手摘掉。
+  const attachGen = useRef(0);
   const reconnectCount = useRef(0);
   const [selectedImages, setSelectedImages] = useState([]); // K2：批量选图，最多 MAX_PICK
   const [uploading, setUploading] = useState(false);
@@ -216,8 +223,48 @@ export default function ChatScreen({ bot, onBack }) {
   const seqs = useRef(new Set());
   const targetBot = useRef(String(bot.id));
 
-  // 附件菜单不再 3 秒自动收回：点了就停在那儿，直到用户点「取消」或选完图。
-  // （之前的 setTimeout 3s 是「点一下自己回弹」的原因）
+  // 附件菜单不再 3 秒自动收回：点了就停在那儿，直到用户点空白 / 点输入框 / 选完图。
+
+  // 从下往上弹（微信式）：先挂上树，下一帧再动，避免「瞬间出现」
+  const openAttach = useCallback(() => {
+    setErr(null);
+    attachArmAt.current = Date.now();
+    attachGen.current += 1;
+    attachAnim.setValue(0);
+    setAttachHint(true);
+    requestAnimationFrame(() => {
+      Animated.timing(attachAnim, {
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [attachAnim]);
+
+  // 缩回：先淡出+下滑，动完再从树上摘掉
+  const closeAttach = useCallback(() => {
+    attachGen.current += 1;
+    const gen = attachGen.current;
+    Animated.timing(attachAnim, {
+      toValue: 0,
+      duration: 150,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      // 这期间又开过一次 → 本次收起作废，不摘树
+      if (finished && attachGen.current === gen) setAttachHint(false);
+    });
+  }, [attachAnim]);
+
+  // 点输入框：键盘一上来就把两块按钮渐隐掉（键盘动画与淡出同帧起步，不用等松手）。
+  // 只在「键盘升起」这一刻收：键盘本来就开着时点加号，面板要能留住。
+  const kbPrev = useRef(0);
+  useEffect(() => {
+    const rising = keyboardHeight > kbPrev.current;
+    kbPrev.current = keyboardHeight;
+    if (rising && keyboardHeight > 0 && attachHint) closeAttach();
+  }, [keyboardHeight, attachHint, closeAttach]);
 
   const applyMessages = useCallback((msgs) => {
     seqs.current = new Set(msgs.map((m) => m.seq).filter((x) => x !== undefined && x !== null));
@@ -390,9 +437,9 @@ export default function ChatScreen({ bot, onBack }) {
       // 不允许任何分支绕过
       pickLock.current = false;
       setPicking(false);
-      setAttachHint(false);
+      closeAttach();
     }
-  }, []);
+  }, [closeAttach]);
 
   async function onSend() {
     let finalText = draft.trim();
@@ -498,6 +545,16 @@ export default function ChatScreen({ bot, onBack }) {
         <View style={s.body}>
           {cachedChat.loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
+          {/* 点消息区任意空白缩回：只吃点击，不盖任何遮罩色（通则 5）。
+              挂上后的前 150ms 不响应，避免开面板的那一下立刻把它关掉（通则 6）。 */}
+          {attachHint ? (
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => {
+                if (Date.now() - attachArmAt.current > 150) closeAttach();
+              }}
+            />
+          ) : null}
         </View>
 
         {selectedImages.length > 0 && (
@@ -524,11 +581,24 @@ export default function ChatScreen({ bot, onBack }) {
           </Text>
         ) : null}
         
-        {/* K1：附件弹层排在输入框**上面**（原来在 composer 之后，等于贴屏幕最底边，
-            一半压在安全区外，点不到）。三枚 80×80 方形图标按钮，横向居中，整块离底边留白。 */}
+        {/* 问题 5（2026-11-15）：面板照微信逻辑重做。
+            以前是「在流里突然出现」，屏幕上看着像从上方冒出来；并排三块里还有一块「取消」。
+            现在：两块从下往上弹出（translateY 24→0 + 淡入），点空白缩回，没有「取消」，
+            点输入框时跟键盘同帧渐隐。
+            面板绝对定位在输入栏正上方（bottom:'100%'）：挂上/摘掉都不重排消息区，
+            不会出现「先整块跳上去再补动画」。 */}
+        <View style={s.composerWrap}>
         {attachHint ? (
-          <View
-            style={[s.attachPanel, { marginBottom: S.x3 }]}
+          <Animated.View
+            style={[
+              s.attachPanel,
+              {
+                opacity: attachAnim,
+                transform: [
+                  { translateY: attachAnim.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) },
+                ],
+              },
+            ]}
           >
             <Pressable
               style={[s.attachTile, picking ? s.attachPillOff : null]}
@@ -557,29 +627,13 @@ export default function ChatScreen({ bot, onBack }) {
               </View>
               <Text style={s.attachTileText} allowFontScaling={false}>拍照</Text>
             </Pressable>
-            <Pressable
-              style={s.attachTile}
-              onPress={() => setAttachHint(false)}
-              accessibilityRole="button"
-              accessibilityLabel="取消"
-            >
-              <View style={s.tileIconCross}>
-                <View style={[s.tileIconCrossBar, { backgroundColor: C.ink2 }]} />
-                <View style={[s.tileIconCrossBar, s.tileIconCrossBarAlt, { backgroundColor: C.ink2 }]} />
-              </View>
-              <Text style={s.attachTileText} allowFontScaling={false}>取消</Text>
-            </Pressable>
-          </View>
+          </Animated.View>
         ) : null}
 
         <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x6 }]}>
           <Pressable
             style={s.attachBtn}
-            onPress={() => {
-              // 显示简单的选择菜单
-              setErr(null);
-              setAttachHint(true);
-            }}
+            onPress={() => (attachHint ? closeAttach() : openAttach())}
           >
             <Text style={s.attachText}>+</Text>
           </Pressable>
@@ -613,6 +667,7 @@ export default function ChatScreen({ bot, onBack }) {
               )}
             </Pressable>
           </Animated.View>
+        </View>
         </View>
       </View>
     </View>
@@ -659,6 +714,8 @@ const makeStyles = (C, T, S, R) =>
     bubbleMine: { backgroundColor: C.me },
     bubbleTheirs: { backgroundColor: C.card },
     bubbleText: { color: C.ink, ...T.body },
+    // 输入栏外壳：只做定位基准，面板贴在它正上方（消息区不重排）
+    composerWrap: { position: 'relative' },
     composer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -695,7 +752,14 @@ const makeStyles = (C, T, S, R) =>
     },
     sendText: { color: C.onAccent, ...T.body },
     attachPanel: {
-      // K1：三枚大号方形图标按钮，横向居中；整块离屏幕底边留出安全区 + 一档间距
+      // 两块方形图标按钮，横向居中；整块离屏幕底边留出安全区 + 一档间距。
+      // 2026-11-15：圆角按通则收小到 8（原来 32/24）；绝对定位在输入栏正上方，
+      // 出场/退场只靠 translateY + opacity，不动消息区布局。
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: '100%',
+      zIndex: 10,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
@@ -704,14 +768,13 @@ const makeStyles = (C, T, S, R) =>
       paddingVertical: S.x4,
       backgroundColor: C.card2,
       marginHorizontal: S.x4,
-      borderRadius: R.big,
-      borderBottomLeftRadius: R.small,
-      borderBottomRightRadius: R.small,
+      marginBottom: S.x3,
+      borderRadius: 8,
     },
     attachTile: {
       width: 80,
       height: 80,
-      borderRadius: R.small,
+      borderRadius: 8,
       backgroundColor: C.card,
       alignItems: 'center',
       justifyContent: 'center',

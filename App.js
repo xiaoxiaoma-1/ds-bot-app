@@ -36,6 +36,7 @@ import {
   undoLast,
   addIdea,
   getBookProgressAll,
+  setCorpusTag,
 } from './src/workbenchApi';
 import BooksScreen from './src/screens/workbench/BooksScreen';
 import CorpusScreen from './src/screens/workbench/CorpusScreen';
@@ -611,6 +612,22 @@ function MyViewsRoute({ navigation }) {
 
   const data = live || cachedMyViews.data;
   const views = data ? data.items : cachedMyViews.error ? [] : undefined;
+  // 删除 / 「这条已经不在了」都要能本地移除，且不能用渲染时的旧闭包 —— 用 ref 拿最新一份。
+  const dataRef = useRef(null);
+  dataRef.current = data;
+
+  // 本地移除一条（缓存和 live 同时改）：删完列表必须真的少一条，不是只弹一行红字。
+  const dropLocalView = useCallback((id) => {
+    const base = dataRef.current;
+    if (!base) return;
+    const next = {
+      ...base,
+      total: Math.max(0, (Number(base.total) || 0) - 1),
+      items: (base.items || []).filter((x) => x && x.id !== id),
+    };
+    setCached('workbench:myviews', next);
+    setLive(next);
+  }, []);
 
   const load = useCallback(async () => {
     setErr(null);
@@ -642,9 +659,19 @@ function MyViewsRoute({ navigation }) {
         },
       });
     } catch (e) {
+      // 「这条已经不在了」= api_view_one 查不到（列表缓存里还留着已删掉的 id）。
+      // 以前只往展开区摆一行红字「读不到这条：找不到」，条目继续赖在列表里；
+      // 现在直接把它从列表移除，并用一行话说清（通则 40：不假装页面上不存在）。
+      const gone = String((e && e.message) || '').indexOf('找不到') >= 0;
+      if (gone) {
+        setDetail(null);
+        dropLocalView(id);
+        setErr('这条已经不在了（库里没有），已从列表移除');
+        return;
+      }
       setDetail({ id, loading: false, error: '读不到这条：' + e.message });
     }
-  }, [views]);
+  }, [views, dropLocalView]);
 
   const onClose = useCallback(() => setDetail(null), []);
 
@@ -669,20 +696,27 @@ function MyViewsRoute({ navigation }) {
 
   const onDelete = useCallback(
     async (v) => {
+      // 后端是真删（mobile_server.py:1512 `delete from my_views where id=?`，不是打标记）。
+      // 真正的毛病在前端：删完只用渲染时的旧 data 拼了一遍列表，数据一换（缓存/ref 不一致）
+      // 这条就还留在屏幕上，退出重进才消失。现在不管服务端说成功还是「已经不在了」，
+      // 都按 dropLocalView 从本地移除；只有网络/权限这种真失败才留着这条并报错。
+      if (!v || !v.id) return false;
+      setErr(null);
       try {
         const r = await delView(v.id);
-        // 「找不到这条观点」= 别处已删，本地也移除，不弹错
-        if (!r.ok && !r.gone) setErr('删不掉这条');
+        if (!r || r.ok || r.gone) {
+          dropLocalView(v.id);
+          setDetail((prev) => (prev && prev.id === v.id ? null : prev));
+          return true;
+        }
+        setErr('删不掉这条，先别退出去，再点一次');
+        return false;
       } catch (e) {
-        setErr(e.message);
-        return;
+        setErr('删除没成功：' + String((e && e.message) || e));
+        return false;
       }
-      const next = { ...(data || { total: 0 }), items: (data?.items || []).filter((x) => x.id !== v.id) };
-      setCached('workbench:myviews', next);
-      setLive(next);
-      setDetail((prev) => (prev && prev.id === v.id ? null : prev));
     },
-    [data],
+    [dropLocalView],
   );
 
   return (
@@ -721,7 +755,12 @@ function CorpusRoute({ navigation }) {
         await delView(row.id);
         setRetryTick((n) => n + 1);
       }}
-      // 移回「我的观点」后端还没有接口，这里不传 onMoveBack，按钮上标「待接入」（F3）
+      // 移回「我的观点」：语料库是 tags 里带「语料」的那批，
+      // POST /api/corpus_add {id, on:false} 去掉这个标记就回来了（后端早就有，前端没接）。
+      onMoveBack={async (row) => {
+        await setCorpusTag(row.id, false);
+        setRetryTick((n) => n + 1);
+      }}
       onBack={() => navigation.goBack()}
       error={cachedCorpus.error || undefined}
     />

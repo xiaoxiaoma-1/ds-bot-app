@@ -103,46 +103,59 @@ export async function loadHotDaily() {
 }
 
 // ③ 接着写
+// 「接着写」只能显示老板自己写的稿子（my_drafts）。origin/table 必须明确是 my_drafts 才算，
+// 缺字段 / 是 posts 一律按「没有」处理 —— 以前这里把 source==='opened'|'latest' 当成
+// 「不确定，先显示」，结果把 posts 里采集来的别人文案当成自己的稿子显示了出来。
 export async function loadDraftResume() {
   const d = await get('/api/draft/resume');
-  // 原样保留服务端的来源标记：首页要靠它判断 posts / my_drafts。
+  const origin = String(d.origin || '').toLowerCase();
+  const table = String(d.table || '').toLowerCase();
+  const mine = Boolean(d.id) && !d.empty && (origin === 'my_drafts' || table === 'my_drafts');
   return {
     id: d.id || '',
     title: d.title || '',
     tail: d.tail || '',
     chars: Number(d.chars) || 0,
-    source: typeof d.source === 'string' ? d.source : '',
-    table: typeof d.table === 'string' ? d.table : '',
+    at: typeof d.at === 'string' ? d.at : '',
+    origin,
+    table,
+    mine,
   };
 }
 
-// ④ 今日灵感：观点库随机 3 条（走 /api/list，不是 my_views）
+// ④ 今日观点：固定取观点库第一页最前面 3 条（走 /api/list，不是 my_views）
+// 2026-11-15：原来这里是随机抽 3 条 —— 老板点「今日观点」进观点库，第一页根本找不到刚才看到的那 3 条。
+// 现在改成取同一份数据的前 3 条，首页那 3 条 == 观点库第一页前 3 条，一眼就对得上。
 export async function loadIdeas() {
   const d = await get('/api/list?limit=120');
   const raw = Array.isArray(d.items) ? d.items : [];
-  const shuffled = raw
-    .slice()
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3)
-    .map((it) => ({
-      id: it.id,
-      title: it.claim || '',
-      author: it.author || '',
-    }));
+  const first3 = raw.slice(0, 3).map((it) => ({
+    id: it.id,
+    title: it.claim || '',
+    author: it.author || '',
+  }));
   return {
     total: Number(d.left) || raw.length,
-    items: shuffled,
+    items: first3,
   };
 }
 
 // ⑤ 选题池
+// 首页右上角的数字要的是「今天生成了几条」，不是 pool_topics 全表累计
+// （133 是 8 天攒下来的，老板说的每天 30 条是单日口径）。
+// 服务端 /api/topics 按 date(coalesce(day, created_at)) = date('now','localtime') 算好 today，
+// 再带上最近一批的日期和条数，今天还没出题时首页能说清看的是哪一批。
 export async function loadTopics() {
   const d = await get('/api/topics');
   const items = Array.isArray(d.items) ? d.items : [];
   return {
-    total: Number(d.total) || 0,
+    today: d.today === undefined || d.today === null ? null : Number(d.today),
+    todayDay: typeof d.todayDay === 'string' ? d.todayDay : '',
+    latestDay: typeof d.latestDay === 'string' ? d.latestDay : '',
+    latestCount: d.latestCount === undefined || d.latestCount === null ? null : Number(d.latestCount),
+    total: Number(d.total) || 0, // 全表总数：工作台那边还要用，首页不再显示
     minScore: d.minScore === undefined || d.minScore === null ? null : Number(d.minScore),
-    items: items.slice(0, 5), // 首页显示最近 5 条
+    items: items.slice(0, 10), // 5 条填不满热点的高度，取够 10 条
   };
 }
 

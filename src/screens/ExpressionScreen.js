@@ -38,20 +38,28 @@ function timeText(d = new Date()) {
 // 训练历史单条：左滑露出「删除」，点删除才真正删。
 // 左滑逻辑抽到 src/screens/SwipeRow.js：96 只在那个文件里出现一次，
 // 宽度 / clamp / toValue 三处各写一遍就是红块和卡片之间出缝的直接原因。
-function HistoryRow({ item, s, onDelete, onSwipeState }) {
+function HistoryRow({ item, s, onDelete, onOpen, onSwipeState, busy }) {
   return (
     <SwipeRow onDelete={() => onDelete && onDelete(item.id)} onSwipeState={onSwipeState} style={s.historyItem}>
-      <View style={s.historyRow}>
+      {/* 2026-11-15：这一行以前点不动 —— 「过往训练点不进去」就是它没有 onPress。
+          现在点一下用这条的原文重新标注一次，再进点评表（标注结果不落盘，不会造假数据）。 */}
+      <Pressable
+        style={[s.historyRow, busy ? { opacity: 0.6 } : null]}
+        onPress={() => onOpen && onOpen(item)}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityLabel={`打开这条过往训练：${item.summary || ''}`}
+      >
         <View style={s.historyTop}>
           <Text style={s.historyTime} allowFontScaling={false}>{item.at}</Text>
           <Text style={s.historyScore} allowFontScaling={false}>
-            {item.score === null || item.score === undefined ? '未评' : item.score}
+            {busy ? '正在标…' : item.score === null || item.score === undefined ? '未评' : item.score}
           </Text>
         </View>
         <Text style={s.historySummary} numberOfLines={1} allowFontScaling={false}>
           {item.summary}
         </Text>
-      </View>
+      </Pressable>
     </SwipeRow>
   );
 }
@@ -68,6 +76,8 @@ export default function ExpressionScreen({ onBack, onNext }) {
   const [analyzing, setAnalyzing] = useState(false);
   // 左滑中：外层 ScrollView 停滚，手势全给这一行（F3）
   const [swiping, setSwiping] = useState(false);
+  // 正在从「过往训练」重新打开的那一条（行内显示「正在标…」，防连点）
+  const [openingId, setOpeningId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -101,24 +111,31 @@ export default function ExpressionScreen({ onBack, onNext }) {
 
   const canFinish = draft.trim().length >= 10 && !analyzing;
 
-  // 点了立刻有反应：按钮立刻进「正在标注」，不让页面等在那儿什么都不发生
+  // 点了立刻有反应：按钮立刻进「正在标注」，不让页面等在那儿什么都不发生。
+  // 2026-11-15：这里开始记时间戳（tapAt / apiMs），点评表拿去做「打开用了多少 ms」，
+  // 慢在哪一段（请求 or 渲染）就能直接看出来，不用猜。
   const finish = useCallback(async () => {
     const text = draft.trim();
     if (!text || analyzing) return;
     setAnalyzing(true);
     setErr(null);
+    // 先收键盘再等标注：键盘动画和页面转场叠一起会显得很慢（实测接口 5~12ms，慢的是这一段）
+    Keyboard.dismiss();
     const t0 = Date.now();
     try {
       const d = await expressionApi.analyze(text);
+      const t1 = Date.now();
       const parsed = capSegs(parseHighlight((d && d.highlight) || ''));
       addHistory({
         id: `${Date.now()}`,
         at: timeText(),
         summary: text.replace(/\s+/g, ' ').slice(0, 20),
+        // 原文一起存：不然「过往训练」点开只能看到 20 字摘要，打不开
+        text,
         score: d && typeof d.density === 'number' ? d.density : null,
       });
       if (onNext) {
-        onNext({ text, a: d, segs: parsed.segs, cut: parsed.cut, analyzeMs: Date.now() - t0 });
+        onNext({ text, a: d, segs: parsed.segs, cut: parsed.cut, analyzeMs: t1 - t0, tapAt: t0 });
       }
     } catch (e) {
       setErr((e && e.message) || '标注失败');
@@ -126,6 +143,33 @@ export default function ExpressionScreen({ onBack, onNext }) {
       setAnalyzing(false);
     }
   }, [draft, analyzing, addHistory, onNext]);
+
+  // 过往训练 → 点开这条（用存下来的原文重新标一次，再进点评表）
+  const openHistory = useCallback(async (item) => {
+    if (!item || openingId) return;
+    const text = String(item.text || '').trim();
+    if (!text) {
+      setErr('这条是早期记录，只存了摘要、没存原文；重新说一遍再标');
+      return;
+    }
+    setOpeningId(item.id);
+    setErr(null);
+    const t0 = Date.now();
+    try {
+      const d = await expressionApi.analyze(text);
+      const t1 = Date.now();
+      const parsed = capSegs(parseHighlight((d && d.highlight) || ''));
+      if (onNext) {
+        onNext({ text, a: d, segs: parsed.segs, cut: parsed.cut, analyzeMs: t1 - t0, tapAt: t0 });
+      } else {
+        setErr('打不开：上一层的 onNext 没接');
+      }
+    } catch (e) {
+      setErr((e && e.message) || '打开失败');
+    } finally {
+      setOpeningId(null);
+    }
+  }, [onNext, openingId]);
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -155,7 +199,11 @@ export default function ExpressionScreen({ onBack, onNext }) {
             {/* 打字不许带动页面：inputWrap 上不再有 onContentSizeChange -> scrollToEnd */}
             <LiveInput
               style={s.input}
-              minHeight={200}
+              // 2026-11-15：原来 min 200 —— 空的时候是一块 200 高的空灰框，占掉小半屏。
+              // 现在只留 3 行高度，写多少长多少，到 5 行停住（框内滚，页面不动）。
+              minHeight={96}
+              maxHeight={inputMaxHeight(21, 5, 16)}
+              padVertical={16}
               value={draft}
               onChangeText={(v) => {
                 setDraft(v);
@@ -183,7 +231,15 @@ export default function ExpressionScreen({ onBack, onNext }) {
               <Text style={s.historyEmpty} allowFontScaling={false}>还没有训练记录</Text>
             ) : (
               history.map((item) => (
-                <HistoryRow key={item.id} item={item} s={s} onDelete={deleteHistory} onSwipeState={setSwiping} />
+                <HistoryRow
+                  key={item.id}
+                  item={item}
+                  s={s}
+                  onDelete={deleteHistory}
+                  onOpen={openHistory}
+                  onSwipeState={setSwiping}
+                  busy={openingId === item.id}
+                />
               ))
             )}
           </ScrollView>
@@ -228,7 +284,8 @@ const makeStyles = (C, T, S, R) =>
     back: { color: C.ink2, ...T.body },
     title: { color: C.ink, ...T.title, flex: 1, textAlign: 'center' },
     headSlot: { width: 32 },
-    inputWrap: { paddingHorizontal: S.page, paddingTop: S.x3, paddingBottom: S.x6, minHeight: 240 },
+    // 输入框高度交给 LiveInput 钳（min 96 ≈ 3 行，最多 5 行后框内滚）
+    inputWrap: { paddingHorizontal: S.page, paddingTop: S.x3, paddingBottom: S.x6 },
     // 高度：LiveInput 按内容钳（min 200 = 设计高度；到上限后框内自滚，框和页面都不动）
     input: { backgroundColor: C.card, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body },
     historyHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: S.x6, marginBottom: S.x2 },

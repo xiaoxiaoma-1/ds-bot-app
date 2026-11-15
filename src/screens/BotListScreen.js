@@ -16,6 +16,7 @@ import { DeviceMotion } from 'expo-sensors';
 import { avatarInk, inkOn, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import CHARACTER_SHAPES from '../components/characterShapes';
+import { eyeInkFor } from '../components/CharacterIcon';
 import { applyOrder, loadOrder, saveOrder } from '../order';
 import BotMenu from './botMenu';
 import { botApi } from '../botApi';
@@ -46,30 +47,10 @@ const DEFAULT_EYES = [
   [58.5, 42, 7, 18, -12],
 ];
 
-// 眼睛颜色（H1）：以前是 inkOn(tint) —— 只有纯白 #FFFFFF 和近黑 #1A1A1A 两档，
-// 结果深色脸上是一片白（「眼睛是白色的」），浅色脸上一点黑（「有一个是黑色的」）。
-// 现在取脸色的同色系深/浅一档，任何脸型都能看出是「眼睛」，而且不刺眼。
-function hexToRgb(h) {
-  const s = String(h || '');
-  if (!/^#[0-9a-f]{6}$/i.test(s)) return null;
-  return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
-}
-function mixHex(a, b, t) {
-  const ra = hexToRgb(a);
-  const rb = hexToRgb(b);
-  if (!ra || !rb) return a;
-  const out = ra.map((v, i) => Math.round(v + (rb[i] - v) * t));
-  return '#' + out.map((v) => v.toString(16).padStart(2, '0')).join('');
-}
-function relLum(h) {
-  const rgb = hexToRgb(h);
-  if (!rgb) return 1;
-  const lin = rgb.map((v) => {
-    const c = v / 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
-}
+// 眼睛颜色（2026-11-15 修正）：以前这里是「深色脸往 C.onHero（纯白）混 55%」，
+// #4D6BFE 的蓝脸混出来是 #8FA6FB —— 屏幕上就是「眼睛是白色的」。
+// 现在统一交给 CharacterIcon.eyeInkFor：取当前主题的文字色（浅色主题≈黑），
+// 只有脸色和它对比不足 3:1 才退回另一侧。眼睛形状、尺寸、倾斜一处没动。
 
 // 头像盒边长（眼睛坐标按这个换算）
 const MARK = 40;
@@ -161,8 +142,8 @@ const AdvisorRow = memo(function AdvisorRow({
   const shape = avatar.shape || 'gumdrop';
   // 跟随 bot.avatar.color，与 DS Bot 桌面端 BotMark 一致（图形填色 + 透明底）
   const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
-  // 眼睛 = 脸色的同色系深/浅一档（深色脸往 C.onHero 提亮，浅色脸往 C.ink 压深）
-  const faceInk = relLum(tint) > 0.42 ? mixHex(tint, C.ink, 0.6) : mixHex(tint, C.onHero, 0.55);
+  // 眼睛 = 当前主题的文字色（浅色≈黑），见 CharacterIcon.eyeInkFor
+  const faceInk = eyeInkFor(tint, C);
 
   // 眼睛跟着倾斜走：单轴最多 3pt（老板要看得出来，又不至于飞出脸）；嘴不参与
   const tilt = useTilt();
@@ -304,16 +285,43 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
     if (cachedAdvisors.data) applyFull(cachedAdvisors.data);
   }, [cachedAdvisors.data]);
 
-  const load = useCallback(async (isRefresh) => {
+  // 「停留一会儿就出红块」查因（2026-11-15）：
+  //   服务端不慢（本机实测 /api/dsbot/advisors 0.35 秒回），红块里那句
+  //   「网络不通：FetchRequestCanceledException」其实是我们自己 20 秒超时 abort 掉
+  //   的那次请求 —— Expo 57 的 fetch 中止时抛的原生异常名不是 AbortError，
+  //   旧代码只认 AbortError，就把它当成了网络故障。
+  //   现在 api.js 把这类情况标成 code:'timeout'，这里先原地自动重试一次，
+  //   两次都超时才出来说话，而且说的是「等太久」，不再冒充「网络不通」。
+  const aliveRef = useRef(true);
+  useEffect(
+    () => () => {
+      aliveRef.current = false;
+    },
+    [],
+  );
+
+  const load = useCallback(async (isRefresh, attempt = 0) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
     try {
       const full = await advisorsFull();
+      if (!aliveRef.current) return;
       applyFull(full);
       setErr(null);
+      setLoading(false);
+      setRefreshing(false);
     } catch (e) {
+      if (!aliveRef.current) return;
+      const timedOut = e && e.code === 'timeout';
+      if (timedOut && attempt === 0) {
+        // 第一次超时：不吓人，原地再来一次（通则 36：点了必须马上有反应）
+        setErr({ step: 'list', message: '等太久了（20 秒没回应），正在再试一次…', retrying: true });
+        setTimeout(() => {
+          if (aliveRef.current) load(isRefresh, 1);
+        }, 800);
+        return;
+      }
       // 有缓存时保留旧列表，错误只在完全没有缓存时占整屏
       setErr({ step: e.step || 'list', message: e.message || '未知错误' });
-    } finally {
       setLoading(false);
       setRefreshing(false);
     }
@@ -509,7 +517,7 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
   // 有缓存就保留列表、只提示一行小字；没有缓存才占整屏转圈 / 错误态
   const hasCache = cachedAdvisors.data != null;
   const fetchErr = err || (cachedAdvisors.error ? { step: 'list', message: cachedAdvisors.error } : null);
-  const showSpinner = !hasCache && (cachedAdvisors.loading || loading);
+  const showSpinner = !hasCache && (cachedAdvisors.loading || loading || (fetchErr && fetchErr.retrying));
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
@@ -569,10 +577,10 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
         <View style={s.center}>
           <ActivityIndicator color={C.accent} />
           <Text style={s.centerText} allowFontScaling={false}>
-            正在取顾问列表
+            {fetchErr && fetchErr.retrying ? '超时了，正在再试一次' : '正在取顾问列表'}
           </Text>
         </View>
-      ) : !hasCache && fetchErr ? (
+      ) : !hasCache && fetchErr && !fetchErr.retrying ? (
         <View style={s.errBox}>
           <Text style={s.errTitle} allowFontScaling={false}>
             {stepLabel[fetchErr.step] || '出错了'}

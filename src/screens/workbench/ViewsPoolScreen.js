@@ -53,6 +53,7 @@ import { getMyViews } from '../../workbenchApi';
 
 const SHAPE_H = 196;
 const CARD_H = 360; // 容得下 180 字上限（9 行 ×21 + 元信息/作者/方向标注），再高就留白
+const REVEAL_W = 132; // 滑出块宽度：放得下「认同」「不认同」两个大字，且不超过卡片的三分之一
 const SWIPE_OUT = 420;
 const THRESHOLD = 96;
 
@@ -310,8 +311,12 @@ export default function ViewsPoolScreen({
     }
   };
 
-  const leftOp = pan.x.interpolate({ inputRange: [-THRESHOLD, -24, 0], outputRange: [1, 0.4, 0.22], extrapolate: 'clamp' });
-  const rightOp = pan.x.interpolate({ inputRange: [0, 24, THRESHOLD], outputRange: [0.22, 0.4, 1], extrapolate: 'clamp' });
+  // 探探式滑出块（2026-11-15 重做）：一块贴在卡片右边（认同）、一块贴左边（不认同）。
+  // 静止时被卡片整个盖住（位移推到框外 + opacity 0），手指一动就跟着露出来，松手回弹归零。
+  const agreeShift = pan.x.interpolate({ inputRange: [-THRESHOLD, 0], outputRange: [0, REVEAL_W], extrapolate: 'clamp' });
+  const agreeOp = pan.x.interpolate({ inputRange: [-24, -8, 0], outputRange: [1, 0.5, 0], extrapolate: 'clamp' });
+  const disagreeShift = pan.x.interpolate({ inputRange: [0, THRESHOLD], outputRange: [-REVEAL_W, 0], extrapolate: 'clamp' });
+  const disagreeOp = pan.x.interpolate({ inputRange: [0, 8, 24], outputRange: [0, 0.5, 1], extrapolate: 'clamp' });
   const nextScale = pan.x.interpolate({ inputRange: [-THRESHOLD, 0, THRESHOLD], outputRange: [1, 0.96, 1], extrapolate: 'clamp' });
   const nextShift = pan.x.interpolate({ inputRange: [-THRESHOLD, 0, THRESHOLD], outputRange: [0, 8, 0], extrapolate: 'clamp' });
 
@@ -510,6 +515,33 @@ export default function ViewsPoolScreen({
                 </Animated.View>
               ) : null}
 
+              {/* 滑出块：贴卡片边缘、占满卡片高度、随手指平移露出、松手回弹、静止不显示。
+                  层级在「下一张」之上、「当前这张」之下 —— 当前卡片一移开就露出来，静止时被它整个盖住。 */}
+              <View pointerEvents="none" style={s.revealClip}>
+                <Animated.View
+                  style={[
+                    s.revealPane,
+                    s.revealRight,
+                    { opacity: agreeOp, transform: [{ translateX: agreeShift }] },
+                  ]}
+                >
+                  <Text style={[s.revealText, { color: C.good }]} allowFontScaling={false}>
+                    认同
+                  </Text>
+                </Animated.View>
+                <Animated.View
+                  style={[
+                    s.revealPane,
+                    s.revealLeft,
+                    { opacity: disagreeOp, transform: [{ translateX: disagreeShift }] },
+                  ]}
+                >
+                  <Text style={[s.revealText, { color: C.bad }]} allowFontScaling={false}>
+                    不认同
+                  </Text>
+                </Animated.View>
+              </View>
+
               <Animated.View
                 {...responder.panHandlers}
                 style={[
@@ -537,15 +569,6 @@ export default function ViewsPoolScreen({
                 <Text style={s.cardAuthor} numberOfLines={1} allowFontScaling={false}>
                   @{cur.author || '来源未标'}
                 </Text>
-
-                <View style={s.dirRow}>
-                  <Animated.Text style={[s.dirText, { opacity: leftOp, color: C.bad }]} allowFontScaling={false}>
-                    ← 不认同
-                  </Animated.Text>
-                  <Animated.Text style={[s.dirText, { opacity: rightOp, color: C.good }]} allowFontScaling={false}>
-                    认同 →
-                  </Animated.Text>
-                </View>
               </Animated.View>
             </View>
           )}
@@ -690,8 +713,20 @@ const makeStyles = (C, T, S, R, K) =>
     manualText: { ...T.meta, fontWeight: '500' },
     cardClaim: { color: C.ink, ...T.body },
     cardAuthor: { marginTop: S.x4, color: C.ink2, ...T.meta },
-    dirRow: { position: 'absolute', left: S.x5, right: S.x5, bottom: S.x5, flexDirection: 'row', justifyContent: 'space-between' },
-    dirText: { ...T.meta, fontWeight: '500' },
+    // 滑出块（探探式）：整块贴在卡片边缘，占满卡片高度，静止时被推到框外看不见
+    revealClip: { ...StyleSheet.absoluteFillObject, overflow: 'hidden', borderRadius: R.big },
+    revealPane: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      width: REVEAL_W,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: C.card2,
+    },
+    revealRight: { right: 0 },
+    revealLeft: { left: 0 },
+    revealText: { ...T.section, fontWeight: '700' },
 
     emptyBox: { alignItems: 'center', gap: S.x2, paddingHorizontal: S.x5 },
     emptyTitle: { color: C.ink, ...T.section },

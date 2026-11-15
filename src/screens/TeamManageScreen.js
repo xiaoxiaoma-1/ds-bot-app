@@ -14,8 +14,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { avatarInk, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import CHARACTER_SHAPES from '../components/characterShapes';
-import { advisors, models, writeModel } from '../api';
+import { advisors, models, writeModel, botFolders, botFolderCreate, writeBotFolders } from '../api';
 import { setCached, useCachedResource } from '../cache';
+import { eyeInkFor } from '../components/CharacterIcon';
+
+// 问题 3 的教训（0.3.0 版「顾问页管理点什么都闪退」）：/api/dsbot/models 回的是
+// 对象数组 [{ref,name,provider}]，当时前端按字符串用（item.replace）直接崩。
+// 这里两种形态都认，哪天真回字符串也不会再空一片：
+function normalizeModel(item) {
+  if (typeof item === 'string') {
+    const ref = item.trim();
+    return ref ? { ref, name: displayModelName(ref), provider: '' } : null;
+  }
+  if (!item || typeof item !== 'object') return null;
+  const ref = String(item.ref || item.model || item.id || '').trim();
+  if (!ref) return null;
+  return {
+    ref,
+    name: typeof item.name === 'string' && item.name ? item.name : displayModelName(ref),
+    provider: typeof item.provider === 'string' ? item.provider : '',
+  };
+}
 
 function displayModelName(model) {
   if (typeof model !== 'string' || !model) return '';
@@ -65,27 +84,7 @@ function getModelSupplier(model) {
 
 // I2：团队管理的头像要和外面列表长得一模一样（同 shape、同 tint、同眼睛），
 // 以前这里是一个灰色圆角方块占位，所以「头像没显示」。
-function hexToRgb(h) {
-  const s = String(h || '');
-  if (!/^#[0-9a-f]{6}$/i.test(s)) return null;
-  return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
-}
-function mixHex(a, b, t) {
-  const ra = hexToRgb(a);
-  const rb = hexToRgb(b);
-  if (!ra || !rb) return a;
-  const out = ra.map((v, i) => Math.round(v + (rb[i] - v) * t));
-  return '#' + out.map((v) => v.toString(16).padStart(2, '0')).join('');
-}
-function relLum(h) {
-  const rgb = hexToRgb(h);
-  if (!rgb) return 1;
-  const lin = rgb.map((v) => {
-    const c = v / 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
-}
+// 2026-11-15：眼睛颜色不再自己混（深色脸往纯白混 = 白眼睛），统一交给 eyeInkFor。
 const TEAM_MARK = 48;
 const DEFAULT_EYES = [
   [44.5, 46, 7, 18, -8],
@@ -109,7 +108,7 @@ function teamEyes(shape, i) {
 function TeamAvatar({ avatar = {}, scheme, C }) {
   const shape = avatar.shape || 'gumdrop';
   const tint = avatar.color ? avatarInk(avatar.color, scheme) : C.ink2;
-  const faceInk = relLum(tint) > 0.42 ? mixHex(tint, C.ink, 0.6) : mixHex(tint, C.onHero, 0.55);
+  const faceInk = eyeInkFor(tint, C);
   return (
     <View style={{ width: TEAM_MARK, height: TEAM_MARK }}>
       <Image source={{ uri: maskFor(shape) }} style={{ width: TEAM_MARK, height: TEAM_MARK, tintColor: tint }} resizeMode="contain" />
@@ -136,10 +135,20 @@ function TeamAvatar({ avatar = {}, scheme, C }) {
   );
 }
 
-export default function TeamManageScreen({ navigation }) {
+export default function TeamManageScreen({ navigation, onBack }) {
   const { C, T, S, R, scheme } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+
+  // 问题 4「点返回直接闪退」的真因（2026-11-15）：
+  // App.js 的 TeamManageRoute 只传了 onBack，没传 navigation（`<TeamManageScreen onBack=… />`），
+  // 而这里原来解构的是 navigation，返回按钮里写的是 navigation.goBack() ——
+  // 等于对 undefined 取方法，一点就抛异常直接闪退。
+  // 现在先走导航层给的 onBack，只有它没给才退回 navigation，两条路都不存在时什么也不做。
+  const goBack = useCallback(() => {
+    if (typeof onBack === 'function') return onBack();
+    if (navigation && typeof navigation.goBack === 'function') return navigation.goBack();
+  }, [onBack, navigation]);
 
   const cached = useCachedResource('dsbot:advisors', advisors);
   const [bots, setBots] = useState(() => (cached.data || []).filter(b => b.id && b.name));
@@ -147,10 +156,21 @@ export default function TeamManageScreen({ navigation }) {
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(() => !cached.data);
   const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsErr, setModelsErr] = useState(null);
   const [savingIds, setSavingIds] = useState([]);
   const [err, setErr] = useState(null);
   const [bulkOp, setBulkOp] = useState(null);
   const [showBulkMenu, setShowBulkMenu] = useState(false);
+
+  // ── 分组（2026-11-15，老板要手机端也有分组）──
+  // 电脑端是「组标题 + 可拖可排序」，手机上没有拖拽，改成三件事：
+  //   建组（原地长出输入行）/ 归组（展开某个 Bot 里点组的胶囊）/ 组可展开收起。
+  const [groups, setGroups] = useState([]);
+  const [groupsErr, setGroupsErr] = useState(null);
+  const [foldOpen, setFoldOpen] = useState({}); // { 组 id: false } = 收起；默认展开
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [groupBusy, setGroupBusy] = useState(false);
   // I4：页面一卸载就把 mounted 置 false，后面所有 setState / setTimeout 都先看它，
   // 避免「点返回直接闪退」（卸载后异步 setState / 定时器回来还在写状态）。
   const mounted = useRef(true);
@@ -181,20 +201,77 @@ export default function TeamManageScreen({ navigation }) {
   }, []);
 
   const loadModels = useCallback(async () => {
+    if (mounted.current) setModelsLoading(true);
     try {
       const res = await models();
-      if (mounted.current) setAllModels((res && Array.isArray(res)) ? res : []);
-    } catch {
-      // 模型清单拉不到不影响看 Bot 列表，只是「全部设为」暂时不可用
+      if (!mounted.current) return;
+      // 问题 3：接口回的是对象数组 [{ref,name,provider}]（实测已确认），
+      // 以前这里把它当字符串用 + 失败时 catch 静默吞掉，于是「改为：」下面一片空白、
+      // 只留一个取消按钮。现在两种形态都归一化，失败也不再沉默。
+      const raw = Array.isArray(res) ? res : res && Array.isArray(res.models) ? res.models : [];
+      setAllModels(raw.map(normalizeModel).filter(Boolean));
+      setModelsErr(null);
+    } catch (e) {
+      if (!mounted.current) return;
+      setAllModels([]);
+      setModelsErr((e && e.message) || '模型清单没取到');
     } finally {
       if (mounted.current) setModelsLoading(false);
+    }
+  }, []);
+
+  const loadGroups = useCallback(async () => {
+    try {
+      const list = await botFolders();
+      if (!mounted.current) return;
+      setGroups(Array.isArray(list) ? list : []);
+      setGroupsErr(null);
+    } catch (e) {
+      if (!mounted.current) return;
+      setGroupsErr((e && e.message) || '读不到分组');
+    }
+  }, []);
+
+  // 建组：create 接口不回 id，建完必须重读一次列表才拿得到 id/order（否则归组点不到它）
+  const createGroup = useCallback(async () => {
+    const name = newGroupName.trim();
+    if (!name || groupBusy) return;
+    setGroupBusy(true);
+    setErr(null);
+    try {
+      await botFolderCreate(name);
+      if (!mounted.current) return;
+      setNewGroupName('');
+      setNewGroupOpen(false);
+      await loadGroups();
+    } catch (e) {
+      if (mounted.current) setErr((e && e.message) || '分组没建成');
+    } finally {
+      if (mounted.current) setGroupBusy(false);
+    }
+  }, [newGroupName, groupBusy, loadGroups]);
+
+  // 归组：一个 Bot 可以在多个组里（电脑端就是 folders 数组），点一下加、再点一下减。
+  // 先本地生效再发请求，失败回滚 —— 通则 36：点了必须马上有反应。
+  const toggleBotFolder = useCallback(async (bot, folderId) => {
+    const now = Array.isArray(bot.folders) ? bot.folders.slice() : [];
+    const next = now.includes(folderId) ? now.filter((x) => x !== folderId) : [...now, folderId];
+    setBots((prev) => prev.map((b) => (b.id === bot.id ? { ...b, folders: next } : b)));
+    setErr(null);
+    try {
+      await writeBotFolders(bot.id, next);
+    } catch (e) {
+      if (!mounted.current) return;
+      setBots((prev) => prev.map((b) => (b.id === bot.id ? { ...b, folders: now } : b)));
+      setErr((e && e.message) || '归组没成功');
     }
   }, []);
 
   useEffect(() => {
     load();
     loadModels();
-  }, [load, loadModels]);
+    loadGroups();
+  }, [load, loadModels, loadGroups]);
 
   const handleExpand = useCallback((id) => {
     setExpandedId(expandedId === id ? null : id);
@@ -304,6 +381,50 @@ export default function TeamManageScreen({ navigation }) {
 
   const mostCommonModel = getMostCommonModel();
 
+  // 分组后的列表（一个 Bot 可以同时在多个组里，电脑端就是 folders 数组）
+  const grouped = useMemo(() => {
+    const byFolder = {};
+    groups.forEach((f) => {
+      byFolder[f.id] = [];
+    });
+    const loose = [];
+    bots.forEach((b) => {
+      const ids = (Array.isArray(b.folders) ? b.folders : []).filter((id) => byFolder[id]);
+      if (!ids.length) {
+        loose.push(b);
+        return;
+      }
+      ids.forEach((id) => byFolder[id].push(b));
+    });
+    return { byFolder, loose };
+  }, [bots, groups]);
+
+  // 渲染用的平铺行：组头 + 组内 Bot（收起的组只剩组头）。
+  // 同一只 Bot 可能出现在两个组里，所以每行带自己的 key，不能拿 bot.id 当 key。
+  const flat = useMemo(() => {
+    const rows = [];
+    groups.forEach((f) => {
+      const members = grouped.byFolder[f.id] || [];
+      const open = foldOpen[f.id] !== false;
+      rows.push({ kind: 'group', key: 'g-' + f.id, id: f.id, name: f.name, count: members.length });
+      if (!open) return;
+      if (!members.length) {
+        rows.push({ kind: 'note', key: 'n-' + f.id, text: '这个组还空着：展开某个 Bot，点「归到」里的组名就能归进来' });
+        return;
+      }
+      members.forEach((bot) => rows.push({ kind: 'bot', key: 'b-' + f.id + '-' + bot.id, bot }));
+    });
+    if (groups.length && grouped.loose.length) {
+      const open = foldOpen.__loose !== false;
+      rows.push({ kind: 'group', key: 'g-loose', id: '__loose', name: '未分组', count: grouped.loose.length });
+      if (open) grouped.loose.forEach((bot) => rows.push({ kind: 'bot', key: 'b-loose-' + bot.id, bot }));
+    } else if (!groups.length) {
+      // 一个组都还没建：不摆「未分组」这个空壳，直接平铺
+      grouped.loose.forEach((bot) => rows.push({ kind: 'bot', key: 'b-' + bot.id, bot }));
+    }
+    return rows;
+  }, [groups, grouped, foldOpen]);
+
   if (loading && bots.length === 0 && !err) {
     return (
       <View style={s.loading}>
@@ -315,7 +436,7 @@ export default function TeamManageScreen({ navigation }) {
   return (
     <View style={[s.container, { paddingTop: insets.top }]}>
       <View style={s.header}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+        <Pressable onPress={goBack} hitSlop={12}>
           <Text style={s.back}>返回</Text>
         </Pressable>
         <Text style={s.title}>团队管理</Text>
@@ -407,16 +528,95 @@ export default function TeamManageScreen({ navigation }) {
         </View>
       )}
 
+      {/* 分组工具行：点「＋ 新组」原地长出输入行（通则 32：不弹窗、不换页） */}
+      <View style={s.groupBar}>
+        {newGroupOpen ? (
+          <View style={s.groupInputRow}>
+            <TextInput
+              style={s.groupInput}
+              value={newGroupName}
+              onChangeText={setNewGroupName}
+              placeholder="新组名字（最多 20 字）"
+              placeholderTextColor={C.placeholder}
+              maxLength={20}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={createGroup}
+              allowFontScaling={false}
+            />
+            <Pressable
+              style={[s.groupOk, (!newGroupName.trim() || groupBusy) && { opacity: 0.4 }]}
+              onPress={createGroup}
+              disabled={!newGroupName.trim() || groupBusy}
+            >
+              <Text style={s.groupOkText} allowFontScaling={false}>
+                {groupBusy ? '建…' : '建'}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setNewGroupOpen(false);
+                setNewGroupName('');
+              }}
+              hitSlop={10}
+            >
+              <Text style={s.groupCancelText} allowFontScaling={false}>
+                收起
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={s.groupAddBtn} onPress={() => setNewGroupOpen(true)}>
+            <Text style={s.groupAddText} allowFontScaling={false}>
+              ＋ 新组
+            </Text>
+          </Pressable>
+        )}
+        {groupsErr ? (
+          <Text style={s.groupErr} numberOfLines={2} allowFontScaling={false}>
+            {groupsErr}
+          </Text>
+        ) : null}
+      </View>
+
       <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
         {!loading && !err && bots.length === 0 ? (
           <Text style={s.emptyText}>读不到 Bot 列表，点上面重试</Text>
-        ) : bots.map((bot) => {
+        ) : flat.map((row) => {
+          if (row.kind === 'group') {
+            const open = foldOpen[row.id] !== false;
+            return (
+              <Pressable
+                key={row.key}
+                style={s.foldHead}
+                onPress={() => setFoldOpen((prev) => ({ ...prev, [row.id]: !open }))}
+              >
+                <Text style={s.foldCaret} allowFontScaling={false}>
+                  {open ? '▾' : '▸'}
+                </Text>
+                <Text style={s.foldName} numberOfLines={1} allowFontScaling={false}>
+                  {row.name}
+                </Text>
+                <Text style={s.foldCount} allowFontScaling={false}>
+                  {row.count} 个
+                </Text>
+              </Pressable>
+            );
+          }
+          if (row.kind === 'note') {
+            return (
+              <Text key={row.key} style={s.foldEmpty} allowFontScaling={false}>
+                {row.text}
+              </Text>
+            );
+          }
+          const bot = row.bot;
           const isExpanded = expandedId === bot.id;
           const isSaving = savingIds.includes(bot.id);
           const isDifferent = bot.model !== mostCommonModel;
           
           return (
-            <View key={bot.id} style={s.botCard}>
+            <View key={row.key} style={s.botCard}>
               <Pressable 
                 style={[s.botRow, isDifferent && s.botRowBold]} 
                 onPress={() => handleExpand(bot.id)}
@@ -438,7 +638,66 @@ export default function TeamManageScreen({ navigation }) {
                     <View style={s.currentModel}>
                       <Text style={s.currentModelText}>当前：{getModelSupplier(bot.model)} · {displayModelName(bot.model)}</Text>
                     </View>
+                    <Text style={s.chooseLabel}>归到：</Text>
+                    {groups.length === 0 ? (
+                      <Text style={s.groupHint} allowFontScaling={false}>
+                        还没有分组，点上面「＋ 新组」建一个
+                      </Text>
+                    ) : (
+                      <View style={s.chips}>
+                        {groups.map((f) => {
+                          const on = Array.isArray(bot.folders) && bot.folders.includes(f.id);
+                          return (
+                            <Pressable
+                              key={'fold-' + f.id}
+                              style={[s.chip, on && s.chipOn]}
+                              onPress={() => toggleBotFolder(bot, f.id)}
+                            >
+                              <Text style={[s.chipText, on && s.chipTextOn]} numberOfLines={1} allowFontScaling={false}>
+                                {f.name}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    )}
+
                     <Text style={s.chooseLabel}>改为：</Text>
+
+                    {/* 问题 3：模型清单拉不到 / 回空时，这里原来是一片空白只留「取消」。
+                        现在三种状态各自说话，并且都能原地重试（通则 32/33/40）。 */}
+                    {modelsLoading ? (
+                      <View style={s.modelsState}>
+                        <ActivityIndicator size="small" color={C.accent} />
+                        <Text style={s.modelsStateText} allowFontScaling={false}>
+                          正在取模型清单…
+                        </Text>
+                      </View>
+                    ) : null}
+                    {!modelsLoading && modelsErr ? (
+                      <View style={s.modelsState}>
+                        <Text style={s.modelsStateText} allowFontScaling={false}>
+                          {modelsErr}
+                        </Text>
+                        <Pressable style={s.retryBtn} onPress={loadModels}>
+                          <Text style={s.retryBtnText} allowFontScaling={false}>
+                            重试
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                    {!modelsLoading && !modelsErr && allModels.length === 0 ? (
+                      <View style={s.modelsState}>
+                        <Text style={s.modelsStateText} allowFontScaling={false}>
+                          接口回了空清单，一个模型都没给
+                        </Text>
+                        <Pressable style={s.retryBtn} onPress={loadModels}>
+                          <Text style={s.retryBtnText} allowFontScaling={false}>
+                            重读
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
                     
                     {allModels.map((item) => {
                       const ref = item.ref;
@@ -565,6 +824,136 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  // ── 分组（2026-11-15）── 小圆角 8、无线条无投影
+  groupBar: {
+    paddingHorizontal: S.x6,
+    paddingVertical: S.x3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.x3,
+  },
+  groupAddBtn: {
+    paddingHorizontal: S.x4,
+    paddingVertical: S.x2,
+    borderRadius: 8,
+    backgroundColor: C.card,
+  },
+  groupAddText: {
+    color: C.ink,
+    ...T.meta,
+  },
+  groupInputRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.x3,
+  },
+  groupInput: {
+    flex: 1,
+    width: 0,
+    minHeight: 36,
+    paddingHorizontal: S.x4,
+    borderRadius: 8,
+    backgroundColor: C.card,
+    color: C.ink,
+    ...T.body,
+  },
+  groupOk: {
+    paddingHorizontal: S.x4,
+    paddingVertical: S.x2,
+    borderRadius: 8,
+    backgroundColor: C.accent,
+  },
+  groupOkText: {
+    color: C.onAccent,
+    ...T.meta,
+  },
+  groupCancelText: {
+    color: C.ink3,
+    ...T.meta,
+  },
+  groupErr: {
+    color: C.bad,
+    ...T.meta,
+    flexShrink: 1,
+  },
+  groupHint: {
+    color: C.ink3,
+    ...T.meta,
+    marginBottom: S.x3,
+  },
+  foldHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.x2,
+    paddingHorizontal: S.x6,
+    paddingTop: S.x5,
+    paddingBottom: S.x2,
+  },
+  foldCaret: {
+    color: C.ink3,
+    ...T.meta,
+    width: 12,
+  },
+  foldName: {
+    flex: 1,
+    color: C.ink,
+    ...T.title,
+  },
+  foldCount: {
+    color: C.ink3,
+    ...T.meta,
+  },
+  foldEmpty: {
+    color: C.ink3,
+    ...T.meta,
+    paddingHorizontal: S.x6,
+    paddingVertical: S.x3,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: S.x2,
+    marginBottom: S.x4,
+  },
+  chip: {
+    paddingHorizontal: S.x4,
+    paddingVertical: S.x2,
+    borderRadius: R.capsule,
+    backgroundColor: C.bg,
+  },
+  chipOn: {
+    backgroundColor: C.accent,
+  },
+  chipText: {
+    color: C.ink2,
+    ...T.meta,
+  },
+  chipTextOn: {
+    color: C.onAccent,
+  },
+  modelsState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.x3,
+    paddingVertical: S.x3,
+    marginBottom: S.x2,
+  },
+  modelsStateText: {
+    color: C.ink2,
+    ...T.body,
+    flexShrink: 1,
+  },
+  retryBtn: {
+    paddingHorizontal: S.x4,
+    paddingVertical: S.x2,
+    borderRadius: R.capsule,
+    backgroundColor: C.accent,
+  },
+  retryBtnText: {
+    color: C.onAccent,
+    ...T.meta,
   },
   botCard: {
     borderBottomWidth: 1,

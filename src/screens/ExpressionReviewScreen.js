@@ -26,10 +26,14 @@ import { DocText, MARK_CAP, MdText, STATS } from './expressionShared';
 // 数据从训练页带过来（text / analyze 结果 / 词级片段），
 // 因为 analyze 已经在训练页做完，这一屏只负责「看」：原文、润色（点了才发）、点评（SSE 边生成边显示）。
 
-export default function ExpressionReviewScreen({ text = '', a = null, segs = [], cut = false, analyzeMs = null, onBack, onEdit }) {
+export default function ExpressionReviewScreen({ text = '', a = null, segs = [], cut = false, analyzeMs = null, tapAt = null, onBack, onEdit }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
+  // 2026-11-15 打点：从「点讲完了」到这一屏挂上用了多少 ms。
+  // analyzeMs 是请求占的时间，openMs 是导航 + 首帧占的时间 —— 两个都摆在页面上，
+  // 慢在哪一段一眼看得出来（不再靠猜「是接口慢还是渲染慢」）。
+  const openMs = useMemo(() => (tapAt ? Math.max(0, Date.now() - tapAt) : null), [tapAt]);
 
   const [tab, setTab] = useState('orig'); // orig | polish | report
   const [polish, setPolish] = useState({ loading: false, text: '', err: null });
@@ -187,7 +191,8 @@ export default function ExpressionReviewScreen({ text = '', a = null, segs = [],
 
         <View style={s.docHead}>
           <Text style={s.docHeadText} allowFontScaling={false}>
-            词级标注 · 用时 {analyzeMs === null || analyzeMs === undefined ? '--' : analyzeMs + ' ms'}
+            词级标注 · 请求 {analyzeMs === null || analyzeMs === undefined ? '--' : analyzeMs + ' ms'}
+            {openMs === null ? '' : ` · 打开 ${openMs} ms`}
           </Text>
           {onEdit ? (
             <Pressable onPress={onEdit} hitSlop={10} accessibilityRole="button">

@@ -330,6 +330,19 @@ export async function getCorpusViews({ q, limit = 120 } = {}) {
   };
 }
 
+/* 语料库「移回我的观点」：不需要新接口 ——
+ * POST /api/corpus_add {id, on:false} 就是把 tags 里的「语料」标记去掉
+ * （mobile_server.py:1631 的 api_corpus_add 本来就支持 on=False）。
+ *   成功: {ok:true, inCorpus:false}
+ *   失败: {ok:false, error:"找不到这条"}
+ * 移过去（我的观点 → 语料库）就是同一条 on=true。
+ */
+export async function setCorpusTag(id, on) {
+  const d = await request('/api/corpus_add', { method: 'POST', body: { id, on: Boolean(on) } });
+  if (!d || d.ok !== true) throw new Error((d && d.error) || '没改成');
+  return d;
+}
+
 /* ───────── 选题池的写操作（后端 2026-11-13 改成 rowcount 判定，不再假成功） ─────────
  * POST /api/topic_status {id, status}  → {ok:true}；缺参 {ok:false, error:"缺参数"}；status 不校验枚举
  * POST /api/topic_del    {id}          → 成功 {ok:true, deleted:1}；不存在 {ok:false, error:"找不到这个选题"}

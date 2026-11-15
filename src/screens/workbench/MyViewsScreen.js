@@ -111,11 +111,16 @@ export default function MyViewsScreen({
   const [corpusBusy, setCorpusBusy] = useState(null);
   const [corpusDone, setCorpusDone] = useState({});
   const [corpusErr, setCorpusErr] = useState(null);
+  // 删掉的那条必须当场从列表消失（不用等父级重拉、也不用退出重进）
+  const [removed, setRemoved] = useState({});
+  const [delBusy, setDelBusy] = useState(null);
   const scrollRef = useRef(null);
 
   const loading = views === undefined;
   const baseList = Array.isArray(views) ? views : [];
-  const all = [...optimistic, ...baseList].filter((v, i, arr) => v && arr.findIndex((x) => x && x.id === v.id) === i);
+  const all = [...optimistic, ...baseList].filter(
+    (v, i, arr) => v && !removed[v.id] && arr.findIndex((x) => x && x.id === v.id) === i,
+  );
   // 「观点库里的观点」只放表态（clash）；自写 / 原话 / 有感都是自己的，进「我自己写的观点」。
   const poolList = all.filter((v) => String(v.kind || '') === 'clash');
   const selfList = all.filter((v) => String(v.kind || '') !== 'clash');
@@ -156,6 +161,26 @@ export default function MyViewsScreen({
       setCorpusErr(String((e && e.message) || '没移进去'));
     } finally {
       setCorpusBusy(null);
+    }
+  };
+
+  // 删除：先让父级真删（后端 delete from my_views，不是打标记），成功后再本地摘掉。
+  // 父级返回 false 才算失败，失败时这条留着并报错，不假装删掉了。
+  const deleteRow = async (v) => {
+    if (!v || !v.id || delBusy) return;
+    setDelBusy(v.id);
+    setPostErr(null);
+    setCorpusErr(null);
+    try {
+      const ok = onDelete ? await onDelete(v) : false;
+      if (ok !== false) {
+        setRemoved((prev) => ({ ...prev, [v.id]: true }));
+        if (openId === v.id && onClose) onClose();
+      }
+    } catch (e) {
+      setPostErr('没删掉：' + String((e && e.message) || e));
+    } finally {
+      setDelBusy(null);
     }
   };
 
@@ -224,18 +249,27 @@ export default function MyViewsScreen({
                     </Text>
                   </Pressable>
                   <Pressable
-                    style={s.actBtn}
+                    style={[s.actBtn, corpusDone[v.id] ? s.actBtnDone : null]}
                     onPress={() => moveToCorpus(v)}
                     disabled={Boolean(corpusBusy) || Boolean(corpusDone[v.id])}
                     accessibilityRole="button"
                   >
-                    <Text style={[s.actText, { color: corpusDone[v.id] ? C.ink3 : K.brand }]} allowFontScaling={false}>
+                    <Text
+                      style={[s.actText, corpusDone[v.id] ? { color: C.ink3 } : null]}
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                    >
                       {corpusBusy === v.id ? '正在移…' : corpusDone[v.id] ? '已在语料库' : '移到语料库'}
                     </Text>
                   </Pressable>
-                  <Pressable style={s.actBtn} onPress={() => onDelete && onDelete(v)} accessibilityRole="button">
+                  <Pressable
+                    style={s.actBtn}
+                    onPress={() => deleteRow(v)}
+                    disabled={Boolean(delBusy)}
+                    accessibilityRole="button"
+                  >
                     <Text style={[s.actText, { color: C.bad }]} allowFontScaling={false}>
-                      删
+                      {delBusy === v.id ? '删…' : '删'}
                     </Text>
                   </Pressable>
                 </View>
@@ -304,7 +338,7 @@ export default function MyViewsScreen({
             accessibilityRole="button"
           >
             <Text style={s.composeBtnText} allowFontScaling={false}>
-              {posting ? '记…' : '记一条'}
+              {posting ? '正在记…' : '记一条'}
             </Text>
           </Pressable>
           {postErr ? (
@@ -401,8 +435,10 @@ const makeStyles = (C, T, S, R, K) =>
     composeBtn: {
       marginTop: S.x2,
       alignSelf: 'flex-end',
+      // 宽度写死：以前是跟着文字走的（「记一条」比「记…」宽），输入框一有内容按钮就变窄，
+      // 看起来像被挤成省略号 —— 那其实是提交中的「记…」两字。现在不随内容变宽窄。
+      width: 96,
       height: 44,
-      paddingHorizontal: S.x5,
       borderRadius: R.capsule,
       backgroundColor: K.brand,
       alignItems: 'center',
@@ -446,7 +482,15 @@ const makeStyles = (C, T, S, R, K) =>
     kindPill: { height: 20, paddingHorizontal: S.x2, borderRadius: R.capsule, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },
     kindText: { color: C.ink2, ...T.meta },
     rowTitle: { flex: 1, color: C.ink, ...T.title },
-    rowScore: { ...T.meta, fontWeight: '700' },
+    rowScore: {
+      // 分数列定宽（放得下三位数 100 + 「未评」两字）：以前没宽度也没 flexShrink:0，
+      // 62 比「未评」宽，列一宽就把正文挤断行（「不是找什…62」）。
+      width: 44,
+      flexShrink: 0,
+      textAlign: 'right',
+      ...T.meta,
+      fontWeight: '700',
+    },
 
     detail: { paddingHorizontal: S.x4, paddingBottom: S.x4 },
     muted: { color: C.ink2, ...T.meta },
@@ -455,7 +499,9 @@ const makeStyles = (C, T, S, R, K) =>
     originText: { color: C.ink, ...T.body },
     detailMeta: { marginTop: S.x2, color: C.ink3, ...T.meta },
     reviewWrap: { marginTop: S.x3 },
-    acts: { marginTop: S.x3, flexDirection: 'row', flexWrap: 'wrap', gap: S.x2 },
-    actBtn: { height: 32, paddingHorizontal: S.x3, borderRadius: R.capsule, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },
+    acts: { marginTop: S.x3, flexDirection: 'row', gap: S.x2 },
+    // 三枚等宽（flex:1）：中间那枚「移到语料库」字数多也不会把另外两枚挤歪
+    actBtn: { flex: 1, height: 36, borderRadius: R.capsule, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },
+    actBtnDone: { backgroundColor: C.card },
     actText: { color: C.ink, ...T.meta, fontWeight: '500' },
   });

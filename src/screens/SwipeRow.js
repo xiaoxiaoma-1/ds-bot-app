@@ -23,7 +23,12 @@ import { useRoles } from './workbench/roles';
 //   onSwipeState(open:boolean)  可选：滑开/收起时通知外层（外层可用它锁 ScrollView）
 //   deleteLabel  默认「删除」
 
-export const SWIPE_W = 96;
+// 底下的红块尺寸（2026-11-15 定）：固定 64×64，贴着条目右端，不占正文。
+// 以前是 width: SWIPE_W + height: '100%' —— 行一高（正文长）红块就跟着长成一块大门板，
+// 行一矮（单行摘要）又被拉成 96 宽的长条，看着像「悬在右上角把字盖住」。
+export const SWIPE_W = 84;
+const DELETE_SIZE = 64;
+const DELETE_INSET = 10;
 const THRESHOLD_DX = 4;
 const OPEN_AT = -56;
 
@@ -97,12 +102,18 @@ const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     // 普通 View 裁圆角（不是裁剪平移元素本身）
     clip: { borderRadius: R.small, overflow: 'hidden' },
-    deleteLayer: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', justifyContent: 'flex-end' },
-    // 红块：自己带圆角 + 100% 高，不再依赖父容器裁
+    deleteLayer: {
+      ...StyleSheet.absoluteFillObject,
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      paddingRight: DELETE_INSET,
+    },
+    // 红块：固定 64×64（圆角 8，通则 19），垂直居中贴右端；高度不再跟行高跑
     deleteBtn: {
-      width: SWIPE_W,
-      height: '100%',
-      borderRadius: R.small,
+      width: DELETE_SIZE,
+      height: DELETE_SIZE,
+      borderRadius: 8,
       backgroundColor: C.bad,
       alignItems: 'center',
       justifyContent: 'center',

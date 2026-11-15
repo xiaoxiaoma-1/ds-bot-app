@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, Component } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -117,29 +117,94 @@ function failureFor(step, e, fallback) {
   };
 }
 
-function VideoThumb({ uri, style, s }) {
-  const player = useVideoPlayer(uri, (p) => {
-    p.muted = true;
-    p.loop = false;
-  });
-  return <VideoView player={player} style={style} contentFit="cover" nativeControls={false} />;
+// 2026-11-15：expo-video 拿到空串 / 相对路径 / 坏地址会直接抛原生异常，整页跟着闪退。
+// 所以先把 uri 验一遍，只有完整可播地址才真的建 player；地址不全就退回一个占位块，
+// 视频卡片不再把整个「我的」页拖死。
+function playableUri(uri) {
+  return typeof uri === 'string' && /^(https?:\/\/|file:|content:|asset:)/i.test(uri.trim());
 }
 
-function VideoViewer({ uri, C, T, S, R, insets }) {
+function VideoInner({ uri, style, controls }) {
   const player = useVideoPlayer(uri, (p) => {
+    p.muted = !controls;
     p.loop = false;
   });
   return (
     <VideoView
       player={player}
-      style={{ flex: 1, marginTop: insets.top + S.x6, marginBottom: insets.bottom + S.x6 }}
-      contentFit="contain"
-      nativeControls
+      style={style}
+      contentFit={controls ? 'contain' : 'cover'}
+      nativeControls={Boolean(controls)}
     />
   );
 }
 
-export default function ProfileScreen({ navigation, onBack, embedded = false, onOpenSettings }) {
+function VideoThumb({ uri, style }) {
+  if (!playableUri(uri)) return <View style={style} />;
+  return <VideoInner uri={uri} style={style} controls={false} />;
+}
+
+function VideoViewer({ uri, C, T, S, R, insets }) {
+  const style = { flex: 1, marginTop: insets.top + S.x6, marginBottom: insets.bottom + S.x6 };
+  if (!playableUri(uri)) {
+    return (
+      <View style={[style, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: C.ink2, ...T.body }} allowFontScaling={false}>
+          这段视频的地址不完整，打不开
+        </Text>
+      </View>
+    );
+  }
+  return <VideoInner uri={uri} style={style} controls />;
+}
+
+// 兜底：这一页里任何一个组件抛异常，以前是整块「我的」直接闪退，一个字的报错都看不到。
+// 现在先接住（class 才能收 componentDidCatch），把 error.message 摆到页面上，点「重试」重新挂载。
+// 好处有两个：页面不再闪退；下次真出错时，报错原文就在屏上，抄一行就能定位。
+function CrashFallback({ err, onRetry }) {
+  const { C, T, S, R } = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: C.bg, padding: S.x6, justifyContent: 'center', gap: S.x3 }}>
+      <Text style={{ color: C.ink2, ...T.body }} allowFontScaling={false}>
+        「我的」这一页没渲染成功
+      </Text>
+      <Text style={{ color: C.ink2, ...T.meta }} allowFontScaling={false}>
+        {String((err && err.message) || err || '没有报错信息')}
+      </Text>
+      <Pressable
+        style={{ marginTop: S.x2, alignSelf: 'flex-start', height: 36, paddingHorizontal: S.x5, justifyContent: 'center', borderRadius: R.capsule, backgroundColor: C.card2 }}
+        onPress={onRetry}
+        accessibilityRole="button"
+      >
+        <Text style={{ color: C.ink, ...T.meta, fontWeight: '500' }} allowFontScaling={false}>重试</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+class ProfileBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { err: null };
+    this.reset = this.reset.bind(this);
+  }
+
+  componentDidCatch(error) {
+    this.setState({ err: error });
+    if (typeof console !== 'undefined' && console.error) console.error('[我的页] 渲染异常：', error);
+  }
+
+  reset() {
+    this.setState({ err: null });
+  }
+
+  render() {
+    if (this.state.err) return <CrashFallback err={this.state.err} onRetry={this.reset} />;
+    return this.props.children;
+  }
+}
+
+function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettings }) {
   const { C, T, S, R } = useTheme();
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const insets = useSafeAreaInsets();
@@ -239,11 +304,13 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
   useEffect(() => {
     let alive = true;
     if (!cachedMoments.data) return undefined;
+    // 缓存里要是不是数组，以前的 .map 会当场抛 TypeError（整页白掉/闪退）
+    const list = Array.isArray(cachedMoments.data) ? cachedMoments.data : [];
     (async () => {
-      const normalized = await Promise.all(cachedMoments.data.map(normalizeMoment));
+      const normalized = await Promise.all(list.map(normalizeMoment));
       if (!alive) return;
       setMoments(normalized);
-      setHasMore(cachedMoments.data.length === PAGE_SIZE);
+      setHasMore(list.length === PAGE_SIZE);
     })();
     return () => { alive = false; };
   }, [cachedMoments.data]);
@@ -1012,6 +1079,15 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
         </View>
       </Modal>
     </View>
+  );
+}
+
+// 外面包一层兜底：抛异常不再闪退，报错原文摆到屏上（详见 ProfileBoundary）
+export default function ProfileScreen(props) {
+  return (
+    <ProfileBoundary>
+      <ProfileScreenInner {...props} />
+    </ProfileBoundary>
   );
 }
 

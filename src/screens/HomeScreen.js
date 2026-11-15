@@ -42,6 +42,10 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const { width: winWidth } = useWindowDimensions();
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
   const heroCardW = Math.max(0, winWidth - S.page * 2 - S.x3);
+// 四个状态胶囊等宽（2026-11-15）：boardCell 原来只有 flex:1，
+// 但「待完成 32」和「进行中 0」文字长短不同，实际宽度跟着文字走 → 一排四个宽窄不一。
+// 改成按容器宽度算一个死宽，四个一模一样（容器 = 屏宽 − 左右 page − 三个 8 的间距）。
+const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x2 * 3) / 4);
   const heroSnap = heroCardW + S.x3;
 
   const manualRefresh = useRef(false);
@@ -54,6 +58,19 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   // B2：热点条目原地展开（不是跳页），同时只开一条
   const [hotOpen, setHotOpen] = useState(-1);
+  // A1：三张卡高度取最大值。量的是每张卡的内容区（不含标题/内边距），
+  // 量到更大的就把三张的内容区一起抬到那个高度 —— 高度由内容撑开，但谁也不许比谁矮。
+  const [heroBodyH, setHeroBodyH] = useState(0);
+  const heroBodyMax = useRef(0);
+  const measureHeroBody = useCallback((e) => {
+    const h = (e && e.nativeEvent && e.nativeEvent.layout && e.nativeEvent.layout.height) || 0;
+    if (!(h > 0)) return;
+    // 只涨不缩：小卡被抬到大卡高度后再量回来还是同一个值，不会来回抖
+    if (h > heroBodyMax.current + 0.5) {
+      heroBodyMax.current = h;
+      setHeroBodyH(h);
+    }
+  }, []);
 
   const loadAll = useCallback(async () => {
     manualRefresh.current = true;
@@ -94,16 +111,28 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const hotItems = h && Array.isArray(h.head) && h.head.length
     ? h.head // 数据层已经给了 head（前 5 条）
     : (h && h.picked ? [h.picked] : []);
-  const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 5) : [];
+  const topicItems = (tp && Array.isArray(tp.items)) ? tp.items.slice(0, 10) : [];
   const ideaItems = (i && Array.isArray(i.items)) ? i.items : [];
 
-  // 服务端 posts 记录不算「我的稿子」，显示空态；只有 my_drafts 才显示接着写。
-  const draftOrigin = String((d && (d.origin || d.source || d.table)) || '');
-  // origin 字段没上线前，source==='opened'/'latest' 当作不确定，先显示稿子
-  const draftMine = Boolean(d && d.id && (
-    draftOrigin.toLowerCase().includes('my_drafts') || 
-    (draftOrigin === 'opened' || draftOrigin === 'latest')
-  ));
+  // 选题池行数：5 条填不满今日热点的高度，有 10 条就显示 10 条（老板说 5 或 10 都行）。
+  // 6–9 条按实际条数显示；不足 5 条补齐 5 行占位，不让卡片缩成一小截。
+  const topicShow = topicItems.length >= 10 ? 10 : topicItems.length;
+  const topicRowCount = Math.max(5, topicShow);
+
+  // 选题池右上角的数字：今天生成了几条（不是全表累计的 133）。
+  // 今天还没出题（today=0）时不写「0 条」——池子里明明有东西，写 0 就是假数；
+  // 改成说清「列表里这是哪一批」。
+  const topicsMeta = !tp
+    ? '去挑一个'
+    : (Number.isFinite(tp.today) && tp.today > 0
+        ? `今天 ${tp.today} 条 ›`
+        : (Number.isFinite(tp.latestCount) && tp.latestCount > 0
+            ? `${String(tp.latestDay || '').slice(5)} 那批 ${tp.latestCount} 条 ›`
+            : '去挑一个'));
+
+  // 接着写只认我自己写的稿子（数据层把 origin/table 都对齐到 my_drafts 才算 mine）。
+  // 以前只看 id 有没有，结果把采集来的别人文案当自己的稿子显示了出来。
+  const draftMine = Boolean(d && d.mine);
 
   const openDraft = () => {
     go('MyViews');
@@ -111,9 +140,10 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
 
   const openBoard = (status) => go('Board', status ? { status } : undefined);
 
+  // 今日观点 → 进观点库的第一页（第一页最上面就是首页这 3 条观点，左滑认同/右滑不认同）。
+  // 不再带 selected：带进去 App 会把 autoSwipe 打开，直接跳到左右滑，跳过第一页。
   const openIdeas = () => {
-    const selected = ideaItems.map((x) => x && x.id).filter(Boolean);
-    go('ViewsPool', selected.length ? { selected } : undefined);
+    go('ViewsPool');
   };
 
   // B2：热点条目点开 = 卡片里原地展开一栏，两项：「查看原文」「AI 怎么看」
@@ -173,7 +203,14 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
         <Text style={s.heroTitle} allowFontScaling={false}>{title}</Text>
         <Text style={s.heroMeta} allowFontScaling={false}>{meta}</Text>
       </View>
-      <View style={s.heroBody}>{children}</View>
+      {/* A1：三张卡的内容区共用同一个 minHeight（取三张量出来的最大值），
+          标题区和内边距三张一模一样，所以总高度必然相等，且内容多的那张撑开、不被压。 */}
+      <View
+        style={[s.heroBody, heroBodyH ? { minHeight: heroBodyH } : null]}
+        onLayout={measureHeroBody}
+      >
+        {children}
+      </View>
     </Pressable>
   );
 
@@ -280,7 +317,7 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
 
           <HeroCard
             title="选题池"
-            meta={tp && tp.total ? `${tp.total} 条 ›` : '去挑一个'}
+            meta={topicsMeta}
             onPress={!topics.loading && !topics.error && topicItems.length ? () => go('TopicsPool') : undefined}
             label="选题池"
           >
@@ -288,26 +325,27 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
               <StateLine st={topics} empty="正在取选题" />
             ) : topics.error && !tp ? (
               <ErrorBlock st={topics} />
+            ) : topicShow === 0 ? (
+              // 一条都没有时不许留 5 行「1 · —」占位 —— 那是拿行号假装有选题（通则 40）。
+              // 老老实实说今天没出题，卡片高度由另外两张卡撑平。
+              <Text style={s.stateText} allowFontScaling={false}>今天的选题还没生成</Text>
             ) : (
-              // 固定 5 行：和热点卡同条数、同高（220）。不足 5 条时补占位行，
-              // 占位只显示「—」，不缩字号——三张卡的字必须一样大。
-              [...Array(5)].map((_, index) => {
-                const topic = index < topicItems.length ? topicItems[index] : null;
+              // 行数见上面 topicRowCount：5 条填不满就显示 10 条，取够为止；
+              // 仍不足 5 条时补空行（不写序号、不写「—」），只用来保持三张卡的行距一致。
+              [...Array(topicRowCount)].map((_, index) => {
+                const topic = index < topicShow ? topicItems[index] : null;
                 return (
-                  <View key={topic ? (topic.id || 'topic-' + index) : 'topic-empty-' + index} style={s.listRow}>
-                    <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
+                  <View key={topic ? (topic.id || 'topic-' + index) : 'topic-gap-' + index} style={s.listRow}>
                     {topic ? (
                       <>
+                        <Text style={s.ordinal} allowFontScaling={false}>{index + 1} · </Text>
                         <Text style={s.listTitle} numberOfLines={1} allowFontScaling={false}>
                           {topic.title || '（无标题）'}
                         </Text>
                         <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
                       </>
                     ) : (
-                      <>
-                        <View style={s.listText} />
-                        <Text style={s.score} allowFontScaling={false}>—</Text>
-                      </>
+                      <View style={{ height: 16 }} />
                     )}
                   </View>
                 );
@@ -367,13 +405,13 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
               {BOARD_STATUS.map((item) => (
                 <Pressable
                   key={item.key}
-                  style={s.boardCell}
+                  style={[s.boardCell, { width: boardCellW }]}
                   onPress={() => openBoard(item.key)}
                   accessibilityRole="button"
                   accessibilityLabel={`看板 ${item.label}，${b[item.key] ?? 0} 件`}
                 >
-                  <Text style={s.boardCount} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
-                  <Text style={s.boardLabel} allowFontScaling={false}>{item.label}</Text>
+                  <Text style={s.boardCount} numberOfLines={1} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
+                  <Text style={s.boardLabel} numberOfLines={1} allowFontScaling={false}>{item.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -448,14 +486,20 @@ const makeStyles = (C, T, S, R) =>
     heroTitle: { color: C.ink, ...T.section },
     // A2：卡底变浅青绿后 ink3 压不住（约 2.9:1），统一提到 ink2（浅色 ≈5.4:1 / 深色 ≈6.5:1）
     heroMeta: { color: C.ink2, ...T.meta },
-    heroBody: { flex: 1, justifyContent: 'space-between', paddingTop: S.x1 },
-    draftFill: { flex: 1, justifyContent: 'space-between', paddingTop: S.x1, paddingBottom: S.x2 },
+    // A1：内容区不再 flex:1 吃满卡片（那样量到的永远是卡片高度，量不出真实内容），
+    // 改成 minHeight 由三张卡的最大内容高度定：内容多的高、内容少的补齐，总高必然一致。
+    heroBody: { justifyContent: 'space-between', paddingTop: S.x1 },
+    // flexGrow 而不是 flex:1：flex:1 的 flexBasis 是 0，父容器高度还是 auto 的第一帧会塌成 0 高；
+    // flexGrow 保留内容高度，内容区一撑开又能贴到底部（「继续写 ›」仍钉在卡底）。
+    draftFill: { flexGrow: 1, justifyContent: 'space-between', paddingTop: S.x1, paddingBottom: S.x2 },
     sectionCard: {
       marginHorizontal: S.page,
       marginBottom: S.x3,
       padding: S.x4,
       borderRadius: R.small,
-      gap: S.x2,
+      // 2026-11-15：标题卡到「待完成/进行中/阶段完成/已完成」胶囊原来只有 12px（gap 8 + paddingTop 8），
+      // 比胶囊到第一张任务卡的 25px 还窄，看着像粘在标题上。这里抬到 32，胶囊下面保持原样。
+      gap: 32,
     },
     sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
     sectionTitle: { color: C.ink, ...T.title },
@@ -499,9 +543,10 @@ const makeStyles = (C, T, S, R) =>
     hotAiText: { color: C.ink3, ...T.meta },
     draftEmpty: { paddingVertical: S.x2, gap: S.x2, alignItems: 'flex-start' },
     emptyActionText: { color: C.ink, ...T.meta },
-    boardGrid: { flexDirection: 'row', gap: S.x2, paddingTop: S.x2 },
+    boardGrid: { flexDirection: 'row', gap: S.x2, paddingTop: 0 },
     boardCell: {
-      flex: 1,
+      flexGrow: 0,
+      flexShrink: 0,
       backgroundColor: C.card2,
       borderRadius: R.small,
       paddingVertical: S.x3,
@@ -511,7 +556,9 @@ const makeStyles = (C, T, S, R) =>
       gap: S.x1,
     },
     boardCellOn: { backgroundColor: C.accent, borderColor: C.accent },
-    boardCount: { color: C.ink, ...T.section },    boardLabel: { color: C.ink3, ...T.meta, textAlign: 'center' },
+    boardCount: { color: C.ink, ...T.section, textAlign: 'center' },
+    // 「待完成/进行中/阶段完成/已完成」这行字提到 ink2：ink3 在深色下几乎读不出（F3）
+    boardLabel: { color: C.ink2, ...T.meta, textAlign: 'center' },
     stateRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, paddingVertical: S.x2 },
     stateText: { color: C.ink3, ...T.meta },
     centerBlock: { alignItems: 'center', paddingVertical: S.x3, gap: S.x2 },

@@ -119,7 +119,19 @@ export async function login(base, pass) {
   };
 }
 
-async function request(path, { method = 'GET', body, step = 'list', retry = true } = {}) {
+// 自己超时 abort 掉的那次请求，在 Expo 57（winter/fetch）里抛的不是 AbortError，
+// 而是 name/message 都是 FetchRequestCanceledException 的原生异常 —— 以前只认
+// e.name === 'AbortError'，于是「我们主动掐断」被当成「网络不通」播到界面上
+// （这就是顾问页那块红的「网络不通：FetchRequestCanceledException」）。
+// 这里按名字 + 文案一起认，认出来就只报「等太久」，不再冒充网络故障。
+function isAbortLike(e) {
+  if (!e) return false;
+  const name = String(e.name || '');
+  const msg = String(e.message || '');
+  return /abort|cancel/i.test(name) || /abort|cancel/i.test(msg);
+}
+
+async function request(path, { method = 'GET', body, step = 'list', retry = true, timeoutMs } = {}) {
   const base = await getBase();
   if (!base) throw new ApiError('还没填服务地址', step);
 
@@ -134,12 +146,12 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
   };
   if (body !== undefined) headers['content-type'] = 'application/json';
 
-  // 判断超时时间：上传接口用 60 秒，其他用 20 秒
+  // 判断超时时间：调用方指定 > 上传接口 60 秒 > 其它 20 秒
   const isUpload = path.includes('/upload');
-  const timeoutMs = isUpload ? UPLOAD_TIMEOUT : DEFAULT_TIMEOUT;
+  const waitMs = timeoutMs || (isUpload ? UPLOAD_TIMEOUT : DEFAULT_TIMEOUT);
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), waitMs);
   let res;
   try {
     res = await fetch(join(base, path), {
@@ -150,7 +162,12 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
       signal: ctrl.signal,
     });
   } catch (e) {
-    if (e && e.name === 'AbortError') throw new ApiError('请求超时', step, { code: 'timeout', message: '等太久了，重试一下' });
+    if (isAbortLike(e)) {
+      throw new ApiError(`等太久了（${Math.round(waitMs / 1000)} 秒没回应）`, step, {
+        code: 'timeout',
+        timeoutMs: waitMs,
+      });
+    }
     throw new ApiError('网络不通：' + (e.message || '请求失败'), step);
   } finally {
     clearTimeout(timer);
@@ -236,6 +253,68 @@ export async function writeModel({ id, model }) {
     step: 'model',
   });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '保存失败', 'model');
+  return d;
+}
+
+// ---- Bot 分组（文件夹）：服务端 2026-11-14 已开放这一组接口 ----
+//   GET  /api/dsbot/folders                -> { ok, folders:[{id,name,order,collapsed}] }
+//   POST /api/dsbot/folders/create {name}  -> { ok, name }（不给 id，建完要重读列表）
+//   POST /api/dsbot/folders/rename {id,name}
+//   POST /api/dsbot/folders/delete {id}
+//   POST /api/dsbot/folders/reorder {order:[id,...]}
+//   POST /api/dsbot/bot/<botId>/folders {folders:[folderId,...]}
+export async function botFolders() {
+  const d = await request('/api/dsbot/folders', { step: 'folders' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '读不到分组', 'folders');
+  // 顺序照服务端给的 order 排，缺 order 的排最后
+  const list = Array.isArray(d.folders) ? d.folders.slice() : [];
+  list.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999));
+  return list;
+}
+
+export async function botFolderCreate(name) {
+  const d = await request('/api/dsbot/folders/create', {
+    method: 'POST',
+    body: { name: String(name || '').trim() },
+    step: 'folders',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '分组没建成', 'folders');
+  return d;
+}
+
+export async function botFolderRename(id, name) {
+  const d = await request('/api/dsbot/folders/rename', {
+    method: 'POST',
+    body: { id, name: String(name || '').trim() },
+    step: 'folders',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '改名失败', 'folders');
+  return d;
+}
+
+export async function botFolderDelete(id) {
+  const d = await request('/api/dsbot/folders/delete', { method: 'POST', body: { id }, step: 'folders' });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '分组删不掉', 'folders');
+  return d;
+}
+
+export async function botFolderReorder(order) {
+  const d = await request('/api/dsbot/folders/reorder', {
+    method: 'POST',
+    body: { order: Array.isArray(order) ? order : [] },
+    step: 'folders',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '排序没保存', 'folders');
+  return d;
+}
+
+export async function writeBotFolders(id, folders) {
+  const d = await request('/api/dsbot/bot/' + encodeURIComponent(id) + '/folders', {
+    method: 'POST',
+    body: { folders: Array.isArray(folders) ? folders : [] },
+    step: 'folders',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '归组没成功', 'folders');
   return d;
 }
 
@@ -358,7 +437,7 @@ export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jp
       signal: ctrl.signal,
     });
   } catch (e) {
-    if (e && e.name === 'AbortError') throw new ApiError('上传超时', 'upload');
+    if (isAbortLike(e)) throw new ApiError('上传等太久了，没传完', 'upload', { code: 'timeout' });
     throw new ApiError('上传失败：' + (e.message || '网络不通'), 'upload');
   } finally {
     clearTimeout(timer);

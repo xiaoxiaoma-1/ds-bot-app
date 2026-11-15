@@ -21,8 +21,44 @@ const VIEW = 100;
 
 const SHADE_OPACITY = 0.07;
 
-// 卡图标眼睛定案色（规格 §5.1）
+// 卡图标眼睛定案色（规格 §5.1）。只在「没拿到主题」时兜底。
 const EYE_FILL = '#0F1A3C';
+// 深色底上的兜底眼睛色（深浅主题都要看得见）
+const EYE_FILL_ON_DARK = '#F2F5FF';
+
+function hexToRgb(h) {
+  const s = String(h || '');
+  if (!/^#[0-9a-f]{6}$/i.test(s)) return null;
+  return [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+
+export function faceLum(h) {
+  const rgb = hexToRgb(h);
+  if (!rgb) return 1;
+  const lin = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return lin[0] * 0.2126 + lin[1] * 0.7152 + lin[2] * 0.0722;
+}
+
+/**
+ * 脸色上的眼睛色（2026-11-15 统一口径）。
+ *
+ * 以前顾问页 / 团队管理页各自混色：深色脸往 C.onHero（纯白）提亮 55%，
+ * 于是 #4D6BFE 的蓝脸混出 #8FA6FB —— 屏幕上就是「眼睛是白色的」。
+ * 现在一律先用当前主题的文字色 C.ink（浅色主题≈黑、深色主题≈白），
+ * 只有当脸色和它对比不足 3:1（眼睛会糊在脸上）才退回另一侧，
+ * 保证深浅主题、深色脸浅色脸都能看见，且不再随手混出中间灰白。
+ */
+export function eyeInkFor(faceHex, C) {
+  if (!C || typeof C.ink !== 'string' || C.ink.charAt(0) !== '#') return EYE_FILL;
+  const lf = faceLum(faceHex);
+  const li = faceLum(C.ink);
+  const ratio = (Math.max(lf, li) + 0.05) / (Math.min(lf, li) + 0.05);
+  if (ratio >= 3) return C.ink;
+  return li > 0.5 ? EYE_FILL : EYE_FILL_ON_DARK;
+}
 
 // 小尺寸补偿（规格 §1、§5.4）：换算后眼宽 < 2px 才启用
 const SMALL_EYE_W_BOOST = 1.35;
@@ -50,7 +86,9 @@ export default function CharacterIcon({
 }) {
   const def = CHARACTER_SHAPES[shape] || CHARACTER_SHAPES.gumdrop;
   const fill = resolveFill(ink, scheme, color);
-  const fillEyes = eyeColor || EYE_FILL;
+  // 以前不管深浅主题都是定案深蓝 #0F1A3C —— 深色主题的图标上等于隐形。
+  // 不传 eyeColor 时按主题走：浅色主题黑眼、深色主题浅眼。眼睛几何一个像素没动。
+  const fillEyes = eyeColor || (scheme === 'light' ? EYE_FILL : EYE_FILL_ON_DARK);
 
   const eyes = useMemo(() => {
     if (size < MIN_BOX_FOR_EYES) return null;

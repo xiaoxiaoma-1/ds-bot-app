@@ -308,7 +308,7 @@ export default function TopicsPoolScreen({
                 onPress={() => (d ? setDraft(null) : aiWrite(t, false))}
                 accessibilityRole="button"
               >
-                <Text style={[s.btnText, { color: C.onAccent }]} allowFontScaling={false}>
+                <Text style={[s.btnText, { color: K.onBrand }]} allowFontScaling={false}>
                   {d ? '收起稿' : 'AI 写'}
                 </Text>
               </Pressable>
@@ -361,10 +361,14 @@ export default function TopicsPoolScreen({
   };
 
   return (
-    <View style={s.root}>
+    // 2026-11-15：root 补上 insets.top，头部这块钉在安全区下面（以前是 0，
+    // 标题和「今天 N 条」正好落在状态栏底下，被「10:13」压住切掉上半截）。
+    <View style={[s.root, { paddingTop: insets.top }]}>
       <ScrollView
         ref={scrollRef}
         style={s.scroll}
+        // 头部固定：只有列表自己滚，标题不跟着走（通则 13 / 10）
+        stickyHeaderIndices={[0]}
         contentContainerStyle={{ paddingBottom: onTabPress ? dockPadding(insets, S) : S.page + insets.bottom }}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
@@ -372,12 +376,12 @@ export default function TopicsPoolScreen({
       >
         <View style={s.top}>
           <View style={s.shape} />
-          <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
+          <Pressable style={s.back} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
             <Text style={s.backText} allowFontScaling={false}>
               ‹
             </Text>
           </Pressable>
-          <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
+          <View style={[s.headText, { top: S.x6 * 2 + S.x1 }]}>
             <Text style={s.title} allowFontScaling={false}>
               选题池
             </Text>
@@ -531,6 +535,7 @@ const makeStyles = (C, T, S, R, K) =>
     },
     back: {
       position: 'absolute',
+      top: 0,
       left: 14,
       width: 44,
       height: 44,
@@ -640,7 +645,9 @@ const makeStyles = (C, T, S, R, K) =>
 
     toLatest: {
       position: 'absolute',
-      right: S.page,
+      // 卡片左右各留 S.page，原来按钮也贴在这个 x 上，正好压在卡片右边缘。
+      // 往里收 8，让它浮在卡片里侧，不和边线打架。
+      right: S.page + S.x2,
       height: 32,
       paddingHorizontal: S.x3,
       borderRadius: R.capsule,
