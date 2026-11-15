@@ -33,7 +33,7 @@ export default function KeyboardDismissOverlay() {
 
   return (
     <Pressable
-      style={[StyleSheet.absoluteFillObject, { zIndex: 999 }]}
+      style={[StyleSheet.absoluteFill, { zIndex: 999 }]}
       onPress={() => Keyboard.dismiss()}
       // 只吞这一下；不需要滑动、也不需要焦点
       accessible={false}

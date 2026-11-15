@@ -225,6 +225,7 @@ export async function advisorsFull() {
     advisors: d.advisors || [],
     groups: Array.isArray(d.groups) ? d.groups : [],
     unreadNote: typeof d.unreadNote === 'string' ? d.unreadNote : '',
+    mainBotId: typeof d.mainBotId === 'string' ? d.mainBotId : null,
   };
 }
 

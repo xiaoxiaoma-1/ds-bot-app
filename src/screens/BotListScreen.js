@@ -137,6 +137,7 @@ const AdvisorRow = memo(function AdvisorRow({
   onMeasured,
   panHandlers,
   translateY,
+  pinnedTop = false,
 }) {
   const avatar = item.avatar || {};
   const shape = avatar.shape || 'gumdrop';
@@ -195,9 +196,14 @@ const AdvisorRow = memo(function AdvisorRow({
           )}
         </View>
         <View style={s.rowBody}>
-          <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
-            {item.name}
-          </Text>
+          <View style={s.nameRow}>
+            <Text style={s.name} numberOfLines={1} allowFontScaling={false}>
+              {item.name}
+            </Text>
+            {pinnedTop ? (
+              <Text style={s.pinnedLabel} allowFontScaling={false}>置顶</Text>
+            ) : null}
+          </View>
           <View style={s.metaRow}>
             <View style={[s.dot, { backgroundColor: dotColor(item.status, C) }]} />
             <Text style={s.status} numberOfLines={1} allowFontScaling={false}>
@@ -238,6 +244,11 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
   const [folderList, setFolderList] = useState(() => {
     const c = readCached('dsbot:folders');
     return Array.isArray(c) ? c : [];
+  });
+  // 初始化时从advisors缓存中读取mainBotId
+  const [mainBotId, setMainBotId] = useState(() => {
+    const cached = readCached('advisors');
+    return (cached && cached.mainBotId) || null;
   });
   const [openFolders, setOpenFolders] = useState(() => new Set());
   const [order, setOrder] = useState([]);
@@ -291,6 +302,7 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
     setCached('advisors', full); // 三个入口（首次 / 静默 / 手动）都在这里落缓存
     setGroups(normalizeGroups(full.groups));
     setUnreadNote(full.unreadNote || '');
+    setMainBotId(full.mainBotId || null);
     setRows(list);
     const m = {};
     list.forEach((it) => {
@@ -376,21 +388,45 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
   const visible = useMemo(() => rows.filter((it) => !hidden.has(String(it.id))), [rows, hidden]);
   const sorted = useMemo(() => applyOrder(visible, order), [visible, order]);
 
+  // 按主Bot分离：主Bot永远置顶，不从原分组移除
+  const [mainBots, restBots] = useMemo(() => {
+    const mainBotsList = [];
+    const restBotsList = [];
+    sorted.forEach((b) => {
+      if (mainBotId && String(b.id) === String(mainBotId)) {
+        mainBotsList.push(b);
+      } else {
+        restBotsList.push(b);
+      }
+    });
+    return [mainBotsList, restBotsList];
+  }, [sorted, mainBotId]);
+
   // 把列表折成「组标题 + 组内 Bot」的扁平数组，交给同一个 FlatList 渲染。
   // 组标题是一条 kind='folder' 的伪行；点它展开/收起。
   // 未归组的 Bot 放最后一段「未分组」，不藏起来。
   const feed = useMemo(() => {
-    if (!folderList.length) return sorted.map((b) => ({ kind: 'bot', bot: b }));
+    const out = [];
+    
+    // 2026-11-15（老板）：主Bot永远第一个置顶，不管它在不在分组里
+    mainBots.forEach((b) => out.push({ kind: 'bot', bot: b, pinnedTop: true }));
+    
+    if (!folderList.length) {
+      // 无分组时，主Bot之后直接接restBots
+      restBots.forEach((b) => out.push({ kind: 'bot', bot: b }));
+      return out;
+    }
+
     const byFolder = new Map();
     folderList.forEach((f) => byFolder.set(String(f.id), []));
     const loose = [];
-    sorted.forEach((b) => {
+    restBots.forEach((b) => {
       const ids = Array.isArray(b.folders) ? b.folders.map(String) : [];
       const hit = ids.filter((id) => byFolder.has(id));
       if (!hit.length) { loose.push(b); return; }
       hit.forEach((id) => byFolder.get(id).push(b));
     });
-    const out = [];
+    
     folderList.forEach((f) => {
       const items = byFolder.get(String(f.id)) || [];
       if (!items.length) return;            // 空组不占地方
@@ -398,13 +434,14 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
       out.push({ kind: 'folder', id: String(f.id), name: f.name, n: items.length, open });
       if (open) items.forEach((b) => out.push({ kind: 'bot', bot: b }));
     });
+    
     if (loose.length) {
       const open = openFolders.has('__loose');
       out.push({ kind: 'folder', id: '__loose', name: '未分组', n: loose.length, open });
       if (open) loose.forEach((b) => out.push({ kind: 'bot', bot: b }));
     }
     return out;
-  }, [sorted, folderList, openFolders]);
+  }, [sorted, folderList, openFolders, mainBots, restBots]);
   const unreadTotal = useMemo(
     () => sorted.reduce((sum, it) => sum + (unread[String(it.id)] || 0), 0),
     [sorted, unread],
@@ -472,8 +509,12 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
   );
 
   const makePan = useCallback(
-    (item, _feedIndex) =>
-      PanResponder.create({
+    (item, _feedIndex) => {
+      // 主Bot不允许拖拽
+      if (mainBotId && String(item.id) === String(mainBotId)) {
+        return { panHandlers: {} };
+      }
+      return PanResponder.create({
         onStartShouldSetPanResponder: () => true, // 只有把手挂着这个响应器
         onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: () => setDragId(String(item.id)),
@@ -488,8 +529,9 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
           setDragId(null);
           dragY.setValue(0);
         },
-      }),
-    [dragY, reorder, sortedIndexOf],
+      });
+    },
+    [dragY, reorder, sortedIndexOf, mainBotId],
   );
 
   const toggleFolder = useCallback((id) => {
@@ -535,6 +577,7 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
         }}
         panHandlers={makePan(bot, index).panHandlers}
         translateY={dragY}
+        pinnedTop={item.pinnedTop || false}
       />
       );
     },
@@ -803,7 +846,9 @@ const makeStyles = (C, T, S, R) =>
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: S.x1, marginTop: S.x1 },
     dot: { width: 6, height: 6, borderRadius: R.capsule },
     status: { color: C.ink2, ...T.meta, flexShrink: 1 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2 },
     name: { color: C.ink, ...T.title },
+    pinnedLabel: { color: C.ink3, ...T.meta, fontSize: 11, lineHeight: 14 },
     badge: {
       minWidth: 20,
       height: 20,

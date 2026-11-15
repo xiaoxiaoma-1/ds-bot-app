@@ -295,7 +295,7 @@ export default function ViewsPoolScreen({
       if (goBackRef.current) goBackRef.current();
     },
     enabled: mode === 'swipe',
-    edgeWidth: 16,
+    edgeWidth: 20,
   });
 
   // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
@@ -363,28 +363,43 @@ export default function ViewsPoolScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}
     >
-      <View style={s.top}>
-        <View style={s.shape} />
-        <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
-          <Text style={s.backText} allowFontScaling={false}>
-            ‹
-          </Text>
-        </Pressable>
-        <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
-          <Text style={s.title} allowFontScaling={false}>
-            观点库
-          </Text>
-          <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>
-            已表态 {doneN} · 还剩 {remain}
-          </Text>
+      {/* 底衬层：跟手时不能露白 */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: C.bg }} />
+      
+      {/* 跟手动画层：整屏平移 */}
+      <Animated.View 
+        style={{ 
+          flex: 1, 
+          transform: [{ translateX: edgeBack.x }],
+          // 左侧轻微阴影，显出页面在滑走
+          shadowColor: '#000000',
+          shadowOffset: { width: -2, height: 0 },
+          shadowOpacity: 0.03,
+          shadowRadius: 4,
+        }}
+        {...edgeBack.panHandlers}
+      >
+        <View style={s.top}>
+          <View style={s.shape} />
+          <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
+            <Text style={s.backText} allowFontScaling={false}>
+              ‹
+            </Text>
+          </Pressable>
+          <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
+            <Text style={s.title} allowFontScaling={false}>
+              观点库
+            </Text>
+            <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>
+              已表态 {doneN} · 还剩 {remain}
+            </Text>
+          </View>
         </View>
-      </View>
 
       {/* 卡片区：写理由时整块收起，把高度让给 sheet */}
       {verdict ? null : (
         <View
           style={s.stage}
-          {...edgeBack.panHandlers}
           onLayout={(e) => {
             const h = Math.round(e.nativeEvent.layout.height);
             if (h > 0 && Math.abs(h - stageHRef.current) > 1) {
@@ -593,6 +608,7 @@ export default function ViewsPoolScreen({
           {onTabPress ? <Dock activeTab={activeTab} onTabPress={onTabPress} /> : null}
         </>
       )}
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 }
@@ -648,7 +664,7 @@ const makeStyles = (C, T, S, R, K) =>
     cardClaim: { color: C.ink, ...T.body },
     cardAuthor: { marginTop: S.x4, color: C.ink2, ...T.meta },
     // 滑出块（探探式）：整块贴在卡片边缘，占满卡片高度，静止时被推到框外看不见
-    revealClip: { ...StyleSheet.absoluteFillObject, overflow: 'hidden', borderRadius: R.big },
+    revealClip: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', borderRadius: R.big },
     revealPane: {
       position: 'absolute',
       top: 0,

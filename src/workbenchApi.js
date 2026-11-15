@@ -1,5 +1,5 @@
 import { getBase, getPass, getSess } from './store';
-import { login } from './api';
+import { login, ApiError } from './api';
 
 // 工作台功能页接口层（对照 8788 的真实契约写的，逐条都在 mobile_server.py 里核过行号）。
 // 规矩：契约不清楚的**不写**——宁可留着死按钮，也不写一个会骗人的按钮。

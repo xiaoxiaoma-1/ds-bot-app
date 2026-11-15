@@ -497,7 +497,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
         setErr({ step: '看大图失败', message: '还没有头像，先拍一张或从相册选一张' });
         return;
       }
-      setViewer({ type: 'image', url: me.avatarUrl });
+      setViewer({ type: 'image', url: me.avatarUrl, coverUrl: '', from: 'root' });
       return;
     }
 
@@ -890,7 +890,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
                 {(latest.media || []).length > 0 ? (
                   <View style={s.bubbleMediaRow}>
                     {(latest.media || []).slice(0, 3).map((m, i) => (
-                      <View key={i} style={s.bubbleMediaItem}>
+                      <Pressable key={i} style={s.bubbleMediaItem} onPress={() => setViewer({ type: m.type, url: m.url, coverUrl: m.coverUrl, from: 'root' })}>
                         {m.type === 'video' ? (
                           m.coverUrl ? (
                             <CachedImage uri={m.coverUrl} style={s.bubbleImage} resizeMode="cover" thumbWidth={THUMB_W} />
@@ -902,7 +902,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
                         ) : (
                           <CachedImage uri={m.url} style={s.bubbleImage} resizeMode="cover" thumbWidth={THUMB_W} />
                         )}
-                      </View>
+                      </Pressable>
                     ))}
                     {(latest.media || []).length > 3 ? (
                       <View style={[s.bubbleImage, s.mediaMore]}>
@@ -1035,7 +1035,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
                           <Pressable
                             key={i}
                             style={s.momentMediaCell}
-                            onPress={() => setViewer(m)}
+                            onPress={() => setViewer({ type: m.type, url: m.url, coverUrl: m.coverUrl, from: 'sheet' })}
                           >
                             {m.type === 'video' ? (
                               m.coverUrl ? (
@@ -1067,6 +1067,73 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
             </ScrollView>
           </View>
         </View>
+        {viewer && viewer.from === 'sheet' ? (
+          <Pressable
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 20,
+              backgroundColor: C.bg,
+            }}
+            onPress={() => setViewer(null)}
+          >
+            {viewer.type === 'video' ? (
+              <VideoViewer uri={viewer.url} C={C} T={T} S={S} R={R} insets={insets} />
+            ) : viewer && viewer.url ? (
+              <>
+                <CachedImage
+                  uri={viewer.url}
+                  style={{ flex: 1 }}
+                  resizeMode="contain"
+                  thumbWidth={THUMB_W}
+                />
+                <CachedImage
+                  uri={viewer.url}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                  resizeMode="contain"
+                  thumbWidth={1200}
+                />
+              </>
+            ) : (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: C.ink2, ...T.body }} allowFontScaling={false}>
+                  这张图没有地址
+                </Text>
+              </View>
+            )}
+            <Pressable
+              style={{ position: 'absolute', top: insets.top + S.x6, right: S.x6 }}
+              onPress={() => setViewer(null)}
+              hitSlop={12}
+            >
+              <Text style={{ color: C.ink, ...T.body }} allowFontScaling={false}>关闭</Text>
+            </Pressable>
+            {viewer && viewer.type !== 'video' && viewer.url ? (
+              <Pressable
+                style={{ position: 'absolute', top: insets.top + S.x6, left: S.x6 }}
+                onPress={() => saveToAlbum(viewer)}
+                disabled={savingImg}
+                hitSlop={12}
+              >
+                <Text style={{ color: savingImg ? C.ink3 : C.ink, ...T.body }} allowFontScaling={false}>
+                  {savingImg ? '正在存…' : '保存到相册'}
+                </Text>
+              </Pressable>
+            ) : null}
+            {viewer && viewer.url ? (
+              <Pressable
+                style={{ position: 'absolute', top: insets.top + S.x6, left: S.x6 + 80 }}
+                onPress={() => shareItem(viewer)}
+                hitSlop={12}
+              >
+                <Text style={{ color: C.ink, ...T.body }} allowFontScaling={false}>分享</Text>
+              </Pressable>
+            ) : null}
+          </Pressable>
+        ) : null}
       </Modal>
 
       <Modal
@@ -1168,7 +1235,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
       </Modal>
 
       <Modal
-        visible={!!viewer}
+        visible={!!viewer && viewer.from !== 'sheet'}
         transparent
         animationType="fade"
         onRequestClose={() => setViewer(null)}
@@ -1181,11 +1248,20 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
             {viewer && viewer.type === 'video' ? (
               <VideoViewer uri={viewer.url} C={C} T={T} S={S} R={R} insets={insets} />
             ) : viewer && viewer.url ? (
-              <CachedImage
-                uri={viewer.url}
-                style={s.viewerImage}
-                resizeMode="contain"
-              />
+              <>
+                <CachedImage
+                  uri={viewer.url}
+                  style={s.viewerImage}
+                  resizeMode="contain"
+                  thumbWidth={THUMB_W}
+                />
+                <CachedImage
+                  uri={viewer.url}
+                  style={[s.viewerImage, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }]}
+                  resizeMode="contain"
+                  thumbWidth={1200}
+                />
+              </>
             ) : (
               <Text style={s.viewerCloseText} allowFontScaling={false}>这张图没有地址</Text>
             )}

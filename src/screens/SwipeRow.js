@@ -30,7 +30,7 @@ export const SWIPE_W = 84;
 const DELETE_SIZE = 64;
 const DELETE_INSET = 10;
 const THRESHOLD_DX = 4;
-const OPEN_AT = -56;
+const OPEN_AT = -32;
 
 export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel = '删除', style }) {
   const { C, T, S, R } = useTheme();
@@ -38,18 +38,20 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
   const tx = useRef(new Animated.Value(0)).current;
   const opened = useRef(false);
+  const hideTimer = useRef(null);
   // 红块是否挂在树上：拖动中 / 已滑开 才挂，静止不渲染
   const [showDel, setShowDel] = useState(false);
 
   const settle = (open) => {
     opened.current = open;
     // 收起时等动画播完再摘红块，否则红块会「啪」地消失
+    clearTimeout(hideTimer.current);
     if (open) setShowDel(true);
-    else setTimeout(() => setShowDel(false), 200);
+    else hideTimer.current = setTimeout(() => setShowDel(false), 200);
     if (onSwipeState) onSwipeState(open);
     Animated.spring(tx, {
       toValue: open ? -SWIPE_W : 0,
-      useNativeDriver: true,
+      useNativeDriver: false,
       tension: 420,
       friction: 20,
     }).start();
@@ -64,13 +66,21 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
         onPanResponderMove: (e, g) => {
           // 已经滑开的行，右滑是「收回去」；没收开的行只允许往左滑
           const base = opened.current ? -SWIPE_W : 0;
-          const next = Math.min(0, Math.max(-SWIPE_W, base + g.dx));
+          let next = Math.min(0, Math.max(-SWIPE_W, base + g.dx));
+          // 阻尼：滑过边界时给橡皮筋感
+          if (next === -SWIPE_W && g.dx < 0) {
+            const over = base + g.dx + SWIPE_W; // 负值
+            next = -SWIPE_W + over * 0.25;
+          }
           tx.setValue(next);
         },
         onPanResponderRelease: (e, g) => {
           const base = opened.current ? -SWIPE_W : 0;
           const end = base + g.dx;
-          settle(end < OPEN_AT);
+          // 用惯性投影判开合：甩得快就算滑得短也开（iOS 原生行为）
+          const projected = end + g.vx * 90;
+          const open = g.vx <= -0.35 || projected < OPEN_AT;
+          settle(open);
         },
         onPanResponderTerminate: () => settle(opened.current),
         onPanResponderGrant: () => {
@@ -114,7 +124,7 @@ const makeStyles = (C, T, S, R, K) =>
     // 普通 View 裁圆角（不是裁剪平移元素本身）
     clip: { borderRadius: R.small, overflow: 'hidden' },
     deleteLayer: {
-      ...StyleSheet.absoluteFillObject,
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
       flexDirection: 'row',
       justifyContent: 'flex-end',
       alignItems: 'center',
