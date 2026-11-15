@@ -478,6 +478,17 @@ export async function fetchMoments(limit = 20, offset = 0) {
   return d.items || [];
 }
 
+// 删一条朋友圈（2026-11-15 老板要删除按钮；服务端新增 /api/dsbot/me/moment/delete）
+export async function deleteMoment(id) {
+  const d = await request('/api/dsbot/me/moment/delete', {
+    method: 'POST',
+    body: { id },
+    step: 'del_moment',
+  });
+  if (!d || !d.ok) throw new ApiError((d && d.error) || '删不掉这条', 'del_moment');
+  return d;
+}
+
 export async function postMoment(text, media = []) {
   const d = await request('/api/dsbot/me/moment', {
     method: 'POST',

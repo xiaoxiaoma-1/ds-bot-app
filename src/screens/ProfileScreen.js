@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LiveInput, { inputMaxHeight } from '../components/LiveInput';
@@ -26,6 +27,7 @@ import {
   uploadFile,
   fetchMoments,
   postMoment,
+  deleteMoment,
 } from '../api';
 import { getBase } from '../store';
 import { setCached, useCachedResource } from '../cache';
@@ -331,6 +333,27 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
     if (onBack) onBack();
     else if (navigation && navigation.goBack) navigation.goBack();
   }, [navigation, onBack]);
+
+  // 删一条朋友圈：先问一次，删成功后本地立刻移除（不等重拉）
+  const confirmDelMoment = useCallback((item) => {
+    if (!item || item.id == null) return;
+    Alert.alert('删掉这条朋友圈？', '删了就找不回来了。', [
+      { text: '不删', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteMoment(item.id);
+            setMoments((prev) => prev.filter((x) => x.id !== item.id));
+            setErr(null);
+          } catch (e) {
+            setErr({ step: '删朋友圈失败', message: String((e && e.message) || e) });
+          }
+        },
+      },
+    ]);
+  }, []);
 
   const openSettings = useCallback(() => {
     if (onOpenSettings) onOpenSettings();
@@ -923,6 +946,17 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
               ) : (
                 moments.map((item) => (
                   <View key={item.id} style={s.momentCard}>
+                    {/* 2026-11-15（老板）：「我的朋友圈为什么不能删除？没有删除按钮啊」
+                        卡片右上角放一个明确的「删除」，长按卡片同样会问一次。 */}
+                    <Pressable
+                      style={s.momentDel}
+                      onPress={() => confirmDelMoment(item)}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel="删除这条朋友圈"
+                    >
+                      <Text style={s.momentDelText} allowFontScaling={false}>删除</Text>
+                    </Pressable>
                     <Text style={s.momentText} allowFontScaling={false}>{item.text}</Text>
                     <Text style={s.momentTime} allowFontScaling={false}>{formatAt(item.at)}</Text>
                     {(item.media || []).length > 0 ? (
@@ -1070,14 +1104,25 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
         onRequestClose={() => setViewer(null)}
       >
         <View style={s.viewerBackdrop}>
+          {/* 2026-11-15（老板）：「点进去照片根本就不显示，也没办法放大看」
+              ① 图片走 CachedImage（和列表同一个缓存，不会再是空白）
+              ② 点图片以外任何地方关闭；点图片本身不关（避免想看细节时误关） */}
+          <Pressable style={s.viewerStage} onPress={() => setViewer(null)}>
+            {viewer && viewer.type === 'video' ? (
+              <VideoViewer uri={viewer.url} C={C} T={T} S={S} R={R} insets={insets} />
+            ) : viewer && viewer.url ? (
+              <CachedImage
+                uri={viewer.url}
+                style={s.viewerImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={s.viewerCloseText} allowFontScaling={false}>这张图没有地址</Text>
+            )}
+          </Pressable>
           <Pressable style={s.viewerClose} onPress={() => setViewer(null)} hitSlop={12}>
             <Text style={s.viewerCloseText} allowFontScaling={false}>关闭</Text>
           </Pressable>
-          {viewer && viewer.type === 'video' ? (
-            <VideoViewer uri={viewer.url} C={C} T={T} S={S} R={R} insets={insets} />
-          ) : viewer ? (
-            <Image source={{ uri: viewer.url }} style={s.viewerImage} resizeMode="contain" />
-          ) : null}
         </View>
       </Modal>
     </View>
@@ -1261,6 +1306,16 @@ const makeStyles = (C, T, S, R) =>
     writeBtnText: { color: C.onHero, ...T.meta },
     sheetBody: { flex: 1 },
     emptyMoments: { color: C.ink3, ...T.body, textAlign: 'center', marginTop: S.x6 },
+    // 2026-11-15：朋友圈卡片右上角「删除」
+    momentDel: {
+      position: 'absolute',
+      right: S.x3,
+      top: S.x2,
+      zIndex: 2,
+      paddingHorizontal: S.x2,
+      paddingVertical: 2,
+    },
+    momentDelText: { color: C.ink3, ...T.meta },
     momentCard: {
       backgroundColor: C.card,
       borderRadius: R.small,
@@ -1355,5 +1410,7 @@ const makeStyles = (C, T, S, R) =>
     viewerBackdrop: { flex: 1, backgroundColor: C.bg, justifyContent: 'center' },
     viewerClose: { position: 'absolute', top: 48, right: S.page, zIndex: 20 },
     viewerCloseText: { color: C.ink, ...T.body },
-    viewerImage: { width: '100%', height: '80%' },
+    viewerStage: { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' },
+    // 从 80% 高改成满屏可用高度：小图也尽量撑满，看起来是「放大」
+    viewerImage: { width: '100%', height: '100%' },
   });
