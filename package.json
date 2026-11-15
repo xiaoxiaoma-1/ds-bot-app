@@ -1,6 +1,6 @@
 {
   "name": "app-dsbot",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "main": "index.js",
   "private": true,
   "scripts": {

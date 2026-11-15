@@ -5,6 +5,7 @@ import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
 import { getTopicsRefreshStatus, startTopicsRefresh } from '../../workbenchApi';
+import { readCached, setCached } from '../../cache';
 
 // 选题池页（2026-11-12）
 // 口径：功能 1:1 复刻电脑端 TopicsPanel，界面重做。数据源 pool_db.py / index.js 的 pool 路由。
@@ -91,7 +92,15 @@ export default function TopicsPoolScreen({
   followRef.current = follow;
 
   // 服务端出题任务状态（唯一判据）
-  const [job, setJob] = useState(null);
+  // 2026-11-15（老板）：退出去再进来，刷新按钮会闪现 1 秒才切回「正在出题」。
+  // 根因：job 初值是 null → running 算出 false → 第一帧先画了按钮；
+  //       等 pullJob() 异步回来才发现真在跑，于是又切走。
+  // 治法两条一起上：
+  //   ① 首帧先用上次问到的状态（缓存同步读），本来就是 running 就直接画进度
+  //   ② 还没问到过任何状态时（jobKnown=false）不画按钮，画一个同高的占位
+  const JOB_CACHE = 'topics:job';
+  const [job, setJob] = useState(() => readCached(JOB_CACHE) || null);
+  const [jobKnown, setJobKnown] = useState(() => Boolean(readCached(JOB_CACHE)));
   const [jobBusy, setJobBusy] = useState(false);
   const jobDoneRef = useRef(false);
   const running = Boolean(job && job.running);
@@ -100,9 +109,12 @@ export default function TopicsPoolScreen({
     try {
       const d = await getTopicsRefreshStatus();
       setJob(d);
+      setCached(JOB_CACHE, d);   // 下次进页面首帧就能直接用
+      setJobKnown(true);
       return d;
     } catch (e) {
-      // 读不到状态就当作「没在跑」：宁可多给一次按钮，也不能把页面卡成不能动
+      // 读不到状态：把 known 也置真（否则按钮永远不出现），当作「没在跑」
+      setJobKnown(true);
       return null;
     }
   }, []);
@@ -170,6 +182,9 @@ export default function TopicsPoolScreen({
             try {
               const d = await startTopicsRefresh();
               setJob(d);
+              // 刚点完刷新就把状态落缓存：马上退出再进来，首帧也能直接看到「正在出题」
+              setCached(JOB_CACHE, d);
+              setJobKnown(true);
               if (onRefreshAll) Promise.resolve(onRefreshAll({})).catch(() => {});
             } catch (e) {
               setNote('没能开始刷新：' + String((e && e.message) || e));
@@ -391,7 +406,11 @@ export default function TopicsPoolScreen({
         {/* 刷新全部板块：主操作。生成中按钮变进度，右侧给取消 */}
         {/* 刷新全部板块：只有在「今天这 30 条已经出完」或「压根没在跑」时才出现。
             在跑的时候这块只显示真进度（服务端给的 done/total），按钮不出现（老板 2026-11-15 定的）。 */}
-        {running ? (
+        {!jobKnown ? (
+          // 还没问到过服务端状态：这块先占住位置，一个按钮都不画，
+          // 避免「刷新按钮闪一下又被换掉」。
+          <View style={[s.actionRow, { minHeight: 56 }]} />
+        ) : running ? (
           <View style={s.actionRow}>
             <View style={s.jobBox}>
               <Text style={s.jobTitle} allowFontScaling={false}>
