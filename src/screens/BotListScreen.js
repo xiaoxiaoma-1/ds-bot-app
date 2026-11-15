@@ -462,8 +462,17 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
     });
   }, []);
 
+  // 2026-11-15（自查发现）：renderRow 传进来的 index 是 **feed** 的（组标题也占一行），
+  // 而 reorder 是在 **sorted**（只有 Bot）里 splice —— 两个数组下标不是一回事。
+  // 分组后 feed[4] 可能是第 2 个 Bot，直接当 sorted 的下标就会挪错人。
+  // 这里先把 bot 换算成它在 sorted 里的真实位置。
+  const sortedIndexOf = useCallback(
+    (bot) => sorted.findIndex((x) => String(x && x.id) === String(bot && bot.id)),
+    [sorted],
+  );
+
   const makePan = useCallback(
-    (item, index) =>
+    (item, _feedIndex) =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true, // 只有把手挂着这个响应器
         onMoveShouldSetPanResponder: () => true,
@@ -472,14 +481,15 @@ export default function BotListScreen({ onOpen, onSettings, navigation, active =
         onPanResponderRelease: (_, g) => {
           setDragId(null);
           dragY.setValue(0);
-          reorder(index, g.dy);
+          const at = sortedIndexOf(item);
+          if (at >= 0) reorder(at, g.dy);
         },
         onPanResponderTerminate: () => {
           setDragId(null);
           dragY.setValue(0);
         },
       }),
-    [dragY, reorder],
+    [dragY, reorder, sortedIndexOf],
   );
 
   const toggleFolder = useCallback((id) => {

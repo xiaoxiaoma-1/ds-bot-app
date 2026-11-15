@@ -6,6 +6,7 @@ import {
   Easing,
   FlatList,
   Image,
+  Modal,
   Keyboard,
   Pressable,
   StyleSheet,
@@ -17,6 +18,9 @@ import LiveInput, { inputMaxHeight } from '../components/LiveInput';
 import { useTheme } from '../theme';
 import { setCached, useCachedResource } from '../cache';
 import { chat, openFeed, send, uploadImage } from '../api';
+import CachedImage from '../components/CachedImage';
+import { THUMB_W } from '../imgCache';
+import * as WebBrowser from 'expo-web-browser';
 import { getBase } from '../store';
 import { useKeyboardHeight } from '../keyboard';
 import { useAppearOnce, useBounceOnce, usePressScale } from '../motion';
@@ -65,11 +69,39 @@ function LoadingDots({ s }) {
   );
 }
 
-const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s }) {
+// 2026-11-15：消息里如果带了我们服务端的上传链接，就拆出来单独渲染。
+// 图片 → 缩略图直接显示，点了看大图；文档 → 一个「点开预览」卡片。
+// 链接之外的文字照旧走文字气泡（不改动文案本身）。
+const UPLOAD_RE = /https?:\/\/[^\s"'<>]*\/api\/dsbot\/uploads\/[^\s"'<>]+/g;
+const IMG_EXT = /\.(png|jpe?g|webp|gif)(\?|$)/i;
+const DOC_EXT = /\.(pdf|docx?|xlsx?|pptx?|md|markdown|txt|csv)(\?|$)/i;
+
+function splitAttachments(text) {
+  const raw = String(text || '');
+  const found = raw.match(UPLOAD_RE) || [];
+  const clean = raw.replace(UPLOAD_RE, '').replace(/\n{3,}/g, '\n\n').trim();
+  const images = [];
+  const docs = [];
+  found.forEach((u) => {
+    if (IMG_EXT.test(u)) images.push(u);
+    else if (DOC_EXT.test(u)) docs.push(u);
+  });
+  return { clean, images, docs };
+}
+
+function docName(u) {
+  try {
+    const seg = String(u).split('?')[0].split('/').pop() || '文件';
+    return decodeURIComponent(seg);
+  } catch { return '文件'; }
+}
+
+const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s, C, onOpenImage, onOpenDoc }) {
   const appear = useAppearOnce(0);
   const bounce = useBounceOnce();
   const mine = item.who === '我';
   const sameSpeaker = prevWho === item.who;
+  const att = useMemo(() => splitAttachments(item.text), [item.text]);
   return (
     <Animated.View
       style={[
@@ -81,20 +113,42 @@ const BubbleRow = memo(function BubbleRow({ item, prevWho, isLast, s }) {
       ]}
     >
       <View style={[s.bubble, mine ? s.bubbleMine : s.bubbleTheirs]}>
-        <Text style={s.bubbleText} allowFontScaling={false}>
-          {item.text}
-        </Text>
+        {att.clean ? (
+          <Text style={s.bubbleText} allowFontScaling={false}>
+            {att.clean}
+          </Text>
+        ) : null}
+        {att.images.map((u) => (
+          <Pressable key={u} onPress={() => onOpenImage && onOpenImage(u)} style={s.bubbleImgWrap}>
+            <CachedImage uri={u} style={s.bubbleImg} resizeMode="cover" thumbWidth={THUMB_W} />
+          </Pressable>
+        ))}
+        {att.docs.map((u) => (
+          <Pressable
+            key={u}
+            onPress={() => onOpenDoc && onOpenDoc(u)}
+            style={s.docCard}
+            accessibilityRole="button"
+            accessibilityLabel={`预览 ${docName(u)}`}
+          >
+            <Text style={s.docName} numberOfLines={1} allowFontScaling={false}>{docName(u)}</Text>
+            <Text style={s.docHint} allowFontScaling={false}>点开预览</Text>
+          </Pressable>
+        ))}
       </View>
     </Animated.View>
   );
 });
 
-const MessageList = memo(function MessageList({ items, C, T, S, R }) {
+const MessageList = memo(function MessageList({ items, C, T, S, R, onOpenImage, onOpenDoc }) {
   const s = useMemo(() => makeStyles(C, T, S, R), [C, T, S, R]);
   const data = useMemo(() => [...items].reverse(), [items]);
   const renderItem = useCallback(
     ({ item, index }) => (
       <BubbleRow
+        C={C}
+        onOpenImage={onOpenImage}
+        onOpenDoc={onOpenDoc}
         item={item}
         prevWho={data[index + 1] ? data[index + 1].who : undefined}
         isLast={index === 0}
@@ -206,6 +260,20 @@ export default function ChatScreen({ bot, onBack }) {
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [mode, setMode] = useState('');
   const [attachHint, setAttachHint] = useState(false);
+  // 2026-11-15：消息里的附件（图片/文档）点开时用
+  const [imgViewer, setImgViewer] = useState(null);
+  const openImage = useCallback((u) => setImgViewer(u), []);
+  const openDoc = useCallback(async (u) => {
+    try {
+      const sep = u.indexOf('?') >= 0 ? '&' : '?';
+      await WebBrowser.openBrowserAsync(u + sep + 'preview=1', {
+        toolbarColor: '#151518',
+        controlsColor: '#ffffff',
+      });
+    } catch (e) {
+      setErr({ step: '打不开这个文件', message: String((e && e.message) || e) });
+    }
+  }, []);
   // 问题 5（2026-11-15）：加号面板照微信重做。
   // attachHint 只是「在不在树上」，真正的出场/退场交给 attachAnim（24px 上滑 + 淡入）。
   const attachAnim = useRef(new Animated.Value(0)).current;
@@ -546,7 +614,7 @@ export default function ChatScreen({ bot, onBack }) {
 
       <View style={s.body}>
         <View style={s.body}>
-          {cachedChat.loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} />}
+          {cachedChat.loading ? <LoadingDots s={s} /> : <MessageList items={items} C={C} T={T} S={S} R={R} onOpenImage={openImage} onOpenDoc={openDoc} />}
           <LiveBubble ref={liveRef} C={C} T={T} S={S} R={R} />
           {/* 点消息区任意空白缩回：只吃点击，不盖任何遮罩色（通则 5）。
               挂上后的前 150ms 不响应，避免开面板的那一下立刻把它关掉（通则 6）。 */}
@@ -633,6 +701,15 @@ export default function ChatScreen({ bot, onBack }) {
         {/* 附件面板：2026-11-15 按老板的要求挪到输入栏「下面」（原来放在输入栏正上方，
             所以看着像从聊天框上面冒出来）。现在它在输入栏之后、屏幕底部那一格，
             从下往上弹（translateY 24→0 + 淡入），开的时候输入栏自己收窄底部留白。 */}
+        {/* 2026-11-15：消息里的图片点开看大图 */}
+        <Modal visible={!!imgViewer} transparent animationType="fade" onRequestClose={() => setImgViewer(null)}>
+          <Pressable style={s.imgBackdrop} onPress={() => setImgViewer(null)}>
+            {imgViewer ? (
+              <CachedImage uri={imgViewer} style={s.imgFull} resizeMode="contain" />
+            ) : null}
+          </Pressable>
+        </Modal>
+
         {attachHint ? (
           <Animated.View
             style={[
@@ -720,6 +797,22 @@ const makeStyles = (C, T, S, R) =>
     },
     bubbleMine: { backgroundColor: C.me },
     bubbleTheirs: { backgroundColor: C.card },
+    bubbleImgWrap: { marginTop: S.x1, borderRadius: 8, overflow: 'hidden' },
+    bubbleImg: { width: 180, height: 180 },
+    docCard: {
+      marginTop: S.x1,
+      paddingHorizontal: S.x3,
+      paddingVertical: S.x2,
+      borderRadius: 8,
+      backgroundColor: C.card2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: S.x2,
+    },
+    docName: { flex: 1, minWidth: 0, color: C.ink, ...T.body },
+    docHint: { color: C.ink3, ...T.meta },
+    imgBackdrop: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
+    imgFull: { width: '100%', height: '100%' },
     bubbleText: { color: C.ink, ...T.body },
     // 输入栏外壳：只做定位基准，面板贴在它正上方（消息区不重排）
     composerWrap: { position: 'relative' },

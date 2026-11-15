@@ -884,7 +884,7 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     ...T.body,
   },
   bulkDone: {
-    backgroundColor: C.greenLight,
+    backgroundColor: C.softMint,
     marginHorizontal: S.x6,
     marginVertical: S.x3,
     padding: S.x3,
@@ -892,7 +892,7 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     alignItems: 'center',
   },
   bulkDoneText: {
-    color: C.green,
+    color: C.good,
     ...T.body,
   },
   scroll: {
@@ -1100,7 +1100,7 @@ const makeStyles = (C, T, S, R) => StyleSheet.create({
     backgroundColor: C.bg,
   },
   modelOptionCurrent: {
-    backgroundColor: C.accentLight,
+    backgroundColor: C.softMint,
   },
   radio: {
     width: 20,
