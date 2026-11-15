@@ -6,8 +6,14 @@ import { useTheme } from '../theme';
 // 任何一屏抛异常，以前整个页面直接闪退、一个字的报错都看不到；现在先接住，
 // 把 error.message 摆到屏幕上，点「重试」重新挂载。
 // 用法：<ErrorBoundary name="表达训练">…</ErrorBoundary>
-function CrashFallback({ name, err, onRetry }) {
+function CrashFallback({ name, err, info, onRetry }) {
   const { C, T, S, R } = useTheme();
+  // 组件栈只取前三帧，够定位是谁抛的，又不至于把屏幕铺满
+  const stackLines = String((info && info.componentStack) || '')
+    .split('\n')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 3);
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, padding: S.x6, justifyContent: 'center', gap: S.x3 }}>
       <Text style={{ color: C.ink2, ...T.body }} allowFontScaling={false}>
@@ -16,6 +22,11 @@ function CrashFallback({ name, err, onRetry }) {
       <Text style={{ color: C.ink2, ...T.meta }} allowFontScaling={false}>
         {String((err && err.message) || err || '没有报错信息')}
       </Text>
+      {stackLines.length ? (
+        <Text style={{ color: C.ink3, ...T.meta }} allowFontScaling={false}>
+          {stackLines.join('\n')}
+        </Text>
+      ) : null}
       <Pressable
         style={{
           marginTop: S.x2,
@@ -38,24 +49,32 @@ function CrashFallback({ name, err, onRetry }) {
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { err: null };
+    this.state = { err: null, info: null };
     this.reset = this.reset.bind(this);
   }
 
-  componentDidCatch(error) {
-    this.setState({ err: error });
+  componentDidCatch(error, info) {
+    // 2026-11-15：连组件栈一起存 —— 真机上只看 error.message 定位不到是谁抛的。
+    this.setState({ err: error, info });
     if (typeof console !== 'undefined' && console.error) {
-      console.error(`[边界] ${this.props.name || ''} 渲染异常：`, error);
+      console.error(`[边界] ${this.props.name || ''} 渲染异常：`, error, info && info.componentStack);
     }
   }
 
   reset() {
-    this.setState({ err: null });
+    this.setState({ err: null, info: null });
   }
 
   render() {
     if (this.state.err) {
-      return <CrashFallback name={this.props.name} err={this.state.err} onRetry={this.reset} />;
+      return (
+        <CrashFallback
+          name={this.props.name}
+          err={this.state.err}
+          info={this.state.info}
+          onRetry={this.reset}
+        />
+      );
     }
     return this.props.children;
   }

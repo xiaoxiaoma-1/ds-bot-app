@@ -38,6 +38,36 @@ function timeText(d = new Date()) {
 // 训练历史单条：左滑露出「删除」，点删除才真正删。
 // 左滑逻辑抽到 src/screens/SwipeRow.js：96 只在那个文件里出现一次，
 // 宽度 / clamp / toValue 三处各写一遍就是红块和卡片之间出缝的直接原因。
+
+// 2026-11-15（「点进去直接闪退」的根因方向）：
+// 历史是从 AsyncStorage 读回来的裸 JSON，几十个版本前写进去的字段类型不受今天这版约束。
+// 只要里面有一条是 null / 数组 / score 是对象，进这一屏就会在 <Text>{item.at}</Text> 或
+// {item.score} 上抛「Cannot read property 'at' of null」/「Objects are not valid as a React child」，
+// 表现就是点进就闪退、或被 ErrorBoundary 接住显示「这一屏没渲染成功」。
+// 所以渲染前必须过一遍结构归一化 —— 不是在某一行加个 ?. 糊过去，而是保证进 Text 的永远是字符串或数字。
+const HISTORY_FIELDS = ['id', 'at', 'summary', 'text'];
+function normalizeHistory(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  const seen = new Set();
+  for (let i = 0; i < list.length; i += 1) {
+    const raw = list[i];
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const id = String(raw.id == null ? `h${i}` : raw.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const one = { id };
+    HISTORY_FIELDS.slice(1).forEach((k) => {
+      const v = raw[k];
+      one[k] = typeof v === 'string' ? v : v == null ? '' : String(v);
+    });
+    one.score =
+      typeof raw.score === 'number' && Number.isFinite(raw.score) ? raw.score : null;
+    out.push(one);
+  }
+  return out.slice(0, HISTORY_MAX);
+}
+
 function HistoryRow({ item, s, onDelete, onOpen, onSwipeState, busy }) {
   return (
     <SwipeRow onDelete={() => onDelete && onDelete(item.id)} onSwipeState={onSwipeState} style={s.historyItem}>
@@ -85,7 +115,8 @@ export default function ExpressionScreen({ onBack, onNext }) {
       .then((raw) => {
         if (!alive || !raw) return;
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setHistory(parsed.slice(0, HISTORY_MAX));
+        // 2026-11-15：读回来先过结构归一化（老的裸数据里可能有 null / 对象，直接就崩）
+        if (Array.isArray(parsed)) setHistory(normalizeHistory(parsed));
       })
       .catch(() => {});
     return () => {
@@ -95,7 +126,8 @@ export default function ExpressionScreen({ onBack, onNext }) {
 
   const addHistory = useCallback((rec) => {
     setHistory((prev) => {
-      const next = [rec, ...prev.filter((x) => x && x.id !== rec.id)].slice(0, HISTORY_MAX);
+      // 同上：写回前也过一遍归一化，保证磁盘里的数据永远是干净的
+      const next = normalizeHistory([rec, ...prev]);
       AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next)).catch(() => {});
       return next;
     });

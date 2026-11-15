@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   Modal,
   Pressable,
@@ -15,7 +16,7 @@ import { avatarInk, useTheme } from '../theme';
 import { maskFor } from '../avatarMasks';
 import CHARACTER_SHAPES from '../components/characterShapes';
 import { advisors, models, writeModel, botFolders, botFolderCreate, writeBotFolders } from '../api';
-import { setCached, useCachedResource } from '../cache';
+import { readCached, setCached } from '../cache';
 import { eyeInkFor } from '../components/CharacterIcon';
 
 // 问题 3 的教训（0.3.0 版「顾问页管理点什么都闪退」）：/api/dsbot/models 回的是
@@ -150,12 +151,20 @@ export default function TeamManageScreen({ navigation, onBack }) {
     if (navigation && typeof navigation.goBack === 'function') return navigation.goBack();
   }, [onBack, navigation]);
 
-  const cached = useCachedResource('dsbot:advisors', advisors);
-  const [bots, setBots] = useState(() => (cached.data || []).filter(b => b.id && b.name));
-  const [allModels, setAllModels] = useState([]);
+  // 2026-11-15 性能（老板报「调模型/建组太慢」，实测接口 18/13/160ms —— 不是接口慢）：
+  //   ① 原来 advisors 被两条路径各请求一次：useCachedResource 自己刷新一次 + 挂载时 load() 又一次，
+  //      第二次的结果还被丢掉。现在只留 load() 一条路径，初值直接从本地缓存读。
+  //   ② models / groups 原来完全不缓存，每次进页面都重拉。现在都走 readCached + setCached，
+  //      有缓存就第一帧直接出「改为：」的模型清单，后台再静默换新。
+  const initialAdvisors = readCached('dsbot:advisors');
+  const initialModels = readCached('dsbot:models');
+  const initialGroups = readCached('dsbot:groups');
+
+  const [bots, setBots] = useState(() => (Array.isArray(initialAdvisors) ? initialAdvisors : []).filter((b) => b && b.id && b.name));
+  const [allModels, setAllModels] = useState(() => (Array.isArray(initialModels) ? initialModels : []));
   const [expandedId, setExpandedId] = useState(null);
-  const [loading, setLoading] = useState(() => !cached.data);
-  const [modelsLoading, setModelsLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(Array.isArray(initialAdvisors) && initialAdvisors.length));
+  const [modelsLoading, setModelsLoading] = useState(() => !(Array.isArray(initialModels) && initialModels.length));
   const [modelsErr, setModelsErr] = useState(null);
   const [savingIds, setSavingIds] = useState([]);
   const [err, setErr] = useState(null);
@@ -165,7 +174,7 @@ export default function TeamManageScreen({ navigation, onBack }) {
   // ── 分组（2026-11-15，老板要手机端也有分组）──
   // 电脑端是「组标题 + 可拖可排序」，手机上没有拖拽，改成三件事：
   //   建组（原地长出输入行）/ 归组（展开某个 Bot 里点组的胶囊）/ 组可展开收起。
-  const [groups, setGroups] = useState([]);
+  const [groups, setGroups] = useState(() => (Array.isArray(initialGroups) ? initialGroups : []));
   const [groupsErr, setGroupsErr] = useState(null);
   const [foldOpen, setFoldOpen] = useState({}); // { 组 id: false } = 收起；默认展开
   const [newGroupOpen, setNewGroupOpen] = useState(false);
@@ -181,14 +190,42 @@ export default function TeamManageScreen({ navigation, onBack }) {
     };
   }, []);
 
+  // ── 打点（老板 2026-11-15 要的「点进管理→模型列表出现」实际毫秒数）──
+  // 拆成两段：三个请求各自耗时 + 列表首帧渲染耗时。只在 __DEV__ 显示，
+  // 正式包里不出现这行字（通则 41：不往界面塞自证文案）。
+  const perf = useRef({ t0: Date.now(), advisorsMs: 0, modelsMs: 0, foldersMs: 0, firstPaintMs: 0 });
+  const [perfText, setPerfText] = useState('');
+
+  useEffect(() => {
+    if (!__DEV__) return undefined;
+    if (!bots.length) return undefined;
+    let raf1 = null;
+    let raf2 = null;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const p = perf.current;
+        p.firstPaintMs = Date.now() - p.t0;
+        setPerfText(
+          `请求 ${p.advisorsMs}/${p.modelsMs}/${p.foldersMs}ms · 首屏 ${p.firstPaintMs}ms · ${bots.length} 个`,
+        );
+      });
+    });
+    return () => {
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
+  }, [bots]);
+
   // I1：Bot 列表和模型清单分开拉、分开渲染。
   // 原来 Promise.all 等两边都回来才算加载完，models 一慢整页就是转圈一分多钟。
   const load = useCallback(async () => {
     setLoading(true);
+    const t0 = Date.now();
     try {
       const botsRes = await advisors();
       const filteredBots = (botsRes && botsRes.filter ? botsRes : []).filter((b) => b && b.id && b.name);
       if (!mounted.current) return;
+      perf.current.advisorsMs = Date.now() - t0;
       setBots(filteredBots);
       setErr(null);
       // 成功后写回缓存，下次点进来直接命中
@@ -202,15 +239,20 @@ export default function TeamManageScreen({ navigation, onBack }) {
 
   const loadModels = useCallback(async () => {
     if (mounted.current) setModelsLoading(true);
+    const t0 = Date.now();
     try {
       const res = await models();
       if (!mounted.current) return;
+      perf.current.modelsMs = Date.now() - t0;
       // 问题 3：接口回的是对象数组 [{ref,name,provider}]（实测已确认），
       // 以前这里把它当字符串用 + 失败时 catch 静默吞掉，于是「改为：」下面一片空白、
       // 只留一个取消按钮。现在两种形态都归一化，失败也不再沉默。
       const raw = Array.isArray(res) ? res : res && Array.isArray(res.models) ? res.models : [];
-      setAllModels(raw.map(normalizeModel).filter(Boolean));
+      const list = raw.map(normalizeModel).filter(Boolean);
+      setAllModels(list);
       setModelsErr(null);
+      // 模型清单基本不变：落本地，下次进页面秒开（老板 2026-11-15 明确要的缓存）
+      if (list.length) setCached('dsbot:models', list);
     } catch (e) {
       if (!mounted.current) return;
       setAllModels([]);
@@ -221,11 +263,14 @@ export default function TeamManageScreen({ navigation, onBack }) {
   }, []);
 
   const loadGroups = useCallback(async () => {
+    const t0 = Date.now();
     try {
       const list = await botFolders();
       if (!mounted.current) return;
+      perf.current.foldersMs = Date.now() - t0;
       setGroups(Array.isArray(list) ? list : []);
       setGroupsErr(null);
+      if (Array.isArray(list) && list.length) setCached('dsbot:groups', list);
     } catch (e) {
       if (!mounted.current) return;
       setGroupsErr((e && e.message) || '读不到分组');
@@ -460,6 +505,13 @@ export default function TeamManageScreen({ navigation, onBack }) {
         </View>
       </View>
 
+      {/* 只在开发模式下出现：把「点进来 → 列表出来」拆成请求/渲染两段毫秒数 */}
+      {__DEV__ && perfText ? (
+        <Text style={s.perfHint} allowFontScaling={false}>
+          {perfText}
+        </Text>
+      ) : null}
+
       {showBulkMenu && (
         <View style={s.bulkMenu}>
           <ScrollView style={s.bulkMenuScroll}>
@@ -586,10 +638,23 @@ export default function TeamManageScreen({ navigation, onBack }) {
         ) : null}
       </View>
 
-      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
-        {!loading && !err && bots.length === 0 ? (
-          <Text style={s.emptyText}>读不到 Bot 列表，点上面重试</Text>
-        ) : flat.map((row) => {
+      {/* 2026-11-15：ScrollView + 全量 map 改成 FlatList（虚拟化）。
+          39 个 Bot 每张卡都带一个头像（SVG 形状树），一次性全渲染是首屏卡顿的主因；
+          虚拟化后首帧只挂 10 张，滚动时再补。数据源仍然是同一个 flat。 */}
+      <FlatList
+        style={s.scroll}
+        showsVerticalScrollIndicator={false}
+        data={!loading && !err && bots.length === 0 ? [] : flat}
+        keyExtractor={(row) => row.key}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        ListEmptyComponent={
+          !loading && !err && bots.length === 0 ? (
+            <Text style={s.emptyText}>读不到 Bot 列表，点上面重试</Text>
+          ) : null
+        }
+        renderItem={({ item: row }) => {
           if (row.kind === 'group') {
             const open = foldOpen[row.id] !== false;
             return (
@@ -755,13 +820,14 @@ export default function TeamManageScreen({ navigation, onBack }) {
               )}
             </View>
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </View>
   );
 }
 
 const makeStyles = (C, T, S, R) => StyleSheet.create({
+  perfHint: { paddingHorizontal: S.x6, paddingBottom: S.x1, color: C.placeholder, ...T.meta },
   container: {
     flex: 1,
     backgroundColor: C.bg,

@@ -102,6 +102,10 @@ export default function ViewsPoolScreen({
 
   const pan = useRef(new Animated.ValueXY()).current;
   const asked = useRef(false);
+  // 通则 36：停在第一条时点「观点库」原来是个空操作（界面什么都没变，像是没点中）。
+  // 现在给一句话反馈，3 秒自己消失（通则 31）。
+  const [firstHint, setFirstHint] = useState(false);
+  const hintTimer = useRef(null);
 
   const cur = topics[idx] || null;
   const next = topics[idx + 1] || null;
@@ -320,6 +324,13 @@ export default function ViewsPoolScreen({
 
   // 「观点库」气泡：回到第一页（也就是首页那 3 条所在的位置），不换页、不跳走
   const toFirst = () => {
+    if (idx === 0) {
+      // 已经在第一条：不装死，给一句反馈
+      setFirstHint(true);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+      hintTimer.current = setTimeout(() => setFirstHint(false), 3000);
+      return;
+    }
     setIdx(0);
     pan.setValue({ x: 0, y: 0 });
   };
@@ -489,7 +500,7 @@ export default function ViewsPoolScreen({
               观点库
             </Text>
             <Text style={s.entrySub} numberOfLines={1} allowFontScaling={false}>
-              {empty ? '全看完了' : loading ? '正在读…' : `还剩 ${remain} 条`}
+              {empty ? '全看完了' : loading ? '正在读…' : firstHint ? '已经在第一条' : `还剩 ${remain} 条`}
             </Text>
           </Pressable>
           <Pressable
