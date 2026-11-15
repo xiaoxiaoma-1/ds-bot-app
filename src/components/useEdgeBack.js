@@ -23,7 +23,7 @@ import { Animated, Dimensions, PanResponder } from 'react-native';
 // 屏宽必须用 Dimensions 取：responder 的 e.nativeEvent 里**没有 layout 字段**（那是 onLayout 才给的），
 // 以前写成 e.nativeEvent.layout || {width:393} 等于所有机型都按 393 算。
 const SW = Dimensions.get('window').width;
-const TRIGGER_VX = 0.4; // 甩得够快也算
+const TRIGGER_VX = 0.3; // 甩得够快也算，改 0.3 更容易触发（贴近 iOS）
 const SPRING = { tension: 420, friction: 20, useNativeDriver: false }; // 与卡片同一套弹簧令牌；pan 是 JS 驱动，弹簧必须同为 JS
 
 export default function useEdgeBack({ onBack, enabled = true, edgeWidth = 22 }) {
@@ -38,15 +38,18 @@ export default function useEdgeBack({ onBack, enabled = true, edgeWidth = 22 }) 
     () => ({
       x,
       panHandlers: PanResponder.create({
+        // 2026-11-15（老板第三次反馈「还是不跟手」）：必须改到捕获阶段抢。
+        // 卡片的 responder 也是 capture 阶段抢的（ViewsPoolScreen.js:173），谁先返 true 谁赢；
+        // RN 同阶段按树序（根→叶），我们是卡片的祖先，所以我们的 move capture 先被问，返 true 就赢。
+        // 冒泡阶段永远轮不到 —— 这就是前两版一直没效果的根因。
         onStartShouldSetPanResponder: () => false,
-        onStartShouldSetPanResponderCapture: () => false,
-        onMoveShouldSetPanResponder: (e, g) => {
+        onStartShouldSetPanResponderCapture: () => false,   // 起手不抢，留给竖滑滚屏
+        onMoveShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponderCapture: (e, g) => {
           if (!enabled) return false;
           const x0 = typeof g.x0 === 'number' ? g.x0 : e.nativeEvent.locationX;
-          if (typeof x0 === 'number' && x0 > edgeWidth) return false;
-          return g.dx > 6 && g.dx > Math.abs(g.dy) * 1.2;
+          return typeof x0 === 'number' && x0 <= edgeWidth && g.dx > 4 && g.dx > Math.abs(g.dy) * 1.2;
         },
-        onMoveShouldSetPanResponderCapture: () => false, // 不抢子元素的手势
         onPanResponderMove: (e, g) => {
           // 只往右推，往左不推（松手时往左弹），手不离屏可来回
           x.setValue(Math.max(0, g.dx));

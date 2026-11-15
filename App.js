@@ -844,6 +844,7 @@ function BookReaderRoute({ route, navigation }) {
   const [err, setErr] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const moreLock = useRef(false);
+  const prefetchLock = useRef(false);
   const aliveRef = useRef(true);
   useEffect(() => () => { aliveRef.current = false; }, []);
 
@@ -880,6 +881,35 @@ function BookReaderRoute({ route, navigation }) {
       if (!aliveRef.current) return;
       const totalN = Number(d0.total) || 0;
       setTotal(totalN);
+      // 预取加强：若书总块数大于 20，再拉 1~2 次（每次 20 块）拼进内存，进书时至少 60 块
+      if (!prefetchLock.current && totalN > 20) {
+        prefetchLock.current = true;
+        (async () => {
+          const batch1 = Math.min(20, totalN - 20);
+          if (batch1 > 0) {
+            try {
+              const d1 = await getBookRead({ id: bookId, offset: 20, limit: batch1 });
+              if (!aliveRef.current) return;
+              const more1 = pack(d1, 20);
+              cacheBlock(20, more1);
+            } catch (e) {
+              // 预取失败不影响主流程
+            }
+          }
+          const batch2 = Math.min(20, totalN - 40);
+          if (batch2 > 0) {
+            try {
+              const d2 = await getBookRead({ id: bookId, offset: 40, limit: batch2 });
+              if (!aliveRef.current) return;
+              const more2 = pack(d2, 40);
+              cacheBlock(40, more2);
+            } catch (e) {
+              // 预取失败不影响主流程
+            }
+          }
+          prefetchLock.current = false;
+        })();
+      }
       // savedIdx 越界会请求到空块；夹在 0..total-1，避免第一屏白屏。
       const jump = Math.max(0, Math.min(Number(d0.savedIdx) || 0, Math.max(0, totalN - 1)));
       setSavedIdx(jump);

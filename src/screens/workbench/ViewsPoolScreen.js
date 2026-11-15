@@ -295,7 +295,7 @@ export default function ViewsPoolScreen({
       if (goBackRef.current) goBackRef.current();
     },
     enabled: mode === 'swipe',
-    edgeWidth: 20,
+    edgeWidth: 32,   // 20 → 32：20 恰好等于卡片左右留白，手指差 1px 就落在卡片上被吃掉
   });
 
   // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
@@ -370,12 +370,12 @@ export default function ViewsPoolScreen({
       <Animated.View 
         style={{ 
           flex: 1, 
+          backgroundColor: C.bg,          // iOS 上给 View 加阴影必须有底色，否则阴影不渲染
           transform: [{ translateX: edgeBack.x }],
-          // 左侧轻微阴影，显出页面在滑走
           shadowColor: '#000000',
-          shadowOffset: { width: -2, height: 0 },
-          shadowOpacity: 0.03,
-          shadowRadius: 4,
+          shadowOffset: { width: -6, height: 0 },
+          shadowOpacity: 0.18,
+          shadowRadius: 12,
         }}
         {...edgeBack.panHandlers}
       >

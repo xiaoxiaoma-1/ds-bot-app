@@ -42,10 +42,10 @@ import { cleanTitle, paginate, reflow, toSimplified } from './bookText';
 
 const TOP_H = 96;
 const DEBOUNCE_MS = 500;
-const NEAR_END_PAGES = 3;
+const NEAR_END_PAGES = 10;
 const LETTER_SPACING = 0.3;
 // 量尺窗口长度（字）：只量当前位置往后这么多，字号变化只重量这一段（G2）
-const WIN_CHARS = 6000;
+const WIN_CHARS = 20000;
 
 // 字号档：lineHeight 跟着字号走，不然大字号会挤成一坨
 const FONT_STEPS = [
@@ -135,9 +135,16 @@ export default function BookReaderScreen({
 
   // 正文窗口或宽度变了必须先清空（窗口一换，旧行的偏移就全废了）。
   // 字号变化**不清**：旧的页先留着，量尺重排完再整体替换，避免闪一下「正在排版…」。
+  //
+  // 2026-11-15（老板：「一页一页地给我加载」）：依赖从 winText 改成 winStart。
+  // winText = doc.text.slice(winStart, winStart+WIN_CHARS)，只要后面追加了新块（onNeedMore），
+  // winText 就变长 → 原来会把 lines 清空 → pages 变空 → 屏上闪一下「正在排版…」。
+  // 实际上追加块**不会移动窗口起点**，已量出来的行（start/end 是 doc.text 里的绝对偏移）
+  // 对同一段前缀依然有效，所以只要 winStart 没动就不该清空 —— 新的一批行到了直接整体替换。
+  // 窗口真的往后挪（winStart 变）或屏幕宽度变了，才清。
   useEffect(() => {
     setLines([]);
-  }, [winText, pageW]);
+  }, [winStart, pageW]);
 
   // ② 量行：隐藏 Text 与正文同宽同字号，onTextLayout 直接给每行高度
   //
@@ -262,6 +269,23 @@ export default function BookReaderScreen({
     setPageIdx(i);
   };
 
+  const prevPage = useCallback(() => {
+    const target = Math.max(0, pageIdx - 1);
+    if (scroller.current) scroller.current.scrollTo({ x: target * winWidth, animated: true });
+    setPageIdx(target);
+  }, [pageIdx, winWidth]);
+
+  const nextPage = useCallback(() => {
+    const last = pages.length - 1;
+    if (pageIdx >= last) {
+      if (base + blocks.length < total && onNeedMore) onNeedMore(base + blocks.length);
+      return;
+    }
+    const target = pageIdx + 1;
+    if (scroller.current) scroller.current.scrollTo({ x: target * winWidth, animated: true });
+    setPageIdx(target);
+  }, [pageIdx, pages.length, winWidth, base, blocks.length, total, onNeedMore]);
+
   const pageCount = pages.length;
   // G2 文案：主进度只显示「第 N 页」（不显示总页数 —— 窗口只量了一段，总页数不可靠）。
   // N = 之前窗口已经翻过的页数 + 本窗口内的第几页。
@@ -359,6 +383,12 @@ export default function BookReaderScreen({
                         {doc.text.slice(pg.start, pg.end)}
                       </Text>
                     </Pressable>
+                    {/* 三热区：左-上一页，中-菜单，右-下一页 */}
+                    <View style={s.zones} pointerEvents="box-none">
+                      <Pressable style={s.zone} onPress={prevPage} accessibilityRole="button" accessibilityLabel="上一页" />
+                      <Pressable style={s.zone} onPress={() => setMenuOpen(v => !v)} accessibilityRole="button" accessibilityLabel="阅读菜单" />
+                      <Pressable style={s.zone} onPress={nextPage} accessibilityRole="button" accessibilityLabel="下一页" />
+                    </View>
                   </View>
                 ))}
               </ScrollView>
@@ -496,6 +526,10 @@ const makeStyles = (C, T, S, R, K) =>
     },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     hint: { ...T.body },
+
+    // 三热区：左1/3上一页，中1/3菜单，右1/3下一页（透明叠加在正文上）
+    zones: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' },
+    zone: { flex: 1 },
 
     page: { paddingHorizontal: S.page, paddingTop: S.x2 },
     pageHit: { flex: 1, minHeight: 1 },
