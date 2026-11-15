@@ -110,8 +110,13 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
 
   // 选题池行数：5 条填不满今日热点的高度，有 10 条就显示 10 条（老板说 5 或 10 都行）。
   // 6–9 条按实际条数显示；不足 5 条补齐 5 行占位，不让卡片缩成一小截。
-  const topicShow = topicItems.length >= 10 ? 10 : topicItems.length;
-  const topicRowCount = Math.max(5, topicShow);
+  // 2026-11-15（老板）：不要求凑 10 条，能挤几条挤几条，密度合适就行。
+  // 行距放宽到 24（原来 4），因此每行更高；行数按「卡片可用高度 / 行高」算，
+  // 但最多不超过手上真有的条数 —— 绝不为了填满而编行。
+  const TOPIC_ROW_H = 24; // 每行占的高度（含行距）：正文 21 + 呼吸 3
+  const topicCap = Math.max(4, Math.floor((HERO_MIN_H - 60) / TOPIC_ROW_H)); // 220-60=160 → 6 行
+  const topicRowCount = Math.min(topicCap, topicItems.length);
+  const topicShow = topicRowCount;
 
   // 选题池右上角的数字：今天生成了几条（不是全表累计的 133）。
   // 今天还没出题（today=0）时不写「0 条」——池子里明明有东西，写 0 就是假数；
@@ -319,8 +324,9 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
               // 老老实实说今天没出题，卡片高度由另外两张卡撑平。
               <Text style={s.stateText} allowFontScaling={false}>今天的选题还没生成</Text>
             ) : (
-              // 行数见上面 topicRowCount：5 条填不满就显示 10 条，取够为止；
-              // 仍不足 5 条时补空行（不写序号、不写「—」），只用来保持三张卡的行距一致。
+              // 2026-11-15（老板）：不凑 10 条，也不补空行 —— 有几条显示几条，
+              // 行距放大到 6，卡片高度由三张卡共用的 minHeight 撑平。
+              // 少几条就是少几行，宁可下方留白，也不塞占位让密度变高。
               [...Array(topicRowCount)].map((_, index) => {
                 const topic = index < topicShow ? topicItems[index] : null;
                 return (
@@ -333,9 +339,7 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
                         </Text>
                         <Text style={s.score} allowFontScaling={false}>{scoreFor(topic)}</Text>
                       </>
-                    ) : (
-                      <View style={{ height: 16 }} />
-                    )}
+                    ) : null}
                   </View>
                 );
               })
@@ -468,11 +472,13 @@ const makeStyles = (C, T, S, R) =>
     sectionMeta: { color: C.ink3, ...T.meta },
     row: { paddingVertical: S.x1, gap: S.x1 },
     rowTitle: { color: C.ink, ...T.body },
-    rowSub: { color: C.ink2, ...T.meta },    listRow: {
+    rowSub: { color: C.ink2, ...T.meta },    // 2026-11-15（老板第三次说「选题池文字太密」）：每行留白从 4 加到 6，
+    // 对齐从 flex-start 改成 center，行与行之间不再糊成一片。
+    listRow: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       gap: S.x2,
-      paddingVertical: S.x1,
+      paddingVertical: 6,
     },
     listText: { flex: 1, minWidth: 0, gap: S.x1 },
     listTitle: { flex: 1, minWidth: 0, color: C.ink, ...T.body },
