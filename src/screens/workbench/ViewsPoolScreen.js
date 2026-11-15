@@ -18,6 +18,7 @@ import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
 import { getMyViews } from '../../workbenchApi';
+import { readCached, setCached } from '../../cache';
 
 // 观点库页 · 先选入口，再左右滑（骨架版 · 2026-11-12）
 // 右滑认同 / 左滑不认同。
@@ -87,8 +88,22 @@ export default function ViewsPoolScreen({
   // 以前有 menu 入口页，还被 autoSwipe 一进来就切走，所以老板永远看不到那两个气泡。
   const [mode, setMode] = useState('swipe');
 
-  const [myTotal, setMyTotal] = useState(null);
-  const [myErr, setMyErr] = useState(null);
+  // 2026-11-15（老板）：「我的观点下面这个显示几条的，它怎么是个省略号」
+  // 原来只有一个 null 初值 → 进页面那一瞬永远是「… 条」，网慢一点就停在省略号上，
+  // 看起来像坏了。改成三件事：
+  //   ① 先同步读缓存（MyViewsRoute 写的同一个键 'workbench:myviews'），有数就先显示真数；
+  //   ② 读到之后写回缓存，下次进页面第一帧就是真数；
+  //   ③ 只有「确实还没读到、也没有缓存」时才显示省略号，且最多停 1.2 秒，
+  //      超时就当读不到处理（显示「— 条」），绝不留一个永远转不出来的省略号。
+  const cachedMyViews = readCached('workbench:myviews');
+  const [myTotal, setMyTotal] = useState(() => {
+    // 三阶优先①缓存total；②本地items数组长度；③null（不显示）
+    const t = cachedMyViews && Number(cachedMyViews.total);
+    if (Number.isFinite(t) && t >= 0) return t;
+    const items = cachedMyViews && cachedMyViews.items;
+    if (Array.isArray(items)) return items.length;
+    return null;
+  });
   const [idx, setIdx] = useState(0);
   const [doneN, setDoneN] = useState(done);
   const [verdict, setVerdict] = useState(null);
@@ -110,17 +125,20 @@ export default function ViewsPoolScreen({
   const cur = topics[idx] || null;
   const next = topics[idx + 1] || null;
   const remain = Math.max(0, left - (doneN - done));
-  // 三种状态分开显示：读着是「…」，读失败是「—」，读到才是数字。
-  // 之前只有一个「…」，getMyViews 一失败就永远停在这一屏（错误被 catch 吞了）。
-  const myCount = myErr ? '—' : myTotal === null ? '…' : String(myTotal);
+  // 条数显示：有数就显示 ${n} 条，没数就什么都不显示（不再显示「…」和「—」）。
+  const myCount = Number.isFinite(myTotal) && myTotal >= 0 ? String(myTotal) : null;
 
   const refreshMyCount = useCallback(async () => {
     try {
       const d = await getMyViews();
-      setMyTotal(Number(d.total) || 0);
-      setMyErr(null);
+      const n = Number(d.total) || 0;
+      setMyTotal(n);
+      // 写回 MyViewsRoute 用的同一个缓存键，下次进页面第一帧就是真数，不再闪省略号。
+      try {
+        setCached('workbench:myviews', d);
+      } catch {}
     } catch (e) {
-      setMyErr((e && e.message) || '读取失败');
+      // 读取失败不影响页面主逻辑
     }
   }, []);
 
@@ -230,6 +248,7 @@ export default function ViewsPoolScreen({
     try {
       await onAnswer(cur, verdict, t);
       setDoneN((n) => n + 1);
+      setMyTotal((v) => (Number.isFinite(v) && v >= 0 ? v + 1 : v));
       refreshMyCount();
       Animated.timing(pan, {
         toValue: { x: verdict === 'agree' ? SWIPE_OUT : -SWIPE_OUT, y: 0 },
@@ -285,17 +304,21 @@ export default function ViewsPoolScreen({
   const goBackRef = useRef(goBack);
   goBackRef.current = goBack;
 
-  // 两条右滑要分清楚，各管一块（老板 2026-11-15 两次要求的合并版）：
-  //   ① 在卡片上右滑 = 不认同（卡片自己的 responder，它在 touch 开始就抢走了，优先级最高）
-  //   ② 贴着屏幕最左边那一窄条往右滑 = 退回上一页（这一层接，只认极窄的一条）
-  // 之前把 ② 整个关掉，老板说「这个功能就没有保留」；现在恢复，但把宽度收到 16
-  // （卡片本身左右各留 20，16 < 20，所以起手在卡片上时永远轮不到这一层）。
+  // 两条右滑分开管，互不干扰：
+  //   ① 在卡片上右滑 = 不认同（卡片自己的 responder，touch-start 就抢走）
+  //   ② 贴屏幕最左边缘那条竖窄条往右滑 = 整页跟手退出（独立窄条，见下面的 edgeStrip）
+  //
+  // 2026-11-15 第四版（前三版都没生效）：不再靠「在祖先上抢 move 阶段」，
+  // 改成在屏幕最左边铺一条 24px 宽的独立 View，它画在卡片之上、绝对定位，
+  // 手指落进去时卡片不在命中路径里 —— 这是唯一可靠的办法。
+  // 卡片宽 353、屏宽约 393，左右各留 20，所以 24 只吃到卡片最外 4px，不影响滑卡片。
+  const EDGE_W = 24;
   const edgeBack = useEdgeBack({
     onBack: () => {
       if (goBackRef.current) goBackRef.current();
     },
     enabled: mode === 'swipe',
-    edgeWidth: 32,   // 20 → 32：20 恰好等于卡片左右留白，手指差 1px 就落在卡片上被吃掉
+    edgeWidth: EDGE_W,
   });
 
   // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
@@ -366,7 +389,9 @@ export default function ViewsPoolScreen({
       {/* 底衬层：跟手时不能露白 */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: C.bg }} />
       
-      {/* 跟手动画层：整屏平移 */}
+      {/* 跟手动画层：整屏平移。
+          注意：这一层**不挂** panHandlers —— 手势全部交给底下那条独立窄条。
+          挂在这里会和卡片抢同一个 touch，前几版就是因为这个一直不生效。 */}
       <Animated.View 
         style={{ 
           flex: 1, 
@@ -377,7 +402,6 @@ export default function ViewsPoolScreen({
           shadowOpacity: 0.18,
           shadowRadius: 12,
         }}
-        {...edgeBack.panHandlers}
       >
         <View style={s.top}>
           <View style={s.shape} />
@@ -524,13 +548,13 @@ export default function ViewsPoolScreen({
             style={s.entryBubble}
             onPress={openMine}
             accessibilityRole="button"
-            accessibilityLabel={`我的观点，${myCount} 条`}
+            accessibilityLabel={`我的观点${myCount ? ', ' + myCount + ' 条' : ''}`}
           >
             <Text style={s.entryTitle} allowFontScaling={false}>
               我的观点
             </Text>
             <Text style={s.entrySub} numberOfLines={1} allowFontScaling={false}>
-              {myErr ? '读不到' : myCount + ' 条'}
+              {myCount ? myCount + ' 条' : ''}
             </Text>
           </Pressable>
         </View>
@@ -609,6 +633,20 @@ export default function ViewsPoolScreen({
         </>
       )}
       </Animated.View>
+
+      {/* 屏幕最左边缘的手势窄条（2026-11-15 第四版）。
+          为什么要一条独立窄条：卡片自己在 touch-start 就抢走 responder（本文件的
+          onStartShouldSetPanResponder），挂在祖先上靠 move 阶段去抢在真机上不可靠。
+          这条窄条画在卡片之上、绝对定位，手指落进来时卡片根本不在命中路径里，
+          所以它能稳稳拿到 touch-start，两条手势不会再打架。
+          它跟着页面一起平移，所以滑出去时不会挡住下一页。
+          上边界往下让 60（insets.top + 60），避开左上角那个返回按钮，不然会把按钮左半边吃掉。 */}
+      {mode === 'swipe' && !verdict ? (
+        <Animated.View
+          style={[s.edgeStrip, { top: insets.top + 60, transform: [{ translateX: edgeBack.x }] }]}
+          {...edgeBack.panHandlers}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -616,6 +654,17 @@ export default function ViewsPoolScreen({
 const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
+
+    // 屏幕最左边缘的手势窄条：绝对定位、画在最上层、透明（不挡视线）。
+    // 宽度必须和 useEdgeBack 的 edgeWidth 一致（都用 EDGE_W = 24）。
+    edgeStrip: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 24,
+      zIndex: 30,
+    },
 
     top: { position: 'relative' },
     shape: {

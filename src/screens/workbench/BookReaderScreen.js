@@ -395,24 +395,34 @@ export default function BookReaderScreen({
             )}
           </View>
 
-          {/* 菜单：点屏幕中间弹出来，点一下不会再自己收回去（只在再点一次或点「收起」才收） */}
+          {/* 菜单（2026-11-15 老板：「点中间菜单弹出来之后，从 12% 跳到 27%，再点消失又跳回 12%」）。
+              真因：菜单原来是 pager 的兄弟节点，pager 是 flex:1 —— 菜单一出现就把它压矮，
+              pager 的 onLayout 拿到更小的 pageH → paginate(lines, pageH) 按新行数重切一遍 →
+              页数变了、同一个 pageIdx 指到的文字也变了 → 百分比跟着跳。
+              所以菜单必须**浮在内容之上、不参与布局**：绝对定位 + justifyContent:'flex-end'，
+              这样 pageH 恒定，分页只算一次，百分比才稳。
+              pointerEvents="box-none"：空白处点击穿透到底下正文，由正文的 onPress 负责收起菜单。 */}
           {menuOpen ? (
-            <View style={[s.menu, { backgroundColor: C.card }]}>
-              <View style={s.menuRow}>
-                <Text style={s.menuLabel} allowFontScaling={false}>字号</Text>
-                <Pressable
-                  style={[s.chip, canSmaller ? null : s.chipOff]}
-                  onPress={() => canSmaller && changeScale(scaleIdx - 1)}
-                  disabled={!canSmaller}
-                  accessibilityRole="button"
-                  accessibilityLabel="字号减一档"
-                >
-                  <Text style={[s.chipText, canSmaller ? null : s.chipTextOff]} allowFontScaling={false}>
-                    A－
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[s.chip, canBigger ? null : s.chipOff]}
+            <View
+              style={[s.menuLayer, { paddingBottom: insets.bottom + 44 }]}
+              pointerEvents="box-none"
+            >
+              <View style={[s.menu, { backgroundColor: C.card }]}>
+                <View style={s.menuRow}>
+                  <Text style={s.menuLabel} allowFontScaling={false}>字号</Text>
+                  <Pressable
+                    style={[s.chip, canSmaller ? null : s.chipOff]}
+                    onPress={() => canSmaller && changeScale(scaleIdx - 1)}
+                    disabled={!canSmaller}
+                    accessibilityRole="button"
+                    accessibilityLabel="字号减一档"
+                  >
+                    <Text style={[s.chipText, canSmaller ? null : s.chipTextOff]} allowFontScaling={false}>
+                      A－
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[s.chip, canBigger ? null : s.chipOff]}
                   onPress={() => canBigger && changeScale(scaleIdx + 1)}
                   disabled={!canBigger}
                   accessibilityRole="button"
@@ -476,6 +486,7 @@ export default function BookReaderScreen({
                   </Text>
                 </Pressable>
               </View>
+              </View>
             </View>
           ) : null}
 
@@ -536,6 +547,17 @@ const makeStyles = (C, T, S, R, K) =>
     // 正文：lineHeight 26 保留（E2 的判据），字间距 0.3 让密排中文更透气
     body: { letterSpacing: LETTER_SPACING },
 
+    // 菜单浮层：绝对定位铺满整屏，内容靠底 —— **不参与布局**，所以 pager 的高度不会变，
+    // pageH 恒定、分页只算一次，百分比不会因为开关菜单而跳。
+    menuLayer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'flex-end',
+      zIndex: 20,
+    },
     menu: {
       marginHorizontal: S.page,
       marginBottom: S.x2,

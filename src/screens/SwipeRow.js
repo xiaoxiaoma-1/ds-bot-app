@@ -23,12 +23,10 @@ import { useRoles } from './workbench/roles';
 //   onSwipeState(open:boolean)  可选：滑开/收起时通知外层（外层可用它锁 ScrollView）
 //   deleteLabel  默认「删除」
 
-// 底下的红块尺寸（2026-11-15 定）：固定 64×64，贴着条目右端，不占正文。
+// 底下的红块尺寸（2026-11-15 微信范式）：满高贴右，宽度 SWIPE_W+12（左边缘藏在卡片下），右两角 R.small。
 // 以前是 width: SWIPE_W + height: '100%' —— 行一高（正文长）红块就跟着长成一块大门板，
 // 行一矮（单行摘要）又被拉成 96 宽的长条，看着像「悬在右上角把字盖住」。
-export const SWIPE_W = 84;
-const DELETE_SIZE = 64;
-const DELETE_INSET = 10;
+export const SWIPE_W = 88;
 const THRESHOLD_DX = 4;
 const OPEN_AT = -32;
 
@@ -93,7 +91,7 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
   );
 
   return (
-    <View style={[s.clip, style]}>
+    <View style={[s.clip, style]} shouldRasterizeIOS>
       {/* 2026-11-15（老板截图：三个红块静止时就露在卡片上方）：
           以前红块一直挂着、靠卡片盖住；卡片没盖严就直接露出来。
           现在只在「拖动中」或「已滑开」时才挂，静止时根本不存在。 */}
@@ -112,7 +110,7 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
         </Pressable>
       </View>
       ) : null}
-      <Animated.View {...responder.panHandlers} style={{ transform: [{ translateX: tx }] }}>
+      <Animated.View {...responder.panHandlers} style={{ backgroundColor: C.bg, transform: [{ translateX: tx }] }}>
         {children}
       </Animated.View>
     </View>
@@ -121,20 +119,28 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
 
 const makeStyles = (C, T, S, R, K) =>
   StyleSheet.create({
-    // 普通 View 裁圆角（不是裁剪平移元素本身）
-    clip: { borderRadius: R.small, overflow: 'hidden' },
+    // 2026-11-15（老板截图：左滑之后卡片左边整块跑到屏幕外面、文字被屏幕边缘切断，
+    // 红块还比卡片高、冒到卡片上方）：
+    // 根因是 iOS 上**带 borderRadius 的 View 用 overflow:'hidden' 裁不动带 transform 的子元素**
+    // （这条以前在 F2 里写过，但只改了红块自身圆角，没解决「卡片滑出去不被裁」）。
+    // 现在把「裁」和「圆角」拆开：
+    //   · 这层只负责裁（overflow:'hidden'，**不带 borderRadius**）—— 矩形裁剪在 iOS 上可靠；
+    //   · 圆角交给里面的卡片自己画（historyRow 本来就有 borderRadius: R.small）；
+    //   · 红块自带 borderRadius: 8。
+    // 这样卡片滑出去时被矩形边界干净切断，看着就是「滑到页面留白下面去了」，和原生一致。
+    clip: { overflow: 'hidden' },
     deleteLayer: {
       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      paddingRight: DELETE_INSET,
     },
-    // 红块：固定 64×64（圆角 8，通则 19），垂直居中贴右端；高度不再跟行高跑
     deleteBtn: {
-      width: DELETE_SIZE,
-      height: DELETE_SIZE,
-      borderRadius: 8,
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+      width: SWIPE_W + 12,
+      paddingRight: 12,
+      borderTopRightRadius: R.small,
+      borderBottomRightRadius: R.small,
       backgroundColor: C.bad,
       alignItems: 'center',
       justifyContent: 'center',
