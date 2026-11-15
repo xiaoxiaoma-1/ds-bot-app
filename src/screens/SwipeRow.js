@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme, inkOn } from '../theme';
 import { useRoles } from './workbench/roles';
@@ -38,9 +38,14 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
   const tx = useRef(new Animated.Value(0)).current;
   const opened = useRef(false);
+  // 红块是否挂在树上：拖动中 / 已滑开 才挂，静止不渲染
+  const [showDel, setShowDel] = useState(false);
 
   const settle = (open) => {
     opened.current = open;
+    // 收起时等动画播完再摘红块，否则红块会「啪」地消失
+    if (open) setShowDel(true);
+    else setTimeout(() => setShowDel(false), 200);
     if (onSwipeState) onSwipeState(open);
     Animated.spring(tx, {
       toValue: open ? -SWIPE_W : 0,
@@ -69,7 +74,8 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
         },
         onPanResponderTerminate: () => settle(opened.current),
         onPanResponderGrant: () => {
-          // 手势判成横滑的那一刻就锁外层滚动，不再跟纵向滚动抢
+          // 手势判成横滑的那一刻就挂上红块并锁外层滚动
+          setShowDel(true);
           if (onSwipeState) onSwipeState(true);
         },
       }),
@@ -78,6 +84,10 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
 
   return (
     <View style={[s.clip, style]}>
+      {/* 2026-11-15（老板截图：三个红块静止时就露在卡片上方）：
+          以前红块一直挂着、靠卡片盖住；卡片没盖严就直接露出来。
+          现在只在「拖动中」或「已滑开」时才挂，静止时根本不存在。 */}
+      {showDel ? (
       <View style={s.deleteLayer} pointerEvents="box-none">
         <Pressable
           style={s.deleteBtn}
@@ -91,6 +101,7 @@ export default function SwipeRow({ children, onDelete, onSwipeState, deleteLabel
           <Text style={s.deleteText} allowFontScaling={false}>{deleteLabel}</Text>
         </Pressable>
       </View>
+      ) : null}
       <Animated.View {...responder.panHandlers} style={{ transform: [{ translateX: tx }] }}>
         {children}
       </Animated.View>
