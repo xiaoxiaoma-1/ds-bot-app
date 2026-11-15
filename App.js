@@ -2,6 +2,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import KeyboardDismissOverlay from './src/components/KeyboardDismissOverlay';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, useTheme } from './src/theme';
@@ -20,6 +22,7 @@ import {
   getBookCards,
   getBookRead,
   getCorpusViews,
+  getCorpus,
   getTopics,
   postAtomReview,
   postBookProgress,
@@ -89,41 +92,45 @@ function NavRoot({ scheme }) {
   const theme = useMemo(() => navThemeFor(scheme, C), [scheme, C]);
 
   return (
-    <NavigationContainer theme={theme}>
-      <Stack.Navigator
-        initialRouteName="Boot"
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-          fullScreenGestureEnabled: false,
-          fullScreenGestureShadowEnabled: false,
-          contentStyle: { backgroundColor: C.bg },
-        }}
-      >
-        <Stack.Screen name="Boot" component={BootScreen} options={{ animation: 'none' }} />
-        <Stack.Screen name="Setup" component={SetupRoute} />
-        <Stack.Screen name="Profile" component={ProfileRoute} options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen name="BotList" component={BotListRoute} />
-        <Stack.Screen name="Chat" component={ChatRoute} />
-        <Stack.Screen name="GroupChat" component={GroupChatRoute} />
-        <Stack.Screen name="Expression" component={ExpressionRoute} />
-        {/* 点评表是训练页的下一层：左滑/返回都只 pop 到 Expression，不会退到工作台主页 */}
-        <Stack.Screen name="ExpressionReview" component={ExpressionReviewRoute} />
-        <Stack.Screen name="BookReader" component={BookReaderRoute} />
-        <Stack.Screen name="Books" component={BooksRoute} />
-        <Stack.Screen name="Corpus" component={CorpusRoute} />
-        <Stack.Screen name="MyViews" component={MyViewsRoute} />
-        <Stack.Screen name="ViewsDetail" component={ViewsDetailRoute} />
-        <Stack.Screen name="ViewsPool" component={ViewsPoolRoute} />
-        <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
-        <Stack.Screen name="IdeaQuickAdd" component={IdeaQuickAddRoute} options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
-        <Stack.Screen name="HotDaily" component={HotDailyRoute} />
-        <Stack.Screen name="Board" component={BoardRoute} />
-        <Stack.Screen name="TeamManage" component={TeamManageRoute} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      <NavigationContainer theme={theme}>
+        <Stack.Navigator
+          initialRouteName="Boot"
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+            fullScreenGestureEnabled: false,
+            fullScreenGestureShadowEnabled: false,
+            contentStyle: { backgroundColor: C.bg },
+          }}
+        >
+          <Stack.Screen name="Boot" component={BootScreen} options={{ animation: 'none' }} />
+          <Stack.Screen name="Setup" component={SetupRoute} />
+          <Stack.Screen name="Profile" component={ProfileRoute} options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="BotList" component={BotListRoute} />
+          <Stack.Screen name="Chat" component={ChatRoute} />
+          <Stack.Screen name="GroupChat" component={GroupChatRoute} />
+          <Stack.Screen name="Expression" component={ExpressionRoute} />
+          {/* 点评表是训练页的下一层：左滑/返回都只 pop 到 Expression，不会退到工作台主页 */}
+          <Stack.Screen name="ExpressionReview" component={ExpressionReviewRoute} />
+          <Stack.Screen name="BookReader" component={BookReaderRoute} />
+          <Stack.Screen name="Books" component={BooksRoute} />
+          <Stack.Screen name="Corpus" component={CorpusRoute} />
+          <Stack.Screen name="MyViews" component={MyViewsRoute} />
+          <Stack.Screen name="ViewsDetail" component={ViewsDetailRoute} />
+          <Stack.Screen name="ViewsPool" component={ViewsPoolRoute} />
+          <Stack.Screen name="TopicsPool" component={TopicsPoolRoute} />
+          <Stack.Screen name="IdeaQuickAdd" component={IdeaQuickAddRoute} options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="DraftLibrary" component={DraftLibraryRoute} />
+          <Stack.Screen name="HotDaily" component={HotDailyRoute} />
+          <Stack.Screen name="Board" component={BoardRoute} />
+          <Stack.Screen name="TeamManage" component={TeamManageRoute} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      {/* 通用规则：键盘弹起时盖一层透明层，点哪儿都只收键盘，这一下不往下传（全 App 一处实现） */}
+      <KeyboardDismissOverlay />
+    </View>
   );
 }
 
@@ -243,10 +250,12 @@ function ExpressionRoute({ navigation }) {
   // 这样「点评表」在导航栈里是真实的一层：左滑返回 / 左上角返回 都只退到训练页，
   // 想退到工作台必须再返回一次 —— 绝不出现一滑就回到 tab 根页。
   return (
-    <ExpressionScreen
-      onBack={() => navigation.goBack()}
-      onNext={(payload) => navigation.navigate('ExpressionReview', payload)}
-    />
+    <ErrorBoundary name="表达训练">
+      <ExpressionScreen
+        onBack={() => navigation.goBack()}
+        onNext={(payload) => navigation.navigate('ExpressionReview', payload)}
+      />
+    </ErrorBoundary>
   );
 }
 
@@ -742,7 +751,22 @@ function CorpusRoute({ navigation }) {
   const [query, setQuery] = useState('');
   const [retryTick, setRetryTick] = useState(0);
   const corpusKey = `corpus:${query || 'all'}:${retryTick}`;
-  const cachedCorpus = useCachedResource(corpusKey, () => getCorpusViews({ q: query, limit: 120 }));
+  const cachedCorpus = useCachedResource(corpusKey, async () => {
+    // 2026-11-15：改用 /api/corpus（按 tags 里的「语料」标记过滤，且已补 content）。
+    // 以前走 views/list，那是全量 my_views，没移过来的东西也混在语料库里。
+    const d = await getCorpus({ q: query, limit: 120 });
+    return {
+      total: d.total,
+      rows: d.items.map((v) => ({
+        id: v.id,
+        kind: v.kind || '',
+        title: v.title || '',
+        content: v.content || '',
+        chars: Number(v.chars) || 0,
+        created_at: v.at || '',
+      })),
+    };
+  });
 
   return (
     <CorpusScreen

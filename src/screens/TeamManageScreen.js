@@ -233,9 +233,13 @@ export default function TeamManageScreen({ navigation, onBack }) {
   }, []);
 
   // 建组：create 接口不回 id，建完必须重读一次列表才拿得到 id/order（否则归组点不到它）
+  // 2026-11-15（老板报「等太久了 20 秒 / 网络不通」）：实测 create 170ms、models 18ms、folders 13ms，
+  // 不是接口慢。这里加打点：失败行写出「这个请求用了多少秒」，不用再猜是哪一个在等。
+  // finally 兜底复位按钮（原来就有，保留），按钮不会停在「…」。
   const createGroup = useCallback(async () => {
     const name = newGroupName.trim();
     if (!name || groupBusy) return;
+    const t0 = Date.now();
     setGroupBusy(true);
     setErr(null);
     try {
@@ -245,7 +249,10 @@ export default function TeamManageScreen({ navigation, onBack }) {
       setNewGroupOpen(false);
       await loadGroups();
     } catch (e) {
-      if (mounted.current) setErr((e && e.message) || '分组没建成');
+      if (mounted.current) {
+        const ms = Date.now() - t0;
+        setErr(`${(e && e.message) || '分组没建成'}（建组共用 ${(ms / 1000).toFixed(1)} 秒）`);
+      }
     } finally {
       if (mounted.current) setGroupBusy(false);
     }

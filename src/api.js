@@ -153,6 +153,7 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), waitMs);
   let res;
+  let text = '';
   try {
     res = await fetch(join(base, path), {
       method,
@@ -161,6 +162,10 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
       credentials: 'include',
       signal: ctrl.signal,
     });
+    // 2026-11-15（老板报「20 秒没回应 / 网络不通」）：body 也放进同一个超时窗里读。
+    // 以前 fetch 一拿到响应头就 clearTimeout，服务端「头回来了、身子卡住」的时候这里会一直等，
+    // 表现就是某个请求挂死、后面的按钮一直转圈。
+    text = await res.text();
   } catch (e) {
     if (isAbortLike(e)) {
       throw new ApiError(`等太久了（${Math.round(waitMs / 1000)} 秒没回应）`, step, {
@@ -188,7 +193,6 @@ async function request(path, { method = 'GET', body, step = 'list', retry = true
   }
 
   let data = null;
-  const text = await res.text();
   try {
     data = JSON.parse(text);
   } catch {
@@ -277,6 +281,8 @@ export async function botFolderCreate(name) {
     method: 'POST',
     body: { name: String(name || '').trim() },
     step: 'folders',
+    // 实测本机 170ms；手机到 PC 这一跳偶尔慢，给到 30 秒再判死
+    timeoutMs: 30000,
   });
   if (!d || !d.ok) throw new ApiError((d && d.error) || '分组没建成', 'folders');
   return d;
@@ -425,6 +431,7 @@ export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jp
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   let res;
+  let text = '';
   try {
     res = await fetch(join(base, '/api/dsbot/upload'), {
       method: 'POST',
@@ -436,6 +443,9 @@ export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jp
       credentials: 'include',
       signal: ctrl.signal,
     });
+    // 2026-11-15（老板报「发图一直转圈」）：body 也放进同一个超时窗里读。
+    // 以前 fetch 一拿到响应头就 clearTimeout，服务端「头回来了、身子卡住」时这里无限等。
+    text = await res.text();
   } catch (e) {
     if (isAbortLike(e)) throw new ApiError('上传等太久了，没传完', 'upload', { code: 'timeout' });
     throw new ApiError('上传失败：' + (e.message || '网络不通'), 'upload');
@@ -444,7 +454,6 @@ export async function uploadFile(fileUri, { type = 'image/jpeg', name = 'file.jp
   }
 
   let data = null;
-  const text = await res.text();
   try {
     data = JSON.parse(text);
   } catch {

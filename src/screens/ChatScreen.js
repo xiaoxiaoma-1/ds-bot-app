@@ -6,6 +6,7 @@ import {
   Easing,
   FlatList,
   Image,
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
@@ -225,9 +226,11 @@ export default function ChatScreen({ bot, onBack }) {
 
   // 附件菜单不再 3 秒自动收回：点了就停在那儿，直到用户点空白 / 点输入框 / 选完图。
 
-  // 从下往上弹（微信式）：先挂上树，下一帧再动，避免「瞬间出现」
+  // 从下往上弹（微信式）：先挂上树，下一帧再动，避免「瞬间出现」。
+  // 2026-11-15：开面板时先把键盘收掉 —— 有面板就没有键盘，有键盘就没有面板。
   const openAttach = useCallback(() => {
     setErr(null);
+    Keyboard.dismiss();
     attachArmAt.current = Date.now();
     attachGen.current += 1;
     attachAnim.setValue(0);
@@ -588,49 +591,7 @@ export default function ChatScreen({ bot, onBack }) {
             面板绝对定位在输入栏正上方（bottom:'100%'）：挂上/摘掉都不重排消息区，
             不会出现「先整块跳上去再补动画」。 */}
         <View style={s.composerWrap}>
-        {attachHint ? (
-          <Animated.View
-            style={[
-              s.attachPanel,
-              {
-                opacity: attachAnim,
-                transform: [
-                  { translateY: attachAnim.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) },
-                ],
-              },
-            ]}
-          >
-            <Pressable
-              style={[s.attachTile, picking ? s.attachPillOff : null]}
-              onPress={() => pickImage(false)}
-              disabled={picking}
-              accessibilityRole="button"
-              accessibilityLabel="从相册选"
-            >
-              {/* 相册图标：外框 + 中间一只「相片」 */}
-              <View style={[s.tileIconFrame, { borderColor: C.ink2 }]}>
-                <View style={[s.tileIconDot, { backgroundColor: C.accent }]} />
-                <View style={[s.tileIconHill, { backgroundColor: C.ink2 }]} />
-              </View>
-              <Text style={s.attachTileText} allowFontScaling={false}>从相册选</Text>
-            </Pressable>
-            <Pressable
-              style={[s.attachTile, picking ? s.attachPillOff : null]}
-              onPress={() => pickImage(true)}
-              disabled={picking}
-              accessibilityRole="button"
-              accessibilityLabel="拍照"
-            >
-              {/* 拍照图标：机身 + 镜头 */}
-              <View style={[s.tileIconCamera, { borderColor: C.ink2 }]}>
-                <View style={[s.tileIconLens, { backgroundColor: C.accent }]} />
-              </View>
-              <Text style={s.attachTileText} allowFontScaling={false}>拍照</Text>
-            </Pressable>
-          </Animated.View>
-        ) : null}
-
-        <View style={[s.composer, { paddingBottom: Math.max(insets.bottom, S.x3) + S.x6 }]}>
+        <View style={[s.composer, { paddingBottom: attachHint ? S.x2 : Math.max(insets.bottom, S.x3) + S.x6 }]}>
           <Pressable
             style={s.attachBtn}
             onPress={() => (attachHint ? closeAttach() : openAttach())}
@@ -668,6 +629,52 @@ export default function ChatScreen({ bot, onBack }) {
             </Pressable>
           </Animated.View>
         </View>
+
+        {/* 附件面板：2026-11-15 按老板的要求挪到输入栏「下面」（原来放在输入栏正上方，
+            所以看着像从聊天框上面冒出来）。现在它在输入栏之后、屏幕底部那一格，
+            从下往上弹（translateY 24→0 + 淡入），开的时候输入栏自己收窄底部留白。 */}
+        {attachHint ? (
+          <Animated.View
+            style={[
+              s.attachPanel,
+              {
+                paddingBottom: Math.max(insets.bottom, S.x3) + S.x4,
+                opacity: attachAnim,
+                transform: [
+                  { translateY: attachAnim.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) },
+                ],
+              },
+            ]}
+          >
+            <Pressable
+              style={[s.attachTile, picking ? s.attachPillOff : null]}
+              onPress={() => pickImage(false)}
+              disabled={picking}
+              accessibilityRole="button"
+              accessibilityLabel="从相册选"
+            >
+              {/* 相册图标：外框 + 中间一只「相片」 */}
+              <View style={[s.tileIconFrame, { borderColor: C.ink2 }]}>
+                <View style={[s.tileIconDot, { backgroundColor: C.accent }]} />
+                <View style={[s.tileIconHill, { backgroundColor: C.ink2 }]} />
+              </View>
+              <Text style={s.attachTileText} allowFontScaling={false}>从相册选</Text>
+            </Pressable>
+            <Pressable
+              style={[s.attachTile, picking ? s.attachPillOff : null]}
+              onPress={() => pickImage(true)}
+              disabled={picking}
+              accessibilityRole="button"
+              accessibilityLabel="拍照"
+            >
+              {/* 拍照图标：机身 + 镜头 */}
+              <View style={[s.tileIconCamera, { borderColor: C.ink2 }]}>
+                <View style={[s.tileIconLens, { backgroundColor: C.accent }]} />
+              </View>
+              <Text style={s.attachTileText} allowFontScaling={false}>拍照</Text>
+            </Pressable>
+          </Animated.View>
+        ) : null}
         </View>
       </View>
     </View>
@@ -730,7 +737,8 @@ const makeStyles = (C, T, S, R) =>
       // 5 行文字 + 上下各 12 的内边距：到顶就停，多出来的字由输入框自己滚
       maxHeight: inputMaxHeight(21, 5) + 24,
       backgroundColor: C.card,
-      borderRadius: R.capsule,
+      // 2026-11-15（老板）：胶囊两头是圆的，字一长左右就被弧线吃掉一段 → 改成普通长方形框
+      borderRadius: 8,
       overflow: 'hidden',
       paddingVertical: S.x3,
       justifyContent: 'center',
@@ -752,24 +760,21 @@ const makeStyles = (C, T, S, R) =>
     },
     sendText: { color: C.onAccent, ...T.body },
     attachPanel: {
-      // 两块方形图标按钮，横向居中；整块离屏幕底边留出安全区 + 一档间距。
-      // 2026-11-15：圆角按通则收小到 8（原来 32/24）；绝对定位在输入栏正上方，
+      // 2026-11-15：从「输入栏正上方」改到「输入栏下面」——老板看到的是它从聊天框上面冒出来。
+      // 现在它是 composerWrap 里的第二块（在输入栏之后），所以天然在下面；
       // 出场/退场只靠 translateY + opacity，不动消息区布局。
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: '100%',
-      zIndex: 10,
+      // 圆角按通则收小到 8，底部留白由 insets 现场给。
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
       gap: S.x5,
       paddingHorizontal: S.page,
-      paddingVertical: S.x4,
+      paddingTop: S.x4,
       backgroundColor: C.card2,
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
       marginHorizontal: S.x4,
       marginBottom: S.x3,
-      borderRadius: 8,
     },
     attachTile: {
       width: 80,

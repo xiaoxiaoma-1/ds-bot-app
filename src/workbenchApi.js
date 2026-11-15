@@ -343,6 +343,24 @@ export async function setCorpusTag(id, on) {
   return d;
 }
 
+/* ───── 选题池刷新任务（2026-11-15 新增，服务端是唯一判据） ─────
+ * GET  /api/topics/refresh/status -> {ok, day, target:30, count, ready, state, running, done, total, current}
+ * POST /api/topics/refresh        -> 同上（登记或复用今天这一轮）
+ *   state: idle / running / done / failed
+ * ★ 前端不许用本地 state 判断「还在出题」：退出再进来要能接着看到同一条进度。
+ */
+export async function getTopicsRefreshStatus() {
+  const d = await request('/api/topics/refresh/status', { step: 'topics' });
+  if (!d || d.ok !== true) throw new ApiError((d && d.error) || '读不到出题进度', 'topics');
+  return d;
+}
+
+export async function startTopicsRefresh() {
+  const d = await request('/api/topics/refresh', { method: 'POST', body: {}, step: 'topics' });
+  if (!d || d.ok !== true) throw new ApiError((d && d.error) || '没能开始刷新', 'topics');
+  return d;
+}
+
 /* ───────── 选题池的写操作（后端 2026-11-13 改成 rowcount 判定，不再假成功） ─────────
  * POST /api/topic_status {id, status}  → {ok:true}；缺参 {ok:false, error:"缺参数"}；status 不校验枚举
  * POST /api/topic_del    {id}          → 成功 {ok:true, deleted:1}；不存在 {ok:false, error:"找不到这个选题"}

@@ -59,80 +59,6 @@ const THRESHOLD = 96;
 
 const springIn = { tension: 420, friction: 20, useNativeDriver: false }; // 令牌 S3；pan.x 是 JS 驱动，弹簧必须同为 JS
 
-// error 可能是字符串，也可能是 Error（cache 层抛的原样）；统一取出一句能给人看的话
-function errorText(e) {
-  if (!e) return '';
-  if (typeof e === 'string') return e;
-  return e.message ? String(e.message) : String(e);
-}
-
-// 今日观点消息条（D4）：左滑露「认同」，右滑露「不认同」；点条本身进这条的表态页。
-// 双向都要露，所以没有复用 SwipeRow（那个只露一侧的「删除」）。
-const BAR_W = 96;
-function IdeaBar({ item, index, s, onOpen }) {
-  const tx = useRef(new Animated.Value(0)).current;
-  const shownRef = useRef(null); // 'agree' | 'disagree' | null
-
-  const snap = (side) => {
-    shownRef.current = side;
-    Animated.spring(tx, {
-      toValue: side === 'agree' ? -BAR_W : side === 'disagree' ? BAR_W : 0,
-      tension: 420,
-      friction: 20,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const responder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (e, g) => Math.abs(g.dx) > 4 && Math.abs(g.dx) > Math.abs(g.dy),
-        onMoveShouldSetPanResponderCapture: (e, g) => Math.abs(g.dx) > 4 && Math.abs(g.dx) > Math.abs(g.dy),
-        onPanResponderMove: (e, g) => tx.setValue(Math.max(-BAR_W, Math.min(BAR_W, g.dx))),
-        onPanResponderRelease: (e, g) => {
-          if (Math.abs(g.dx) <= 6 && Math.abs(g.dy) <= 6) {
-            snap(null);
-            if (onOpen) onOpen(null);
-            return;
-          }
-          if (g.dx <= -40) snap('agree');
-          else if (g.dx >= 40) snap('disagree');
-          else snap(null);
-        },
-        onPanResponderTerminate: () => snap(null),
-      }),
-    [tx, onOpen],
-  );
-
-  return (
-    <View style={s.barClip}>
-      <View style={s.barPanes} pointerEvents="box-none">
-        <Pressable
-          style={[s.barPane, s.barPaneLeft]}
-          onPress={() => onOpen && onOpen('disagree')}
-          accessibilityRole="button"
-        >
-          <Text style={s.barPaneText} allowFontScaling={false}>不认同</Text>
-        </Pressable>
-        <Pressable
-          style={[s.barPane, s.barPaneRight]}
-          onPress={() => onOpen && onOpen('agree')}
-          accessibilityRole="button"
-        >
-          <Text style={s.barPaneText} allowFontScaling={false}>认同</Text>
-        </Pressable>
-      </View>
-      <Animated.View {...responder.panHandlers} style={{ transform: [{ translateX: tx }] }}>
-        <Pressable style={s.barRow} onPress={() => onOpen && onOpen(null)} accessibilityRole="button">
-          <Text style={s.barIndex} allowFontScaling={false}>{index + 1}</Text>
-          <Text style={s.barTitle} numberOfLines={2} allowFontScaling={false}>
-            {(item && (item.title || item.claim || item.content)) || '（无标题）'}
-          </Text>
-        </Pressable>
-      </Animated.View>
-    </View>
-  );
-}
 
 export default function ViewsPoolScreen({
   topics = [],
@@ -157,14 +83,9 @@ export default function ViewsPoolScreen({
   const s = useMemo(() => makeStyles(C, T, S, R, K), [C, T, S, R, K]);
   const nav = useNavigation();
 
-  const [mode, setMode] = useState(() => (autoSwipe ? 'swipe' : 'menu')); // menu = 两个气泡；swipe = 左右滑
-  
-  // 带 selected 参数进来（autoSwipe=true）时，数据一到就自动进 swipe
-  useEffect(() => {
-    if (autoSwipe && mode === 'menu' && Array.isArray(topics) && topics.length > 0) {
-      setMode('swipe');
-    }
-  }, [autoSwipe, topics, mode]);
+  // 2026-11-15（老板）：这一屏只有一个形态 —— 上面卡片、下面「观点库 / 我的观点」两个气泡。
+  // 以前有 menu 入口页，还被 autoSwipe 一进来就切走，所以老板永远看不到那两个气泡。
+  const [mode, setMode] = useState('swipe');
 
   const [myTotal, setMyTotal] = useState(null);
   const [myErr, setMyErr] = useState(null);
@@ -176,6 +97,8 @@ export default function ViewsPoolScreen({
   const [err, setErr] = useState(null);
   const [manual, setManual] = useState(false); // 无障碍兜底面板
   const [undoBusy, setUndoBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const moving = useRef(false);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const asked = useRef(false);
@@ -183,7 +106,6 @@ export default function ViewsPoolScreen({
   const cur = topics[idx] || null;
   const next = topics[idx + 1] || null;
   const remain = Math.max(0, left - (doneN - done));
-  const pending = Math.max(0, Number(left) || 0);
   // 三种状态分开显示：读着是「…」，读失败是「—」，读到才是数字。
   // 之前只有一个「…」，getMyViews 一失败就永远停在这一屏（错误被 catch 吞了）。
   const myCount = myErr ? '—' : myTotal === null ? '…' : String(myTotal);
@@ -245,19 +167,31 @@ export default function ViewsPoolScreen({
         onStartShouldSetPanResponderCapture: () => !verdict,
         onMoveShouldSetPanResponder: (e, g) => !verdict && Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
         onMoveShouldSetPanResponderCapture: (e, g) => !verdict && Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
-        onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
+        onPanResponderMove: (e, g) => {
+          // 只有手指真的移动过才让滑出块出现（老板：静止时完全不显示）
+          if (!moving.current) moving.current = true;
+          if (Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2) setDragging(true);
+          pan.setValue({ x: g.dx, y: g.dy });
+        },
         onPanResponderRelease: (e, g) => {
+          moving.current = false;
+          setDragging(false);
           // 轻点不滑：展开详情整页（老板要的「点一下变成完整页面」）
           if (Math.abs(g.dx) <= 6 && Math.abs(g.dy) <= 6) {
             if (onOpenDetail && cur) onOpenDetail(cur);
             return;
           }
-          // 右滑认同，左滑不认同。
-          if (g.vx >= 0.4 || g.dx >= THRESHOLD) settle('agree');
-          else if (g.vx <= -0.4 || g.dx <= -THRESHOLD) settle('disagree');
+          // 老板 2026-11-15 的原话：「我左滑它这个地方是认同，右滑是一个不认同」
+          // （之前的判定是反的：右滑成了认同、左滑成了不认同）
+          if (g.vx <= -0.4 || g.dx <= -THRESHOLD) settle('agree');
+          else if (g.vx >= 0.4 || g.dx >= THRESHOLD) settle('disagree');
           else springBack();
         },
-        onPanResponderTerminate: () => springBack(),
+        onPanResponderTerminate: () => {
+          moving.current = false;
+          setDragging(false);
+          springBack();
+        },
       }),
     [pan, settle, springBack, verdict, onOpenDetail, cur],
   );
@@ -302,7 +236,6 @@ export default function ViewsPoolScreen({
         setVerdict(null);
         setWhy('');
         setIdx(0);
-        setMode('menu');
       });
     } catch (e) {
       setErr(String((e && e.message) || '没存上'));
@@ -321,16 +254,26 @@ export default function ViewsPoolScreen({
   const nextShift = pan.x.interpolate({ inputRange: [-THRESHOLD, 0, THRESHOLD], outputRange: [0, 8, 0], extrapolate: 'clamp' });
 
   const empty = !cur && !verdict;
-  const menuPending = pending || topics.length;
 
+  // 卡片高度按「这一屏实际剩下的高度」算（老板 2026-11-15：小屏上卡被裁一半）。
+  // CARD_H=360 是大屏上限，不是死值：stage 是 flex:1，量到多少就用多少，上下各留 S.x4。
+  const [stageH, setStageH] = useState(0);
+  const stageHRef = useRef(0);
+  // manualRow（认同/不认同/不确定 三个胶囊）也占 stage 的高度：44 + marginTop 12 = 56
+  // 打开「用按钮代替滑动」时不减掉它，center 布局会把卡片上下双向顶出屏幕。
+  const MANUAL_ROW_H = 44 + S.x3;
+  const cardH = Math.max(200, Math.min(CARD_H, (stageH || CARD_H) - S.x4 * 2 - (manual ? MANUAL_ROW_H : 0)));
+  // 字多字少跟着卡片高度走，卡片矮就少显示几行，不让正文溢出卡片
+  const claimLines = cardH >= 340 ? 9 : cardH >= 280 ? 6 : 4;
+
+  // 返回（通则 11）：写理由时先收 sheet，其余情况只退上一级。
+  // 不再回「入口页」—— 入口页已经删掉，气泡就在这一屏底部。
   const goBack = () => {
-    // 层级（D3）：投票页 → 观点库主页面；观点库主页面 → 上一级（全部入口）
-    if (mode === 'swipe') {
+    if (verdict) {
       setVerdict(null);
       setWhy('');
       setErr(null);
       pan.setValue({ x: 0, y: 0 });
-      setMode('menu');
       return;
     }
     if (onBack) onBack();
@@ -370,11 +313,15 @@ export default function ViewsPoolScreen({
     setWhy('');
     setErr(null);
     pan.setValue({ x: 0, y: 0 });
-    setMode('menu');
   };
 
-  const openMine = () => {
-    if (onOpenMyViews) {
+  // 「观点库」气泡：回到第一页（也就是首页那 3 条所在的位置），不换页、不跳走
+  const toFirst = () => {
+    setIdx(0);
+    pan.setValue({ x: 0, y: 0 });
+  };
+
+  const openMine = () => {    if (onOpenMyViews) {
       onOpenMyViews();
       return;
     }
@@ -392,83 +339,7 @@ export default function ViewsPoolScreen({
     setMode('swipe');
   };
 
-  const dayIdeas = Array.isArray(topics) ? topics.slice(0, 3) : [];
 
-  if (mode === 'menu') {
-    return (
-      <View style={s.root}>
-        <View style={s.top}>
-          <View style={s.shape} />
-          <Pressable style={[s.back, { top: insets.top }]} onPress={goBack} accessibilityRole="button" accessibilityLabel="返回">
-            <Text style={s.backText} allowFontScaling={false}>‹</Text>
-          </Pressable>
-          <View style={[s.headText, { top: insets.top + S.x6 * 2 + S.x1 }]}>
-            <Text style={s.title} allowFontScaling={false}>观点库</Text>
-            <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>选一个入口</Text>
-          </View>
-        </View>
-
-        <View style={s.menuWrap}>
-          {/* 今日观点：固定在观点库最上面，像消息条（D4）。
-              左滑露「认同」，右滑露「不认同」，点条本身进这一条的表态页（D5）。 */}
-          {dayIdeas.length ? (
-            <View style={s.ideaBox}>
-              <Text style={s.ideaHead} allowFontScaling={false}>今日观点</Text>
-              {dayIdeas.map((it, i) => (
-                <IdeaBar
-                  key={(it && it.id) || 'day-' + i}
-                  item={it}
-                  index={i}
-                  s={s}
-                  onOpen={(verdictKey) => startVote(it, verdictKey)}
-                />
-              ))}
-            </View>
-          ) : null}
-
-          <Pressable style={s.menuCard} onPress={() => setMode('swipe')} accessibilityRole="button">
-            <Text style={s.menuTitle} allowFontScaling={false}>观点库</Text>
-            <Text style={s.menuSub} allowFontScaling={false}>
-              {loading ? '正在读…' : `还有 ${menuPending} 条待判定`}
-            </Text>
-            <Text style={s.menuHint} allowFontScaling={false}>点进来左右滑</Text>
-          </Pressable>
-
-          <Pressable style={s.menuCard} onPress={openMine} accessibilityRole="button">
-            <Text style={s.menuTitle} allowFontScaling={false}>我的观点</Text>
-            <Text style={s.menuSub} allowFontScaling={false}>{myErr ? '读不到' : myCount + ' 条'}</Text>
-            <Text style={s.menuHint} allowFontScaling={false}>看我自己写的</Text>
-          </Pressable>
-        </View>
-
-        {/* 三态分开：有错就说错在哪、能重试；真的 0 条才是空态 */}
-        {error ? (
-          <View style={s.menuStateRow}>
-            <Text style={s.menuStateText} allowFontScaling={false}>{errorText(error)}</Text>
-            {onRetry ? (
-              <Pressable onPress={onRetry} hitSlop={10} accessibilityRole="button">
-                <Text style={s.menuStateBtn} allowFontScaling={false}>重试</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-        {myErr ? (
-          <View style={s.menuStateRow}>
-            <Text style={s.menuStateText} allowFontScaling={false}>我的观点读不到：{myErr}</Text>
-            <Pressable onPress={refreshMyCount} hitSlop={10} accessibilityRole="button">
-              <Text style={s.menuStateBtn} allowFontScaling={false}>重试</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {onTabPress ? (
-          <Dock activeTab={activeTab} onTabPress={onTabPress} />
-        ) : (
-          <View style={{ height: S.x3 + insets.bottom }} />
-        )}
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
@@ -495,7 +366,17 @@ export default function ViewsPoolScreen({
 
       {/* 卡片区：写理由时整块收起，把高度让给 sheet */}
       {verdict ? null : (
-        <View style={s.stage} {...edgeBack.panHandlers}>
+        <View
+          style={s.stage}
+          {...edgeBack.panHandlers}
+          onLayout={(e) => {
+            const h = Math.round(e.nativeEvent.layout.height);
+            if (h > 0 && Math.abs(h - stageHRef.current) > 1) {
+              stageHRef.current = h;
+              setStageH(h);
+            }
+          }}
+        >
           {empty ? (
             <View style={s.emptyBox}>
               <Text style={s.emptyTitle} allowFontScaling={false}>
@@ -506,18 +387,19 @@ export default function ViewsPoolScreen({
               </Text>
             </View>
           ) : (
-            <View style={s.stack}>
+            <View style={[s.stack, { height: cardH }]}>
               {next ? (
-                <Animated.View style={[s.card, s.cardBack, { transform: [{ scale: nextScale }, { translateY: nextShift }] }]}>
-                  <Text style={s.cardClaim} numberOfLines={6} allowFontScaling={false}>
+                <Animated.View style={[s.card, s.cardBack, { height: cardH }, { transform: [{ scale: nextScale }, { translateY: nextShift }] }]}>
+                  <Text style={s.cardClaim} numberOfLines={claimLines} allowFontScaling={false}>
                     {next.claim}
                   </Text>
                 </Animated.View>
               ) : null}
 
-              {/* 滑出块：贴卡片边缘、占满卡片高度、随手指平移露出、松手回弹、静止不显示。
-                  层级在「下一张」之上、「当前这张」之下 —— 当前卡片一移开就露出来，静止时被它整个盖住。 */}
-              <View pointerEvents="none" style={s.revealClip}>
+              {/* 滑出块：只有手指在拖的时候才挂到树上（老板：静止时完全不显示）。
+                  贴卡片边缘、占满卡片高度、随 pan.x 平移露出、松手回弹。 */}
+              {dragging ? (
+                <View pointerEvents="none" style={s.revealClip}>
                 <Animated.View
                   style={[
                     s.revealPane,
@@ -541,12 +423,14 @@ export default function ViewsPoolScreen({
                   </Text>
                 </Animated.View>
               </View>
+              ) : null}
 
               <Animated.View
                 {...responder.panHandlers}
                 style={[
                   s.card,
                   s.cardFront,
+                  { height: cardH },
                   {
                     transform: [
                       { translateX: pan.x },
@@ -563,7 +447,7 @@ export default function ViewsPoolScreen({
                     </Text>
                   </Pressable>
                 </View>
-                <Text style={s.cardClaim} numberOfLines={9} allowFontScaling={false}>
+                <Text style={s.cardClaim} numberOfLines={claimLines} allowFontScaling={false}>
                   {cur.claim}
                 </Text>
                 <Text style={s.cardAuthor} numberOfLines={1} allowFontScaling={false}>
@@ -585,6 +469,39 @@ export default function ViewsPoolScreen({
               </Pressable>
             </View>
           )}
+        </View>
+      )}
+
+      {/* 页面下半：两个气泡入口（老板 2026-11-15 明确要求「下面得有两个气泡，一个观点库一个我的观点」）。
+          以前这两个入口藏在被 autoSwipe 直接切走的 menu 页里，所以他一直看不到。 */}
+      {verdict ? null : (
+        <View style={s.entryRow}>
+          <Pressable
+            style={s.entryBubble}
+            onPress={toFirst}
+            accessibilityRole="button"
+            accessibilityLabel={`观点库，还剩 ${remain} 条`}
+          >
+            <Text style={s.entryTitle} allowFontScaling={false}>
+              观点库
+            </Text>
+            <Text style={s.entrySub} numberOfLines={1} allowFontScaling={false}>
+              {empty ? '全看完了' : loading ? '正在读…' : `还剩 ${remain} 条`}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={s.entryBubble}
+            onPress={openMine}
+            accessibilityRole="button"
+            accessibilityLabel={`我的观点，${myCount} 条`}
+          >
+            <Text style={s.entryTitle} allowFontScaling={false}>
+              我的观点
+            </Text>
+            <Text style={s.entrySub} numberOfLines={1} allowFontScaling={false}>
+              {myErr ? '读不到' : myCount + ' 条'}
+            </Text>
+          </Pressable>
         </View>
       )}
 
@@ -692,16 +609,17 @@ const makeStyles = (C, T, S, R, K) =>
     subTitle: { marginTop: S.x1, color: K.onBrand, opacity: 0.78, ...T.meta, fontWeight: '500' },
 
     stage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    stack: { width: 353, height: CARD_H },
+    // 高度不再固定：JSX 里按 stage 量到的实际高度给（小屏不裁卡）
+    stack: { width: 353 },
     card: {
       position: 'absolute',
       left: 0,
       top: 0,
       width: 353,
-      height: CARD_H,
       borderRadius: R.big,
       backgroundColor: C.card,
       padding: S.x5,
+      overflow: 'hidden',
     },
     cardBack: { backgroundColor: C.card2 },
     cardFront: {},
@@ -732,34 +650,6 @@ const makeStyles = (C, T, S, R, K) =>
     emptyTitle: { color: C.ink, ...T.section },
     emptySub: { color: C.ink2, ...T.meta, textAlign: 'center' },
 
-    menuWrap: { flex: 1, paddingHorizontal: S.page, paddingTop: S.x6, gap: S.x4 },
-    // 今日观点消息条（D4）
-    ideaBox: { gap: S.x2 },
-    ideaHead: { color: C.ink2, ...T.meta },
-    barClip: { borderRadius: R.small, overflow: 'hidden' },
-    barPanes: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', justifyContent: 'space-between' },
-    barPane: { width: BAR_W, height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: C.card2 },
-    barPaneLeft: { alignItems: 'center' },
-    barPaneRight: { alignItems: 'center' },
-    barPaneText: { color: C.ink, ...T.meta, fontWeight: '600' },
-    barRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: S.x2,
-      padding: S.x3,
-      backgroundColor: C.card,
-      borderRadius: R.small,
-    },
-    barIndex: { minWidth: S.x4, color: C.ink3, ...T.meta, textAlign: 'right' },
-    barTitle: { flex: 1, minWidth: 0, color: C.ink, ...T.body },
-    menuCard: { height: 148, borderRadius: R.big, backgroundColor: C.card, padding: S.x5, justifyContent: 'center' },
-    menuTitle: { color: C.ink, ...T.section },
-    menuSub: { marginTop: S.x2, color: C.ink2, ...T.body },
-    menuHint: { marginTop: S.x1, color: C.ink3, ...T.meta },
-    menuStateRow: { paddingHorizontal: S.page, paddingTop: S.x4, flexDirection: 'row', alignItems: 'center', gap: S.x2, flexWrap: 'wrap' },
-    menuStateText: { color: C.bad, ...T.meta, flexShrink: 1 },
-    menuStateBtn: { color: C.ink, ...T.meta, fontWeight: '600' },
-
     sheetHead: { flexDirection: 'row', alignItems: 'center', gap: S.x2 },
     verdictBadge: { ...T.meta, fontWeight: '500' },
 
@@ -783,6 +673,26 @@ const makeStyles = (C, T, S, R, K) =>
     saveBtn: { height: 44, paddingHorizontal: S.x5, borderRadius: R.capsule, backgroundColor: K.brand, alignItems: 'center', justifyContent: 'center' },
     saveText: { color: K.onBrand, ...T.title },
     sheetNote: { marginTop: S.x2, color: C.ink3, ...T.meta },
+
+    // 下半两个气泡入口：全圆胶囊（通则 18），字号按 34/11 的差距拉开
+    entryRow: {
+      flexDirection: 'row',
+      gap: S.x3,
+      marginHorizontal: S.page,
+      marginBottom: S.x4,
+    },
+    entryBubble: {
+      flex: 1,
+      height: 64,
+      borderRadius: R.capsule,
+      backgroundColor: C.card,
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      paddingHorizontal: S.x5,
+      gap: S.x1,
+    },
+    entryTitle: { color: C.ink, ...T.title },
+    entrySub: { color: C.ink2, ...T.meta },
 
     hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: S.x3, marginHorizontal: S.page, marginBottom: S.x2 },
     hint: { color: C.ink3, ...T.meta, flexShrink: 1 },

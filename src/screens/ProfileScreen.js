@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LiveInput, { inputMaxHeight } from '../components/LiveInput';
+// 2026-11-15：头像 / 朋友圈图走本地缓存（第一次加载后就存到手机上，不再每次重取）
+import CachedImage from '../components/CachedImage';
 import { useTheme } from '../theme';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -745,7 +747,7 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
               hitSlop={8}
             >
               {me.avatarUrl ? (
-                <Image source={{ uri: me.avatarUrl }} style={s.avatar} resizeMode="cover" />
+                <CachedImage uri={me.avatarUrl} style={s.avatar} resizeMode="cover" />
               ) : (
                 <View style={[s.avatar, { backgroundColor: C.card2 }]}>
                   <Text style={s.avatarPlaceholder} allowFontScaling={false}>＋</Text>
@@ -798,14 +800,14 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
                       <View key={i} style={s.bubbleMediaItem}>
                         {m.type === 'video' ? (
                           m.coverUrl ? (
-                            <Image source={{ uri: m.coverUrl }} style={s.bubbleImage} resizeMode="cover" />
+                            <CachedImage uri={m.coverUrl} style={s.bubbleImage} resizeMode="cover" />
                           ) : (
                             <View style={[s.bubbleImage, s.mediaFallback]}>
                               <Text style={s.mediaFallbackText} allowFontScaling={false}>视频</Text>
                             </View>
                           )
                         ) : (
-                          <Image source={{ uri: m.url }} style={s.bubbleImage} resizeMode="cover" />
+                          <CachedImage uri={m.url} style={s.bubbleImage} resizeMode="cover" />
                         )}
                       </View>
                     ))}
@@ -933,12 +935,12 @@ function ProfileScreenInner({ navigation, onBack, embedded = false, onOpenSettin
                           >
                             {m.type === 'video' ? (
                               m.coverUrl ? (
-                                <Image source={{ uri: m.coverUrl }} style={s.momentMedia} resizeMode="cover" />
+                                <CachedImage uri={m.coverUrl} style={s.momentMedia} resizeMode="cover" />
                               ) : (
                                 <VideoThumb uri={m.url} style={s.momentMedia} s={s} />
                               )
                             ) : (
-                              <Image source={{ uri: m.url }} style={s.momentMedia} resizeMode="cover" />
+                              <CachedImage uri={m.url} style={s.momentMedia} resizeMode="cover" />
                             )}
                             {m.type === 'video' ? (
                               <View style={s.videoBadge}>

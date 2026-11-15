@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
+import { getTopicsRefreshStatus, startTopicsRefresh } from '../../workbenchApi';
 
 // 选题池页（2026-11-12）
 // 口径：功能 1:1 复刻电脑端 TopicsPanel，界面重做。数据源 pool_db.py / index.js 的 pool 路由。
@@ -46,19 +47,6 @@ const FADE_STEPS = [0.15, 0.3, 0.45, 0.6, 0.78, 0.95];
 
 const DIM_KEYS = ['普世性', '数字冲击', '反常识', '可操作', '痛点强度', '时效性', '争议空间', '经验可挂', '能落到动作', '标题性'];
 
-// 选题池可能被中途退出；正在跑的那一轮不能跟着组件一起消失。
-// 用模块级状态保留进度，回来时按钮仍然显示「正在出题」，全部刷完才放开。
-let sharedBusy = null;
-// 正在跑那一轮的 AbortController 也必须留在组件外面：
-// 否则退出再进来时 busy 还在（进度看得见），但 abortRef 是空的，
-// 「取消」按钮点了什么都不做——用户只能等它跑完。
-let sharedAbort = null;
-const busyListeners = new Set();
-function publishBusy(value) {
-  sharedBusy = value;
-  busyListeners.forEach((listener) => listener(value));
-}
-
 function fmt(n) {
   return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
@@ -91,27 +79,46 @@ export default function TopicsPoolScreen({
   const [boardF, setBoardF] = useState('all');
   const [statusF, setStatusF] = useState('all');
   const [openId, setOpenId] = useState(null);
-  const [draft, setDraft] = useState(null); // { id, text, streaming, error }
-  const [busy, setBusyState] = useState(sharedBusy); // { done, total, current }
   const [note, setNote] = useState(null);
   const [follow, setFollow] = useState(true); // 流式是否自动跟随
 
-  const scrollRef = useRef(null);
-  const abortRef = useRef(null);
   const followRef = useRef(true);
   followRef.current = follow;
 
-  // 组件卸载时只断开监听，不取消正在跑的一轮；进度留在模块级，回来能接着显示。
-  useEffect(() => {
-    const listener = (value) => setBusyState(value);
-    busyListeners.add(listener);
-    listener(sharedBusy);
-    return () => busyListeners.delete(listener);
+  // 服务端出题任务状态（唯一判据）
+  const [job, setJob] = useState(null);
+  const [jobBusy, setJobBusy] = useState(false);
+  const jobDoneRef = useRef(false);
+  const running = Boolean(job && job.running);
+
+  const pullJob = useCallback(async () => {
+    try {
+      const d = await getTopicsRefreshStatus();
+      setJob(d);
+      return d;
+    } catch (e) {
+      // 读不到状态就当作「没在跑」：宁可多给一次按钮，也不能把页面卡成不能动
+      return null;
+    }
   }, []);
 
-  const setBusy = useCallback((value) => {
-    publishBusy(typeof value === 'function' ? value(sharedBusy) : value);
-  }, []);
+  // 进页面先问一次，之后每 3 秒问一次：退出再进来能接着看到同一条进度
+  useEffect(() => {
+    let alive = true;
+    pullJob();
+    const timer = setInterval(async () => {
+      if (!alive) return;
+      const d = await pullJob();
+      if (d && d.state === 'done' && !jobDoneRef.current) {
+        jobDoneRef.current = true;
+        if (onRefreshAll) Promise.resolve(onRefreshAll({})).catch(() => {});
+      }
+    }, 3000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [pullJob, onRefreshAll]);
 
   const shownAll = useMemo(() => topics.filter((x) => (x.score || 0) >= minScore), [topics, minScore]);
   const shown = useMemo(
@@ -136,58 +143,30 @@ export default function TopicsPoolScreen({
 
   const todayN = shownAll.length;
 
-  const guardBusy = () => (busy ? '正在出题，等这一轮跑完再动' : null);
+  const guardBusy = () => (running ? '正在出题，等这一轮跑完再动' : null);
 
-  const refreshAll = useCallback(() => {
-    if (busy) return;
-    Alert.alert(
-      '刷新全部板块？',
-      `会调用 ${boards.length} 次模型，约 6–12 分钟。期间可以点「取消」，取消后已出的选题保留。`,
-      [
-        { text: '先不刷', style: 'cancel' },
-        {
-          text: '开始',
-          onPress: () => {
-            if (!onRefreshAll) {
-              setNote('接口还没接：onRefreshAll 没传进来');
-              return;
-            }
-            const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-            abortRef.current = ctrl;
-            sharedAbort = ctrl;
-            setNote(null);
-            setBusy({ done: 0, total: boards.length, current: '' });
-            Promise.resolve(
-              onRefreshAll({
-                signal: ctrl ? ctrl.signal : undefined,
-                onProgress: (p) => setBusy({ done: p.done || 0, total: p.total || boards.length, current: p.current || '' }),
-              }),
-            )
-              .then((res) => {
-                if (res && res.added != null) setNote(`新增 ${res.added} 条${res.lowDropped ? `，${res.lowDropped} 条低于 ${minScore} 分丢掉` : ''}`);
-              })
-              .catch((e) => setNote(e && e.name === 'AbortError' ? '已取消，已出的选题保留' : '这一轮没跑完：' + String((e && e.message) || e)))
-              .finally(() => {
-                setBusy(null);
-                abortRef.current = null;
-                sharedAbort = null;
-              });
-          },
-        },
-      ],
-    );
-  }, [busy, boards.length, minScore, onRefreshAll]);
-
-  const cancelRefresh = () => {
-    const ctrl = abortRef.current || sharedAbort;
-    if (ctrl) ctrl.abort();
-    sharedAbort = null;
-    setBusy(null);
-  };
+  // 2026-11-15（老板）：「只要今天这 30 条没出完，刷新全部板块就不该出现；出完了才出现；
+  // 退出再进来 100 次也一样」。所以判据只有一个 —— 服务端 /api/topics/refresh/status，
+  // 本地 state 不作为判据（它一会被清、一会是旧的，正是老板一直看到按钮的原因）。
+  const refreshAll = useCallback(async () => {
+    if (jobBusy || running) return;
+    setJobBusy(true);
+    setNote(null);
+    try {
+      const d = await startTopicsRefresh();
+      setJob(d);
+      // 开始这一轮也顺手把列表按当前真数据重读一遍
+      if (onRefreshAll) Promise.resolve(onRefreshAll({})).catch(() => {});
+    } catch (e) {
+      setNote('没能开始刷新：' + String((e && e.message) || e));
+    } finally {
+      setJobBusy(false);
+    }
+  }, [jobBusy, running, onRefreshAll]);
 
   const goBack = () => {
-    if (busy) {
-      Alert.alert('正在出题，先离开？', '这一轮会在后台继续跑，回来还看得到进度；不会丢已经出的选题。', [
+    if (running) {
+      Alert.alert('正在出题，先离开？', '这一轮在服务端继续跑，回来还看得到同一条进度；已经出的选题不会丢。', [
         { text: '留下', style: 'cancel' },
         { text: '离开', style: 'destructive', onPress: () => onBack && onBack() },
       ]);
@@ -392,26 +371,34 @@ export default function TopicsPoolScreen({
         </View>
 
         {/* 刷新全部板块：主操作。生成中按钮变进度，右侧给取消 */}
-        <View style={s.actionRow}>
-          <Pressable
-            style={[s.mainBtn, busy ? s.mainBtnBusy : null]}
-            onPress={refreshAll}
-            disabled={!!busy}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !!busy, busy: !!busy }}
-          >
-            <Text style={[s.mainBtnText, busy ? { color: K.brand } : null]} numberOfLines={1} allowFontScaling={false}>
-              {busy ? `正在出题 ${busy.done}/${busy.total}${busy.current ? ' · ' + busy.current : ''}` : '刷新全部板块'}
-            </Text>
-          </Pressable>
-          {busy ? (
-            <Pressable style={s.cancelBtn} onPress={cancelRefresh} accessibilityRole="button" accessibilityLabel="取消生成">
-              <Text style={s.cancelText} allowFontScaling={false}>
-                取消
+        {/* 刷新全部板块：只有在「今天这 30 条已经出完」或「压根没在跑」时才出现。
+            在跑的时候这块只显示真进度（服务端给的 done/total），按钮不出现（老板 2026-11-15 定的）。 */}
+        {running ? (
+          <View style={s.actionRow}>
+            <View style={s.jobBox}>
+              <Text style={s.jobTitle} allowFontScaling={false}>
+                正在出题 {job.done}/{job.total}
+              </Text>
+              <Text style={s.jobSub} numberOfLines={1} allowFontScaling={false}>
+                {job.current || '电脑那边正在生成，出完这里会自己出现刷新按钮'}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={s.actionRow}>
+            <Pressable
+              style={[s.mainBtn, jobBusy ? s.mainBtnBusy : null]}
+              onPress={refreshAll}
+              disabled={jobBusy}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: jobBusy, busy: jobBusy }}
+            >
+              <Text style={s.mainBtnText} numberOfLines={1} allowFontScaling={false}>
+                {jobBusy ? '正在登记这一轮…' : '刷新全部板块'}
               </Text>
             </Pressable>
-          ) : null}
-        </View>
+          </View>
+        )}
 
         {note ? (
           <Text style={s.note} allowFontScaling={false}>
@@ -429,7 +416,7 @@ export default function TopicsPoolScreen({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: S.page, gap: S.x2 }}
+          contentContainerStyle={{ paddingHorizontal: S.page, gap: S.x3 }}
           style={s.chipScroll}
         >
           <Pressable style={[s.chip, boardF === 'all' ? s.chipOn : null]} onPress={() => setBoardF('all')} accessibilityRole="button">
@@ -561,6 +548,19 @@ const makeStyles = (C, T, S, R, K) =>
       paddingHorizontal: S.x5,
     },
     mainBtnBusy: { backgroundColor: C.card },
+    // 出题进度（服务端真数）：占原本按钮的位置，按钮此时不出现
+    jobBox: {
+      flex: 1,
+      height: 56,
+      borderRadius: R.capsule,
+      backgroundColor: C.card,
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      paddingHorizontal: S.x5,
+      gap: S.x1,
+    },
+    jobTitle: { color: C.ink, ...T.title },
+    jobSub: { color: C.ink2, ...T.meta },
     mainBtnText: { color: C.onHero, ...T.title },
     cancelBtn: {
       height: 56,
@@ -578,7 +578,7 @@ const makeStyles = (C, T, S, R, K) =>
     chipScroll: {},
     chipFade: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 12, flexDirection: 'row' },
     fadeStep: { flex: 1, backgroundColor: C.bg },
-    statusRow: { flexDirection: 'row', gap: S.x2, marginTop: S.x3, marginHorizontal: S.page },
+    statusRow: { flexDirection: 'row', gap: S.x3, marginTop: S.x4, marginHorizontal: S.page },
     chip: {
       height: 32,
       paddingHorizontal: S.x3,
@@ -588,42 +588,45 @@ const makeStyles = (C, T, S, R, K) =>
       justifyContent: 'center',
     },
     chipOn: { backgroundColor: K.brand },
-    chipText: { color: C.ink2, ...T.meta },
-    chipTextOn: { color: K.onBrand, fontWeight: '500' },
+    // 2026-11-15（老板：字太密、间距太少）：只动「气」与「气」之间的缝和行距，
+    // 气泡本身的 minHeight / padding / 圆角一个都没改，所以大小不变。
+    chipText: { color: C.ink2, ...T.meta, lineHeight: 20 },
+    chipTextOn: { color: K.onBrand, fontWeight: '500', lineHeight: 20 },
 
-    group: { marginTop: S.x6 },
+    group: { marginTop: S.x6 + S.x4 },
     groupHead: {
       flexDirection: 'row',
       alignItems: 'baseline',
       gap: S.x2,
       marginHorizontal: S.page,
-      marginBottom: S.x3,
+      marginBottom: S.x4,
     },
     groupTitle: { color: C.ink, ...T.section },
     groupCount: { color: C.ink2, ...T.meta },
     groupEmpty: { marginHorizontal: S.page, color: C.ink3, ...T.meta },
 
-    rowWrap: { marginHorizontal: S.page, marginBottom: S.x3, backgroundColor: C.card, borderRadius: R.small, overflow: 'hidden' },
+    // 一条和一条之间 20（原来 12），一屏能看到的条数少一点，但每条都透气
+    rowWrap: { marginHorizontal: S.page, marginBottom: S.x5, backgroundColor: C.card, borderRadius: R.small, overflow: 'hidden' },
     row: {
       minHeight: ROW_MIN_H,
       backgroundColor: 'transparent',
       padding: S.x4,
       flexDirection: 'row',
       alignItems: 'flex-start',
-      gap: S.x3,
+      gap: S.x4,
     },
     scoreBox: { width: 56, alignItems: 'flex-start' },
-    scoreNum: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
-    scoreLvl: { marginTop: S.x1, color: C.ink2, ...T.meta },
-    rowTitle: { flex: 1, color: C.ink, ...T.title },
+    scoreNum: { fontSize: 24, lineHeight: 32, fontWeight: '700' },
+    scoreLvl: { marginTop: S.x2, color: C.ink2, ...T.meta },
+    rowTitle: { flex: 1, color: C.ink, ...T.title, lineHeight: 30 },
     rowStatus: { flexShrink: 0, minWidth: 24, textAlign: 'right', ...T.meta, fontWeight: '500', marginTop: S.x1 },
 
-    detail: { paddingHorizontal: S.x4, paddingTop: S.x3, paddingBottom: S.x4 },
-    detailBody: { color: C.ink2, ...T.body },
-    detailHook: { marginTop: S.x1, color: C.ink, ...T.body },
-    dims: { marginTop: S.x3, color: C.ink2, ...T.meta },
-    source: { marginTop: S.x1, color: C.ink3, ...T.meta },
-    actions: { flexDirection: 'row', gap: S.x2, marginTop: S.x3 },
+    detail: { paddingHorizontal: S.x4, paddingTop: S.x4, paddingBottom: S.x5 },
+    detailBody: { color: C.ink2, ...T.body, lineHeight: 26 },
+    detailHook: { marginTop: S.x2, color: C.ink, ...T.body, lineHeight: 26 },
+    dims: { marginTop: S.x4, color: C.ink2, ...T.meta, lineHeight: 20 },
+    source: { marginTop: S.x2, color: C.ink3, ...T.meta },
+    actions: { flexDirection: 'row', gap: S.x3, marginTop: S.x4 },
     btn: {
       height: 32,
       paddingHorizontal: S.x3,

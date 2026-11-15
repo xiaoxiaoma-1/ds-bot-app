@@ -45,7 +45,7 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
 // 四个状态胶囊等宽（2026-11-15）：boardCell 原来只有 flex:1，
 // 但「待完成 32」和「进行中 0」文字长短不同，实际宽度跟着文字走 → 一排四个宽窄不一。
 // 改成按容器宽度算一个死宽，四个一模一样（容器 = 屏宽 − 左右 page − 三个 8 的间距）。
-const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x2 * 3) / 4);
+const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4);
   const heroSnap = heroCardW + S.x3;
 
   const manualRefresh = useRef(false);
@@ -421,7 +421,7 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x2 * 3) / 4);
         </View>
 
         <View style={s.sectionCard}>
-          <View style={s.sectionHead}>
+          <View style={[s.sectionHead, s.headTight]}>
             {/* D1：「今日灵感」改名「今日观点」 */}
             <Text style={s.sectionTitle} allowFontScaling={false}>今日观点</Text>
             <Pressable onPress={openIdeas} hitSlop={12} accessibilityRole="button" accessibilityLabel="打开观点库">
@@ -497,11 +497,19 @@ const makeStyles = (C, T, S, R) =>
       marginBottom: S.x3,
       padding: S.x4,
       borderRadius: R.small,
-      // 2026-11-15：标题卡到「待完成/进行中/阶段完成/已完成」胶囊原来只有 12px（gap 8 + paddingTop 8），
-      // 比胶囊到第一张任务卡的 25px 还窄，看着像粘在标题上。这里抬到 32，胶囊下面保持原样。
-      gap: 32,
+      // 2026-11-15（老板第二次说太密）：间距不放 gap 上 ——
+      // sectionCard 里除了 sectionHead 和 boardGrid，还有条件渲染的第三条（加载/错误/空态），
+      // gap 一加就会连那条普通行距也隔 46，所以改成只挂在 sectionHead 的下外边距。
     },
-    sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    sectionHead: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      // 「标题行底 → 胶囊顶」= 46（boardGrid.paddingTop 是 0，没有别的东西抵消它）
+      marginBottom: 46,
+    },
+    // 今日观点那段是普通列表，不吃 46（否则标题和第一条之间空一大块）
+    headTight: { marginBottom: S.x3 },
     sectionTitle: { color: C.ink, ...T.title },
     sectionMeta: { color: C.ink3, ...T.meta },
     row: { paddingVertical: S.x1, gap: S.x1 },

@@ -51,7 +51,14 @@ export function faceLum(h) {
  * 只有当脸色和它对比不足 3:1（眼睛会糊在脸上）才退回另一侧，
  * 保证深浅主题、深色脸浅色脸都能看见，且不再随手混出中间灰白。
  */
+// 强制所有眼睛一律用深蓝黑色 #0F1A3C（老板要求「都应该是黑色」）
+const EYE_FORCE_DARK = true;
+
 export function eyeInkFor(faceHex, C) {
+  // 老板原话：「眼睛正常来讲都应该是黑色」
+  if (EYE_FORCE_DARK) return EYE_FILL; // #0F1A3C 深蓝黑
+
+  // 保留原逻辑的开关，如效果不满意可调回
   if (!C || typeof C.ink !== 'string' || C.ink.charAt(0) !== '#') return EYE_FILL;
   const lf = faceLum(faceHex);
   const li = faceLum(C.ink);

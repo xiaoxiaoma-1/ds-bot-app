@@ -156,6 +156,9 @@ export default function MyViewsScreen({
     try {
       await addToCorpus(v.id);
       setCorpusDone((prev) => ({ ...prev, [v.id]: true }));
+      // 2026-11-15（老板）：移到语料库之后，这一条必须立刻从「我的观点」里消失。
+      // 后端 /api/myviews 已经把带「语料」标记的排除掉了，这里再本地摘一次，不用等刷新。
+      setRemoved((prev) => ({ ...prev, [v.id]: true }));
       if (onRetry) Promise.resolve(onRetry()).catch(() => {});
     } catch (e) {
       setCorpusErr(String((e && e.message) || '没移进去'));
