@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LiveInput, { inputMaxHeight } from '../components/LiveInput';
 import { useTheme } from '../theme';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -920,11 +921,13 @@ export default function ProfileScreen({ navigation, onBack, embedded = false, on
                 <Text style={s.sheetClose} allowFontScaling={false}>关闭</Text>
               </Pressable>
             </View>
-            <TextInput
+            <LiveInput
               style={s.composerInput}
+              minHeight={100}
+              maxHeight={inputMaxHeight(21, 5, 16)}
+              padVertical={16}
               value={postText}
               onChangeText={setPostText}
-              multiline
               maxLength={200}
               placeholder="这一刻的想法…"
               placeholderTextColor={C.placeholder}
@@ -1211,7 +1214,7 @@ const makeStyles = (C, T, S, R) =>
       paddingTop: S.x4,
     },
     composerInput: {
-      minHeight: 100,
+      // 高度交给 LiveInput（100 ~ 5 行+padding）
       backgroundColor: C.card,
       borderRadius: R.small,
       color: C.ink,

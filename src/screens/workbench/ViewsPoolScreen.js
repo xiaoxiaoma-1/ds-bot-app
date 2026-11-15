@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  BackHandler,
   KeyboardAvoidingView,
   PanResponder,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import useEdgeBack from '../../components/useEdgeBack';
+import LiveInput, { inputMaxHeight } from '../../components/LiveInput';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
@@ -328,6 +330,35 @@ export default function ViewsPoolScreen({
     }
     if (onBack) onBack();
   };
+  const goBackRef = useRef(goBack);
+  goBackRef.current = goBack;
+
+  // 内层（表态页）的左滑：容器接住「从左边往右滑」，转给 goBack() —— 只退到「入口页」
+  const edgeBack = useEdgeBack({
+    onBack: () => {
+      if (goBackRef.current) goBackRef.current();
+    },
+    enabled: mode === 'swipe',
+  });
+
+  // 表态页（内层）不许原生边滑把整屏 pop 掉 —— 那正是「从观点库一路退回工作台」的来源。
+  // 内层关掉原生手势，左滑交给上面的 edgeBack：只退一层，落到「选一个入口」。
+  useEffect(() => {
+    if (nav && nav.setOptions) nav.setOptions({ gestureEnabled: mode !== 'swipe' });
+  }, [mode, nav]);
+
+  // 安卓实体返回键同理：内层这一下先自己吃掉，走 goBack()，不让导航栈直接把整屏弹掉
+  useEffect(() => {
+    if (mode !== 'swipe') return undefined;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (goBackRef.current) goBackRef.current();
+      return true;
+    });
+    return () => {
+      if (sub && sub.remove) sub.remove();
+    };
+  }, [mode]);
+
 
   const cancelVote = () => {
     setVerdict(null);
@@ -459,7 +490,7 @@ export default function ViewsPoolScreen({
 
       {/* 卡片区：写理由时整块收起，把高度让给 sheet */}
       {verdict ? null : (
-        <View style={s.stage}>
+        <View style={s.stage} {...edgeBack.panHandlers}>
           {empty ? (
             <View style={s.emptyBox}>
               <Text style={s.emptyTitle} allowFontScaling={false}>
@@ -550,8 +581,11 @@ export default function ViewsPoolScreen({
               {cur ? cur.claim : ''}
             </Text>
           </View>
-          <TextInput
+          <LiveInput
             style={s.input}
+            minHeight={72}
+            maxHeight={inputMaxHeight(21, 5, 16)}
+            padVertical={16}
             value={why}
             onChangeText={(v) => {
               setWhy(v);
@@ -559,7 +593,6 @@ export default function ViewsPoolScreen({
             }}
             placeholder="写一句为什么，它跟你有什么关系"
             placeholderTextColor={C.placeholder}
-            multiline
             autoFocus
             textAlignVertical="top"
             allowFontScaling={false}
@@ -706,7 +739,8 @@ const makeStyles = (C, T, S, R, K) =>
     sheetTitle: { color: C.ink, ...T.title },
     quote: { marginTop: S.x3, paddingLeft: S.x3, backgroundColor: C.card2, borderRadius: R.small, padding: S.x3 },
     quoteText: { color: C.ink2, ...T.meta, lineHeight: 20 },
-    input: { marginTop: S.x3, flexShrink: 1, minHeight: 72, backgroundColor: C.card2, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body },
+    // 高度交给 LiveInput（72 ~ 5 行+padding），这里只管长相
+    input: { marginTop: S.x3, flexShrink: 1, backgroundColor: C.card2, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body },
     errText: { marginTop: S.x2, color: C.bad, ...T.meta },
     sheetActions: { marginTop: S.x3, flexDirection: 'row', justifyContent: 'flex-end', gap: S.x2 },
     ghostBtn: { height: 44, paddingHorizontal: S.x4, borderRadius: R.capsule, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },

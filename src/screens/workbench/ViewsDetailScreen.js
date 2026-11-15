@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LiveInput, { inputMaxHeight } from '../../components/LiveInput';
 import { useTheme } from '../../theme';
 import { useRoles } from './roles';
 import ReviewBlock from './ReviewBlock';
@@ -189,8 +190,11 @@ export default function ViewsDetailScreen({
             })}
           </View>
 
-          <TextInput
+          <LiveInput
             style={s.input}
+            minHeight={96}
+            maxHeight={inputMaxHeight(21, 5, 16)}
+            padVertical={16}
             value={why}
             onChangeText={(v) => {
               setWhy(v);
@@ -198,7 +202,6 @@ export default function ViewsDetailScreen({
             }}
             placeholder={verdict === 'disagree' ? '为什么反对？写一句' : verdict === 'unsure' ? '为什么说不清？写一句' : '为什么认同？写一句'}
             placeholderTextColor={C.placeholder}
-            multiline
             textAlignVertical="top"
             allowFontScaling={false}
           />
@@ -265,7 +268,8 @@ const makeStyles = (C, T, S, R, K) =>
     opt: { height: 32, paddingHorizontal: S.x4, borderRadius: R.capsule, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
     optText: { ...T.meta, fontWeight: '500' },
 
-    input: { marginTop: S.x3, minHeight: 96, backgroundColor: C.card, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body },
+    // 高度交给 LiveInput（96 ~ 5 行+padding）
+    input: { marginTop: S.x3, backgroundColor: C.card, borderRadius: R.small, padding: S.x4, color: C.ink, ...T.body },
     err: { marginTop: S.x2, color: C.bad, ...T.meta },
     notice: { marginTop: S.x2, color: C.ink3, ...T.meta },
     footRow: { marginTop: S.x3, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.x2 },

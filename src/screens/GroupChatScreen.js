@@ -8,10 +8,10 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LiveInput, { inputMaxHeight } from '../components/LiveInput';
 import { useTheme } from '../theme';
 import { useKeyboardShift } from '../keyboard';
 import { groupApi } from '../botApi';
@@ -383,13 +383,14 @@ export default function GroupChatScreen({ group, onBack }) {
               </Text>
             </Pressable>
             <View style={s.inputWrapper}>
-              <TextInput
+              <LiveInput
                 style={s.input}
+                minHeight={21}
+                maxHeight={inputMaxHeight(21, 5)}
                 value={draft}
                 onChangeText={setDraft}
                 placeholder="说点什么"
                 placeholderTextColor={C.placeholder}
-                multiline
                 editable={!sending}
                 allowFontScaling={false}
                 scrollEnabled
@@ -461,7 +462,8 @@ const makeStyles = (C, T, S, R) =>
       flex: 1,
       width: 0,
       minHeight: 44,
-      maxHeight: 120,
+      // 5 行文字 + 上下各 12 内边距：到顶就停，多出来的字在框内滚
+      maxHeight: inputMaxHeight(21, 5) + 24,
       backgroundColor: C.card,
       borderRadius: R.capsule,
       overflow: 'hidden',
@@ -469,9 +471,7 @@ const makeStyles = (C, T, S, R) =>
       justifyContent: 'center',
     },
     input: {
-      flex: 1,
       width: '100%',
-      maxHeight: 120,
       color: C.ink,
       ...T.body,
       paddingVertical: 0,

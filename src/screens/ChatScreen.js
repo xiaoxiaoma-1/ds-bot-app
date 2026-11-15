@@ -9,10 +9,10 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LiveInput, { inputMaxHeight } from '../components/LiveInput';
 import { useTheme } from '../theme';
 import { setCached, useCachedResource } from '../cache';
 import { chat, openFeed, send, uploadImage } from '../api';
@@ -584,13 +584,15 @@ export default function ChatScreen({ bot, onBack }) {
             <Text style={s.attachText}>+</Text>
           </Pressable>
           <View style={s.inputWrapper}>
-            <TextInput
+            {/* 高到 5 行就停，再多的字在框内滚；输入栏本身的位置和高度上限都不动 */}
+            <LiveInput
               style={s.input}
+              minHeight={21}
+              maxHeight={inputMaxHeight(21, 5)}
               value={draft}
               onChangeText={setDraft}
               placeholder="说点什么"
               placeholderTextColor={C.placeholder}
-              multiline
               scrollEnabled
             />
           </View>
@@ -668,7 +670,8 @@ const makeStyles = (C, T, S, R) =>
       flex: 1,
       width: 0,
       minHeight: 44,
-      maxHeight: 120,
+      // 5 行文字 + 上下各 12 的内边距：到顶就停，多出来的字由输入框自己滚
+      maxHeight: inputMaxHeight(21, 5) + 24,
       backgroundColor: C.card,
       borderRadius: R.capsule,
       overflow: 'hidden',
@@ -676,9 +679,7 @@ const makeStyles = (C, T, S, R) =>
       justifyContent: 'center',
     },
     input: {
-      flex: 1,
       width: '100%',
-      maxHeight: 120,
       color: C.ink,
       ...T.body,
       paddingVertical: 0,

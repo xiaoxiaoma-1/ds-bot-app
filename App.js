@@ -13,6 +13,7 @@ import MainTabs from './src/screens/MainTabs';
 import ChatScreen from './src/screens/ChatScreen';
 import GroupChatScreen from './src/screens/GroupChatScreen';
 import ExpressionScreen from './src/screens/ExpressionScreen';
+import ExpressionReviewScreen from './src/screens/ExpressionReviewScreen';
 import BookReaderScreen from './src/screens/workbench/BookReaderScreen';
 import {
   delTopic,
@@ -106,6 +107,8 @@ function NavRoot({ scheme }) {
         <Stack.Screen name="Chat" component={ChatRoute} />
         <Stack.Screen name="GroupChat" component={GroupChatRoute} />
         <Stack.Screen name="Expression" component={ExpressionRoute} />
+        {/* 点评表是训练页的下一层：左滑/返回都只 pop 到 Expression，不会退到工作台主页 */}
+        <Stack.Screen name="ExpressionReview" component={ExpressionReviewRoute} />
         <Stack.Screen name="BookReader" component={BookReaderRoute} />
         <Stack.Screen name="Books" component={BooksRoute} />
         <Stack.Screen name="Corpus" component={CorpusRoute} />
@@ -235,7 +238,27 @@ function ChatRoute({ route, navigation }) {
 
 function ExpressionRoute({ navigation }) {
   // 能力表达整屏（三阶段 + 流式点评）；点评走 sse.js 的 readEventStream，可被 AbortController 中止
-  return <ExpressionScreen onBack={() => navigation.goBack()} />;
+  // 2026-11-15：讲完之后不再在原屏里切 stage，而是推进下一层 ExpressionReview。
+  // 这样「点评表」在导航栈里是真实的一层：左滑返回 / 左上角返回 都只退到训练页，
+  // 想退到工作台必须再返回一次 —— 绝不出现一滑就回到 tab 根页。
+  return (
+    <ExpressionScreen
+      onBack={() => navigation.goBack()}
+      onNext={(payload) => navigation.navigate('ExpressionReview', payload)}
+    />
+  );
+}
+
+function ExpressionReviewRoute({ route, navigation }) {
+  const p = (route && route.params) || {};
+  return (
+    <ExpressionReviewScreen
+      {...p}
+      // 左上角返回和系统左滑是同一个落点：上一层（表达训练页）
+      onBack={() => navigation.goBack()}
+      onEdit={() => navigation.goBack()}
+    />
+  );
 }
 
 function IdeaQuickAddRoute({ navigation }) {

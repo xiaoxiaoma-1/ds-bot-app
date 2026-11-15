@@ -6,10 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LiveInput, { inputMaxHeight } from '../../components/LiveInput';
 import { useTheme } from '../../theme';
 import { getBase, getSess } from '../../store';
 import { useRoles } from './roles';
@@ -112,7 +112,6 @@ export default function MyViewsScreen({
   const [corpusDone, setCorpusDone] = useState({});
   const [corpusErr, setCorpusErr] = useState(null);
   const scrollRef = useRef(null);
-  const inputFocused = useRef(false);
 
   const loading = views === undefined;
   const baseList = Array.isArray(views) ? views : [];
@@ -279,8 +278,12 @@ export default function MyViewsScreen({
         </View>
 
         <View style={s.compose}>
-          <TextInput
+          {/* 框里字再多也不许动页面：高度自己停在上限，多的字在框内滚（LiveInput） */}
+          <LiveInput
             style={s.composeInput}
+            minHeight={84}
+            maxHeight={inputMaxHeight(21, 5, 12)}
+            padVertical={12}
             value={draft}
             onChangeText={(v) => {
               setDraft(v);
@@ -288,17 +291,7 @@ export default function MyViewsScreen({
             }}
             placeholder="写点你自己的"
             placeholderTextColor={C.placeholder}
-            multiline
             scrollEnabled
-            onFocus={() => {
-              inputFocused.current = true;
-            }}
-            onBlur={() => {
-              inputFocused.current = false;
-            }}
-            onContentSizeChange={() => {
-              if (inputFocused.current) scrollRef.current?.scrollToEnd({ animated: true });
-            }}
             textAlignVertical="top"
             autoComplete="off"
             textContentType="none"
@@ -397,8 +390,7 @@ const makeStyles = (C, T, S, R, K) =>
 
     compose: { marginTop: S.x4, marginHorizontal: S.page, backgroundColor: C.card, borderRadius: R.small, padding: S.x4 },
     composeInput: {
-      minHeight: 84,
-      maxHeight: 120,
+      // 高度由 LiveInput 按内容钳制（84 ~ 5 行+padding），这里只管长相
       backgroundColor: C.card2,
       borderRadius: R.small,
       padding: S.x3,
