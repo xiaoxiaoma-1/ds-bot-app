@@ -128,7 +128,10 @@ export default function BoardScreen({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: S.page, gap: S.x2, paddingBottom: S.x3 }}
+        // 2026-11-15（老板第 N 次说「四个胶囊贴着上面的框太密」）：
+        // 以前这里只有左右和底部 padding，四个胶囊紧贴 Head 色带下沿，一点空隙都没有。
+        // 上一轮改的是首页「今天动哪件」那张卡（marginBottom:46），改错对象了 —— 老板说的是本页。
+        contentContainerStyle={{ paddingHorizontal: S.page, paddingTop: S.x6, gap: S.x2, paddingBottom: S.x5 }}
         style={s.tabScroll}
       >
         {BOARD_TABS.map((t) => {
@@ -236,9 +239,11 @@ const makeStyles = (C, T, S, R, K) =>
     subTitle: { marginTop: S.x1, color: K.headOnSub, ...T.meta, fontWeight: '500' },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     tabScroll: { flexGrow: 0 },
+    // 2026-11-15：胶囊本身也抬高一点 —— 老板说「排版散开一点」，
+    // 不只是上方留白，「待完成 32」这类内容挤在 8px 竖内边距里也显得闷。8 → 12。
     tab: {
-      paddingHorizontal: S.x4,
-      paddingVertical: S.x2,
+      paddingHorizontal: S.x5,
+      paddingVertical: S.x3,
       borderRadius: R.capsule,
       backgroundColor: C.card2,
     },
