@@ -20,6 +20,7 @@ import {
   loadTopics,
 } from '../homeData';
 import { buildGreetingAndDate } from '../greeting';
+import { postExplain } from '../workbenchApi';
 import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
 
@@ -56,6 +57,10 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
   const [refreshing, setRefreshing] = useState(false);
   // B2：热点条目原地展开（不是跳页），同时只开一条
   const [hotOpen, setHotOpen] = useState(-1);
+  // 方案 A（老板 2026-11-15 选定）：气泡里的「AI 怎么看」要真干活 ——
+  // 原来那个按钮的 onPress 只是 setHotOpen(index)（等于什么都没做），底下还挂着「接口待接入」。
+  // 现在直接调已有的 /api/dsh-media/explain（workbenchApi.postExplain），就地把解读摊在气泡下面。
+  const [hotAi, setHotAi] = useState(null); // { index, loading, text, err }
   // A1：三张卡高度取最大值。量的是每张卡的内容区（不含标题/内边距），
   // 量到更大的就把三张的内容区一起抬到那个高度 —— 高度由内容撑开，但谁也不许比谁矮。
   const [heroBodyH, setHeroBodyH] = useState(0);
@@ -143,10 +148,41 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
   // B2：热点条目点开 = 卡片里原地展开一栏，两项：「查看原文」「AI 怎么看」
   const openHotItem = (index, it) => {
     setHotOpen((prev) => (prev === index ? -1 : index));
+    // 换一条 / 收起时把上一条的 AI 解读一起收掉，不许串到另一条上
+    setHotAi(null);
     if (!it) return;
     // 展开时把原文也顺手标一下，方便「查看原文」直接用
     return it;
   };
+
+  // 通则 2 / 4：再点同一行收起、点旁边空白也收起
+  const closeHot = useCallback(() => {
+    setHotOpen(-1);
+    setHotAi(null);
+  }, []);
+
+  // 「AI 怎么看」：调 explain 接口，行内显示。三态齐全（loading / error / 有字）。
+  const askAi = useCallback(async (index, it) => {
+    if (!it) return;
+    const title = String(it.title || '').trim();
+    if (!title) {
+      setHotAi({ index, loading: false, text: '', err: '这条没有标题，问不了' });
+      return;
+    }
+    setHotAi({ index, loading: true, text: '', err: null });
+    try {
+      const out = await postExplain(
+        `这条热点：${title}${it.source ? `（来源 ${it.source}）` : ''}。\n它真正的重点是什么？和一个普通人有什么关系？`,
+      );
+      setHotAi((prev) => (prev && prev.index === index ? { index, loading: false, text: out, err: null } : prev));
+    } catch (e) {
+      setHotAi((prev) =>
+        prev && prev.index === index
+          ? { index, loading: false, text: '', err: (e && e.message) || '没问到' }
+          : prev,
+      );
+    }
+  }, []);
 
   const openHot = () => {
     go('HotDaily');
@@ -220,6 +256,9 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.ink2} />
         }
       >
+        {/* 通则 2：热点气泡开着时，点旁边空白就收起。内层按钮/热点行会自己吃掉点击，
+            这一层只接「真的点在空白上」的那一下。 */}
+        <Pressable onPress={closeHot} style={s.hotBlank}>
         <View style={s.head}>
           <Text style={s.greeting} allowFontScaling={false}>{greeting}</Text>
           <Text style={s.date} allowFontScaling={false}>{dateText}</Text>
@@ -295,12 +334,44 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
                         </Pressable>
                         <Pressable
                           style={s.hotActBtn}
-                          onPress={() => setHotOpen(index)}
+                          onPress={() => {
+                            const same = hotAi && hotAi.index === index && hotAi.text;
+                            if (same) {
+                              // 已经有解读：再点一次收起（通则 4）
+                              setHotAi(null);
+                              return;
+                            }
+                            askAi(index, it);
+                          }}
                           accessibilityRole="button"
                         >
                           <Text style={s.hotActText} allowFontScaling={false}>AI 怎么看</Text>
-                          <Text style={s.hotAiText} allowFontScaling={false}>接口待接入</Text>
+                          {hotAi && hotAi.index === index && hotAi.loading ? (
+                            <Text style={s.hotAiText} allowFontScaling={false}>正在想…</Text>
+                          ) : null}
                         </Pressable>
+                      </View>
+                    ) : null}
+                    {/* AI 的解读摊在这一行下面：有字显示三行，失败给原文 + 可重试 */}
+                    {open && hotAi && hotAi.index === index ? (
+                      <View style={s.hotAiBox}>
+                        {hotAi.loading ? (
+                          <View style={s.hotAiRow}>
+                            <ActivityIndicator size="small" color={C.ink2} />
+                            <Text style={s.hotAiBody} allowFontScaling={false}>正在读这条热点…</Text>
+                          </View>
+                        ) : hotAi.err ? (
+                          <View style={s.hotAiRow}>
+                            <Text style={s.hotAiErr} allowFontScaling={false}>{hotAi.err}</Text>
+                            <Pressable onPress={() => askAi(index, it)} hitSlop={8} accessibilityRole="button">
+                              <Text style={s.hotAiRetry} allowFontScaling={false}>重试</Text>
+                            </Pressable>
+                          </View>
+                        ) : (
+                          <Text style={s.hotAiBody} numberOfLines={4} allowFontScaling={false}>
+                            {hotAi.text}
+                          </Text>
+                        )}
                       </View>
                     ) : null}
                   </View>
@@ -413,6 +484,7 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
           )}
         </View>
 
+        </Pressable>
       </ScrollView>
     </View>
   );
@@ -509,6 +581,14 @@ const makeStyles = (C, T, S, R) =>
     },
     hotActText: { color: C.ink, ...T.meta, fontWeight: '500' },
     hotAiText: { color: C.ink3, ...T.meta },
+    // AI 解读块：贴着上面那排气泡、跟正文左端对齐（通则 7 贴在被操作对象旁边）
+    hotAiBox: { paddingLeft: S.x5, paddingRight: S.x2, paddingTop: S.x1, paddingBottom: S.x2 },
+    hotAiRow: { flexDirection: 'row', alignItems: 'center', gap: S.x2, flexWrap: 'wrap' },
+    hotAiBody: { color: C.ink2, ...T.meta, lineHeight: 18 },
+    hotAiErr: { color: C.ink2, ...T.meta },
+    hotAiRetry: { color: C.ink, ...T.meta, fontWeight: '600' },
+    // 点空白收起的承接层：不透明、不挡内容，只接「真点在空白上」那一下
+    hotBlank: { flexGrow: 1 },
     draftEmpty: { paddingVertical: S.x2, gap: S.x2, alignItems: 'flex-start' },
     emptyActionText: { color: C.ink, ...T.meta },
     boardGrid: { flexDirection: 'row', gap: S.x2, paddingTop: 0 },
