@@ -46,10 +46,16 @@ export default function HomeScreen({ active = true, onOpenDraft, navigation }) {
   const { width: winWidth } = useWindowDimensions();
   const { greeting, dateText } = useMemo(() => buildGreetingAndDate(), []);
   const heroCardW = Math.max(0, winWidth - S.page * 2 - S.x3);
-// 四个状态胶囊等宽（2026-11-15）：boardCell 原来只有 flex:1，
-// 但「待完成 32」和「进行中 0」文字长短不同，实际宽度跟着文字走 → 一排四个宽窄不一。
-// 改成按容器宽度算一个死宽，四个一模一样（容器 = 屏宽 − 左右 page − 三个 8 的间距）。
-const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4);
+// 状态胶囊等宽（2026-11-15 起）：boardCell 原来只有 flex:1，
+// 但「待完成 32」和「进行中 0」文字长短不同，实际宽度跟着文字走 → 一排宽窄不一。
+// 改成按容器宽度算一个死宽（容器 = 屏宽 − 左右 page − sectionCard 内距 − 间隙）。
+// 【2026-11-20 修】原来除数写死 /4，加到 5 栏后总宽超出屏幕，第 5 个被切在屏幕外、那排又不能滑
+// （老板原话「最后一个出去屏幕外了还划不动，这个才是重点」）。
+// 改成按 BOARD_STATUS.length 动态算，以后再加栏也不会溢出。
+const boardCellW = Math.max(
+  0,
+  (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * (BOARD_STATUS.length - 1)) / BOARD_STATUS.length,
+);
   const heroSnap = heroCardW + S.x3;
 
   const manualRefresh = useRef(false);
@@ -478,8 +484,9 @@ const boardCellW = Math.max(0, (winWidth - S.page * 2 - S.x4 * 2 - S.x2 * 3) / 4
                   accessibilityRole="button"
                   accessibilityLabel={`看板 ${item.label}，${b[item.key] ?? 0} 件`}
                 >
-                  <Text style={s.boardCount} numberOfLines={1} allowFontScaling={false}>{b[item.key] ?? 0}</Text>
-                  <Text style={s.boardLabel} numberOfLines={1} allowFontScaling={false}>{item.label}</Text>
+                  <Text style={s.boardCount} numberOfLines={1} allowFontScaling={false} adjustsFontSizeToFit minimumFontScale={0.75}>{b[item.key] ?? 0}</Text>
+                  {/* 5 栏后每格变窄，「阶段完成」四个字必须自动缩字号放进去，不许出现省略号 */}
+                  <Text style={s.boardLabel} numberOfLines={1} allowFontScaling={false} adjustsFontSizeToFit minimumFontScale={0.75}>{item.label}</Text>
                 </Pressable>
               ))}
             </View>
