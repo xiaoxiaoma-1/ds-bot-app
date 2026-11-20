@@ -1,56 +1,56 @@
 # diagnostics
-generated: 2026-11-15T13:37:40Z
-run: 43719139896 attempt: 1
-ref: refs/heads/main sha: 3524b2d04e1d865e9307c6307b3608ad467eac32
+generated: 2026-11-20T11:18:13Z
+run: 44724787741 attempt: 1
+ref: refs/heads/main sha: 1687cb5630bd1ded7156169e76386ebb6de68c78
 job status: success
 $GITHUB_WORKSPACE: /Users/runner/work/ds-bot-app/ds-bot-app
 WORKSPACE=DSBot.xcworkspace SCHEME=DSBot
 TARGET_BUILD_DIR=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos WRAPPER_NAME=DSBot.app
-uname: Darwin sat12-bq149-835a71da-342c-4c37-90f8-e51464d1b5be-5631D0135CB6.local 25.6.0 Darwin Kernel Version 25.6.0: Mon Oct 12 00:39:04 PDT 2026; root:xnu-12377.161.15.701.48~2/RELEASE_ARM64_VMAPPLE arm64
+uname: Darwin sjc20-bb710-34a2765a-92d2-4dd3-8a64-fef27a00e502-82D32C6651F0.local 25.6.0 Darwin Kernel Version 25.6.0: Mon Oct 12 00:39:04 PDT 2026; root:xnu-12377.161.15.701.48~2/RELEASE_ARM64_VMAPPLE arm64
 xcodebuild: Xcode 26.3 Build version 17C529 
 pod: 1.17.0
 
 === ls -la $GITHUB_WORKSPACE ===
-total 33048
-drwxr-xr-x   28 runner  staff      896 Nov 15 13:37 .
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:28 ..
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:28 .expo
-drwxr-xr-x   13 runner  staff      416 Nov 15 13:31 .git
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:28 .github
--rw-r--r--    1 runner  staff       93 Nov 15 13:28 .gitignore
--rw-r--r--    1 runner  staff    36937 Nov 15 13:28 App.js
--rw-r--r--    1 runner  staff      717 Nov 15 13:28 app.json
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:28 assets
-drwxr-xr-x@   8 runner  staff      256 Nov 15 13:30 build
--rw-r--r--    1 runner  staff   423791 Nov 15 13:28 build-log-tail.txt
--rw-r--r--    1 runner  staff    75497 Nov 15 13:37 build-settings.txt
--rw-r--r--    1 runner  staff  4880809 Nov 15 13:37 build.log
--rw-r--r--    1 runner  staff     6876 Nov 15 13:28 CHANGELOG.md
--rw-r--r--    1 runner  staff    21868 Nov 15 13:28 DESIGN.md
--rw-r--r--    1 runner  staff      680 Nov 15 13:37 diagnostics.txt
--rw-r--r--    1 runner  staff  9844942 Nov 15 13:37 ds-bot-unsigned.ipa
--rw-r--r--    1 runner  staff      101 Nov 15 13:28 index.js
-drwxr-xr-x   13 runner  staff      416 Nov 15 13:29 ios
-drwxr-xr-x  318 runner  staff    10176 Nov 15 13:28 node_modules
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:37 out
--rw-r--r--    1 runner  staff   247852 Nov 15 13:28 package-lock.json
--rw-r--r--    1 runner  staff      904 Nov 15 13:28 package.json
--rw-r--r--    1 runner  staff      107 Nov 15 13:28 README.md
--rw-r--r--    1 runner  staff     2502 Nov 15 13:28 scope-check.js
-drwxr-xr-x   20 runner  staff      640 Nov 15 13:28 src
--rw-r--r--    1 runner  staff     3153 Nov 15 13:30 xcodebuild-list.json
--rw-r--r--    1 runner  staff     3155 Nov 15 13:29 xcodebuild-list.txt
+total 31904
+drwxr-xr-x   28 runner  staff      896 Nov 20 11:18 .
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:06 ..
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:06 .expo
+drwxr-xr-x   13 runner  staff      416 Nov 20 11:09 .git
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:06 .github
+-rw-r--r--    1 runner  staff       93 Nov 20 11:06 .gitignore
+-rw-r--r--    1 runner  staff    36937 Nov 20 11:06 App.js
+-rw-r--r--    1 runner  staff      682 Nov 20 11:06 app.json
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:06 assets
+drwxr-xr-x@   8 runner  staff      256 Nov 20 11:08 build
+-rw-r--r--    1 runner  staff   422124 Nov 20 11:06 build-log-tail.txt
+-rw-r--r--    1 runner  staff    75497 Nov 20 11:18 build-settings.txt
+-rw-r--r--    1 runner  staff  4880801 Nov 20 11:17 build.log
+-rw-r--r--    1 runner  staff     6876 Nov 20 11:06 CHANGELOG.md
+-rw-r--r--    1 runner  staff    21868 Nov 20 11:06 DESIGN.md
+-rw-r--r--    1 runner  staff      680 Nov 20 11:18 diagnostics.txt
+-rw-r--r--    1 runner  staff  9845331 Nov 20 11:18 ds-bot-unsigned.ipa
+-rw-r--r--    1 runner  staff      101 Nov 20 11:06 index.js
+drwxr-xr-x   13 runner  staff      416 Nov 20 11:07 ios
+drwxr-xr-x  318 runner  staff    10176 Nov 20 11:06 node_modules
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:18 out
+-rw-r--r--    1 runner  staff   227468 Nov 20 11:06 package-lock.json
+-rw-r--r--    1 runner  staff      904 Nov 20 11:06 package.json
+-rw-r--r--    1 runner  staff      107 Nov 20 11:06 README.md
+-rw-r--r--    1 runner  staff     2502 Nov 20 11:06 scope-check.js
+drwxr-xr-x   20 runner  staff      640 Nov 20 11:06 src
+-rw-r--r--    1 runner  staff     3153 Nov 20 11:08 xcodebuild-list.json
+-rw-r--r--    1 runner  staff     3155 Nov 20 11:08 xcodebuild-list.txt
 
 === ls -la build ===
 total 8
-drwxr-xr-x@   8 runner  staff   256 Nov 15 13:30 .
-drwxr-xr-x   28 runner  staff   896 Nov 15 13:37 ..
-drwxr-xr-x    4 runner  staff   128 Nov 15 13:30 Build
-drwxr-x---    3 runner  staff    96 Nov 15 13:30 CompilationCache.noindex
--rw-r--r--    1 runner  staff   359 Nov 15 13:30 info.plist
-drwxr-xr-x    7 runner  staff   224 Nov 15 13:30 Logs
-drwxr-xr-x  102 runner  staff  3264 Nov 15 13:36 ModuleCache.noindex
-drwxr-xr-x    3 runner  staff    96 Nov 15 13:30 SDKStatCaches.noindex
+drwxr-xr-x@   8 runner  staff   256 Nov 20 11:08 .
+drwxr-xr-x   28 runner  staff   896 Nov 20 11:18 ..
+drwxr-xr-x    4 runner  staff   128 Nov 20 11:08 Build
+drwxr-x---    3 runner  staff    96 Nov 20 11:08 CompilationCache.noindex
+-rw-r--r--    1 runner  staff   359 Nov 20 11:08 info.plist
+drwxr-xr-x    7 runner  staff   224 Nov 20 11:08 Logs
+drwxr-xr-x  102 runner  staff  3264 Nov 20 11:16 ModuleCache.noindex
+drwxr-xr-x    3 runner  staff    96 Nov 20 11:08 SDKStatCaches.noindex
 
 === ls -R build/Build/Products ===
 Release-iphoneos
@@ -3239,114 +3239,114 @@ PrivacyInfo.xcprivacy
 build/Build/Products/Release-iphoneos/Yoga:
 
 === ls -la build/Build/Products/Release-iphoneos ===
-total 17064
-drwxr-xr-x@ 107 runner  staff     3424 Nov 15 13:37 .
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 ..
-drwxr-xr-x   23 runner  staff      736 Nov 15 13:37 DSBot.app
-drwxr-xr-x    3 runner  staff       96 Nov 15 13:36 DSBot.app.dSYM
-drwxr-xr-x    6 runner  staff      192 Nov 15 13:36 DSBot.swiftmodule
-drwxr-xr-x@   9 runner  staff      288 Nov 15 13:35 EXConstants
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:36 Expo
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoAsset
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoBlur
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoDomWebView
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 ExpoFileSystem
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ExpoFont
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoImagePicker
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoKeepAwake
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:32 ExpoLogBox
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 ExpoMediaLibrary
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:32 ExpoMediaLibraryImageLoader
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ExpoModulesCore
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ExpoModulesJSI
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ExpoModulesWorklets
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoSecureStore
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoSensors
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoSharing
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ExpoVideo
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 ExpoWebBrowser
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 FBLazyVector
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 hermes-engine
--rw-r--r--    1 runner  staff     4152 Nov 15 13:36 libPods-DSBot.a
--rw-r--r--    1 runner  staff  8728266 Nov 15 13:37 main.jsbundle
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 RCTDeprecation
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 RCTRequired
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 RCTSwiftUI
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 RCTSwiftUIWrapper
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 RCTTypeSafety
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-callinvoker
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 React-Core
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-Core-prebuilt
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-CoreModules
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 React-cxxreact
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-debug
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-defaultsnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-domnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-Fabric
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-FabricComponents
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-FabricImage
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-featureflags
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-featureflagsnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-graphics
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-hermes
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-idlecallbacksnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-ImageManager
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-intersectionobservernativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jserrorhandler
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsi
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsiexecutor
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsinspector
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsinspectorcdp
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsinspectornetwork
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsinspectortracing
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsitooling
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-jsitracing
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-logger
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-Mapbuffer
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-microtasksnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-mutationobservernativemodule
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:32 react-native-safe-area-context
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-NativeModulesApple
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-networking
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-oscompat
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-perflogger
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-performancecdpmetrics
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-performancetimeline
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTActionSheet
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTAnimation
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTAppDelegate
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTBlob
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTFabric
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTFBReactNativeSpec
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTImage
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTLinking
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTNetwork
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTRuntime
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTSettings
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTText
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RCTVibration
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-rendererconsistency
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-renderercss
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-rendererdebug
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RuntimeApple
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RuntimeCore
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-runtimeexecutor
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-RuntimeHermes
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-runtimescheduler
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:30 React-timing
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-utils
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-viewtransitionnativemodule
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 React-webperformancenativemodule
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:32 ReactAppDependencyProvider
-drwxr-xr-x@   3 runner  staff       96 Nov 15 13:32 ReactCodegen
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ReactCommon
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 ReactNativeDependencies
-drwxr-xr-x@   4 runner  staff      128 Nov 15 13:35 RNCAsyncStorage
-drwxr-xr-x@   7 runner  staff      224 Nov 15 13:35 RNScreens
-drwxr-xr-x@   4 runner  staff      128 Nov 15 13:35 RNSVG
-drwxr-xr-x   12 runner  staff      384 Nov 15 13:35 XCFrameworkIntermediates
-drwxr-xr-x@   2 runner  staff       64 Nov 15 13:30 Yoga
+total 17072
+drwxr-xr-x@ 107 runner  staff     3424 Nov 20 11:17 .
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 ..
+drwxr-xr-x   23 runner  staff      736 Nov 20 11:17 DSBot.app
+drwxr-xr-x    3 runner  staff       96 Nov 20 11:16 DSBot.app.dSYM
+drwxr-xr-x    6 runner  staff      192 Nov 20 11:16 DSBot.swiftmodule
+drwxr-xr-x@   9 runner  staff      288 Nov 20 11:15 EXConstants
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 Expo
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoAsset
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoBlur
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoDomWebView
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 ExpoFileSystem
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ExpoFont
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoImagePicker
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoKeepAwake
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:10 ExpoLogBox
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 ExpoMediaLibrary
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:10 ExpoMediaLibraryImageLoader
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ExpoModulesCore
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ExpoModulesJSI
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ExpoModulesWorklets
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoSecureStore
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoSensors
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoSharing
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ExpoVideo
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:15 ExpoWebBrowser
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 FBLazyVector
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 hermes-engine
+-rw-r--r--    1 runner  staff     4152 Nov 20 11:15 libPods-DSBot.a
+-rw-r--r--    1 runner  staff  8728679 Nov 20 11:17 main.jsbundle
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 RCTDeprecation
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 RCTRequired
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 RCTSwiftUI
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 RCTSwiftUIWrapper
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 RCTTypeSafety
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-callinvoker
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 React-Core
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-Core-prebuilt
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-CoreModules
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 React-cxxreact
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-debug
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-defaultsnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-domnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-Fabric
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-FabricComponents
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-FabricImage
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-featureflags
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-featureflagsnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-graphics
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-hermes
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-idlecallbacksnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-ImageManager
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-intersectionobservernativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jserrorhandler
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsi
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsiexecutor
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsinspector
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsinspectorcdp
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsinspectornetwork
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsinspectortracing
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsitooling
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-jsitracing
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-logger
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-Mapbuffer
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-microtasksnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-mutationobservernativemodule
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:10 react-native-safe-area-context
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-NativeModulesApple
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-networking
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-oscompat
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-perflogger
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-performancecdpmetrics
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-performancetimeline
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTActionSheet
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTAnimation
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTAppDelegate
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTBlob
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTFabric
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTFBReactNativeSpec
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTImage
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTLinking
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTNetwork
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTRuntime
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTSettings
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTText
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RCTVibration
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-rendererconsistency
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-renderercss
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-rendererdebug
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RuntimeApple
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RuntimeCore
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-runtimeexecutor
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-RuntimeHermes
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-runtimescheduler
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:08 React-timing
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-utils
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-viewtransitionnativemodule
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 React-webperformancenativemodule
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:10 ReactAppDependencyProvider
+drwxr-xr-x@   3 runner  staff       96 Nov 20 11:10 ReactCodegen
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ReactCommon
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 ReactNativeDependencies
+drwxr-xr-x@   4 runner  staff      128 Nov 20 11:14 RNCAsyncStorage
+drwxr-xr-x@   7 runner  staff      224 Nov 20 11:14 RNScreens
+drwxr-xr-x@   4 runner  staff      128 Nov 20 11:14 RNSVG
+drwxr-xr-x   12 runner  staff      384 Nov 20 11:15 XCFrameworkIntermediates
+drwxr-xr-x@   2 runner  staff       64 Nov 20 11:08 Yoga
 
 === find . -maxdepth 6 -name '*.app' ===
 ./out/Payload/DSBot.app
@@ -3357,19 +3357,19 @@ build/Build/Products/Release-iphoneos/DSBot.app
 
 === ls -la ios ===
 total 192
-drwxr-xr-x  13 runner  staff    416 Nov 15 13:29 .
-drwxr-xr-x  28 runner  staff    896 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff    321 Nov 15 13:28 .gitignore
--rw-r--r--   1 runner  staff    482 Nov 15 13:28 .xcode.env
--rw-r--r--   1 runner  staff     77 Nov 15 13:28 .xcode.env.local
-drwxr-xr-x   3 runner  staff     96 Nov 15 13:28 build
-drwxr-xr-x  10 runner  staff    320 Nov 15 13:29 DSBot
-drwxr-xr-x   5 runner  staff    160 Nov 15 13:29 DSBot.xcodeproj
-drwxr-xr-x   4 runner  staff    128 Nov 15 13:29 DSBot.xcworkspace
--rw-r--r--   1 runner  staff   2778 Nov 15 13:28 Podfile
--rw-r--r--   1 runner  staff  76489 Nov 15 13:29 Podfile.lock
--rw-r--r--   1 runner  staff    215 Nov 15 13:28 Podfile.properties.json
-drwxr-xr-x  20 runner  staff    640 Nov 15 13:37 Pods
+drwxr-xr-x  13 runner  staff    416 Nov 20 11:07 .
+drwxr-xr-x  28 runner  staff    896 Nov 20 11:18 ..
+-rw-r--r--   1 runner  staff    321 Nov 20 11:06 .gitignore
+-rw-r--r--   1 runner  staff    482 Nov 20 11:06 .xcode.env
+-rw-r--r--   1 runner  staff     77 Nov 20 11:06 .xcode.env.local
+drwxr-xr-x   3 runner  staff     96 Nov 20 11:06 build
+drwxr-xr-x  10 runner  staff    320 Nov 20 11:07 DSBot
+drwxr-xr-x   5 runner  staff    160 Nov 20 11:07 DSBot.xcodeproj
+drwxr-xr-x   4 runner  staff    128 Nov 20 11:08 DSBot.xcworkspace
+-rw-r--r--   1 runner  staff   2778 Nov 20 11:06 Podfile
+-rw-r--r--   1 runner  staff  76489 Nov 20 11:07 Podfile.lock
+-rw-r--r--   1 runner  staff    215 Nov 20 11:06 Podfile.properties.json
+drwxr-xr-x  20 runner  staff    640 Nov 20 11:17 Pods
 
 === xcodebuild -list -workspace ios/*.xcworkspace ===
 --- ios/DSBot.xcworkspace
@@ -3743,10 +3743,6 @@ Information about workspace "DSBot":
     WRAPPER_NAME = DSBot.app
 
 === build.log tail 300 ===
-
-iOS Bundled 22138ms index.js (3138 modules)
-Writing bundle output to: /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle
-Copying 15 asset files
 Done writing bundle output
 + [[ true == false ]]
 + EXTRA_COMPILER_ARGS=
@@ -3850,16 +3846,20 @@ Done writing bundle output
 /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:94039:12: warning: the variable "atob" was not declared in anonymous arrow function
     return atob(content);
            ^~~~
-/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:284225:19: warning: the variable "setInterval" was not declared in anonymous arrow function
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:284232:19: warning: the variable "setInterval" was not declared in anonymous arrow function
       var timer = setInterval(async () => {
                   ^~~~~~~~~~~
-/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:284235:9: warning: the variable "clearInterval" was not declared in anonymous arrow function
+/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/main.jsbundle:284242:9: warning: the variable "clearInterval" was not declared in anonymous arrow function
         clearInterval(timer);
         ^~~~~~~~~~~~~
 + [[ '' == true ]]
 + BUNDLE_FILE=/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/main.jsbundle
 + [[ false != true ]]
 + [[ ! -f /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/main.jsbundle ]]
+
+GenerateDSYMFile /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app.dSYM /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot (in target 'DSBot' from project 'DSBot')
+    cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot -o /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app.dSYM
 
 PhaseScriptExecution [CP]\ Copy\ Pods\ Resources /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-800E24972A6A228C8D4807E9.sh (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
@@ -3901,12 +3901,12 @@ React-timing_privacy.bundle/
 React-timing_privacy.bundle/Info.plist
 React-timing_privacy.bundle/PrivacyInfo.xcprivacy
 
-sent 20696 bytes  received 448 bytes  2093465 bytes/sec
+sent 20696 bytes  received 448 bytes  1002085 bytes/sec
 total size is 18191  speedup is 0.86
 
-PhaseScriptExecution [CP]\ Embed\ Pods\ Frameworks /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-8E4556193AF91D5F8D4E3CAE.sh (in target 'DSBot' from project 'DSBot')
+PhaseScriptExecution [CP]\ Embed\ Pods\ Frameworks /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-46FAB8896E5B1E6EE2AB4B19.sh (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
-    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-8E4556193AF91D5F8D4E3CAE.sh
+    /bin/sh -c /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Script-46FAB8896E5B1E6EE2AB4B19.sh
 mkdir -p /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFileSystem/ExpoFileSystem.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3914,7 +3914,7 @@ ExpoFileSystem.framework/
 ExpoFileSystem.framework/ExpoFileSystem
 ExpoFileSystem.framework/Info.plist
 
-sent 1136042 bytes  received 70 bytes  18903693 bytes/sec
+sent 1136042 bytes  received 70 bytes  25190953 bytes/sec
 total size is 1135478  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoFont/ExpoFont.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3922,7 +3922,7 @@ ExpoFont.framework/
 ExpoFont.framework/ExpoFont
 ExpoFont.framework/Info.plist
 
-sent 208688 bytes  received 70 bytes  18807027 bytes/sec
+sent 208688 bytes  received 70 bytes  20669108 bytes/sec
 total size is 208260  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoMediaLibrary/ExpoMediaLibrary.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3930,7 +3930,7 @@ ExpoMediaLibrary.framework/
 ExpoMediaLibrary.framework/ExpoMediaLibrary
 ExpoMediaLibrary.framework/Info.plist
 
-sent 959175 bytes  received 70 bytes  94974752 bytes/sec
+sent 959175 bytes  received 70 bytes  16230879 bytes/sec
 total size is 958623  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesCore/ExpoModulesCore.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3938,7 +3938,7 @@ ExpoModulesCore.framework/
 ExpoModulesCore.framework/ExpoModulesCore
 ExpoModulesCore.framework/Info.plist
 
-sent 3828044 bytes  received 70 bytes  106041939 bytes/sec
+sent 3828044 bytes  received 70 bytes  63695740 bytes/sec
 total size is 3827148  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesJSI/ExpoModulesJSI.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3946,7 +3946,7 @@ ExpoModulesJSI.framework/
 ExpoModulesJSI.framework/ExpoModulesJSI
 ExpoModulesJSI.framework/Info.plist
 
-sent 886629 bytes  received 70 bytes  79882792 bytes/sec
+sent 886629 bytes  received 70 bytes  55074472 bytes/sec
 total size is 886093  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoModulesWorklets/ExpoModulesWorklets.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3954,7 +3954,7 @@ ExpoModulesWorklets.framework/
 ExpoModulesWorklets.framework/ExpoModulesWorklets
 ExpoModulesWorklets.framework/Info.plist
 
-sent 164464 bytes  received 70 bytes  20312839 bytes/sec
+sent 164464 bytes  received 70 bytes  14822882 bytes/sec
 total size is 164000  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ExpoVideo/ExpoVideo.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3962,7 +3962,7 @@ ExpoVideo.framework/
 ExpoVideo.framework/ExpoVideo
 ExpoVideo.framework/Info.plist
 
-sent 1557244 bytes  received 70 bytes  110447801 bytes/sec
+sent 1557244 bytes  received 70 bytes  73806350 bytes/sec
 total size is 1556648  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/React-Core-prebuilt/React.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3970,7 +3970,7 @@ React.framework/
 React.framework/Info.plist
 React.framework/React
 
-sent 12017472 bytes  received 70 bytes  111170601 bytes/sec
+sent 12017472 bytes  received 70 bytes  82822481 bytes/sec
 total size is 12015616  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/ReactNativeDependencies/ReactNativeDependencies.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 12 files
@@ -3987,7 +3987,7 @@ ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/
 ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/Info.plist
 ReactNativeDependencies.framework/ReactNativeDependencies_glog.bundle/PrivacyInfo.xcprivacy
 
-sent 1242199 bytes  received 220 bytes  68641933 bytes/sec
+sent 1242199 bytes  received 220 bytes  61811890 bytes/sec
 total size is 1240342  speedup is 1.00
 rsync --delete -av --filter P .*.?????? --links --filter "- CVS/" --filter "- .svn/" --filter "- .git/" --filter "- .hg/" --filter "- Headers" --filter "- PrivateHeaders" --filter "- Modules" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/XCFrameworkIntermediates/hermes-engine/Pre-built/hermesvm.framework" "/Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks"
 Transfer starting: 3 files
@@ -3995,25 +3995,25 @@ hermesvm.framework/
 hermesvm.framework/Info.plist
 hermesvm.framework/hermesvm
 
-sent 5068055 bytes  received 70 bytes  107603503 bytes/sec
+sent 5068055 bytes  received 70 bytes  60263079 bytes/sec
 total size is 5067035  speedup is 1.00
 
 CopySwiftLibs /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
-    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/PlugIns --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/SystemExtensions --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.EmALNm/Metal.xctoolchain --toolchain /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/PlugIns --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/SystemExtensions --scan-folder /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.hPKDij/Metal.xctoolchain --toolchain /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
 Ignoring --strip-bitcode because --sign was not passed
 
 ExtractAppIntentsMetadata (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
-    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.EmALNm/Metal.xctoolchain --module-name DSBot --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier com.jinyu.dsbot --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
-2026-11-15 13:37:25.688 appintentsmetadataprocessor[20978:60269] Starting appintentsmetadataprocessor export
-2026-11-15 13:37:25.700 appintentsmetadataprocessor[20978:60269] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+    /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.3.7003.10.hPKDij/Metal.xctoolchain --module-name DSBot --sdk-root /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --xcode-version 17C529 --platform-family iOS --deployment-target 16.4 --bundle-identifier com.jinyu.dsbot --output /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --target-triple arm64-apple-ios16.4 --binary-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/DSBot --dependency-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot_dependency_info.dat --stringsdata-file /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftFileList --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/Objects-normal/arm64/DSBot.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-11-20 11:17:54.771 appintentsmetadataprocessor[21487:58334] Starting appintentsmetadataprocessor export
+2026-11-20 11:17:54.782 appintentsmetadataprocessor[21487:58334] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
 
 AppIntentsSSUTraining (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
     /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Info.plist --temp-dir-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/ssu --bundle-id com.jinyu.dsbot --product-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app --extracted-metadata-path /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app/Metadata.appintents --metadata-file-list /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Intermediates.noindex/DSBot.build/Release-iphoneos/DSBot.build/DSBot.DependencyMetadataFileList --archive-ssu-assets
-2026-11-15 13:37:25.807 appintentsnltrainingprocessor[20979:60273] Parsing options for appintentsnltrainingprocessor
-2026-11-15 13:37:25.808 appintentsnltrainingprocessor[20979:60273] No AppShortcuts found - Skipping.
+2026-11-20 11:17:54.847 appintentsnltrainingprocessor[21488:58336] Parsing options for appintentsnltrainingprocessor
+2026-11-20 11:17:54.848 appintentsnltrainingprocessor[21488:58336] No AppShortcuts found - Skipping.
 
 RegisterExecutionPolicyException /Users/runner/work/ds-bot-app/ds-bot-app/build/Build/Products/Release-iphoneos/DSBot.app (in target 'DSBot' from project 'DSBot')
     cd /Users/runner/work/ds-bot-app/ds-bot-app/ios
@@ -4038,177 +4038,177 @@ note: Run script build phase '[CP-User] [Expo] Switch ExpoModulesCore XCFramewor
 note: Run script build phase '[CP-User] [Expo] Switch ExpoMediaLibrary XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoMediaLibrary' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFont XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFont' from project 'Pods')
 note: Run script build phase '[CP-User] [Expo] Switch ExpoFileSystem XCFramework for build configuration' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ExpoFileSystem' from project 'Pods')
-note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
 note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
+note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'DSBot' from project 'DSBot')
 note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
 ** BUILD SUCCEEDED **
 
 
 === build.log 关键行 ===
-1775:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-2302:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-4524:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+1383:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+1910:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+4568:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
 6535:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
 7112:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
 7638:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
 8240:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-9651:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+9720:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
 10267:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-10831:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-13455:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-14035:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-14571:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-15107:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-15635:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-16173:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-16720:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-17246:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-17776:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-18457:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-18983:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-22013:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-22682:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-23249:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-23833:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-24398:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-25047:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-27818:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-28375:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-28989:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-29636:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-30200:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-31411:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-32074:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-33765:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
-34616:** BUILD SUCCEEDED **
+10833:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+13478:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+14142:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+14670:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+15198:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+15726:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+16254:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+16782:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+17348:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+18001:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+18539:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+19105:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+19673:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+20362:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+21180:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+21731:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+24408:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+25019:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+27786:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+28373:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+28967:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+29634:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+30198:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+31410:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+32073:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+33759:    export CODE_SIGN_CONTEXT_CLASS\=XCiPhoneOSCodeSignContext
+34614:** BUILD SUCCEEDED **
 
 === out/ 与 ipa ===
 total 0
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 .
-drwxr-xr-x  28 runner  staff  896 Nov 15 13:37 ..
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 Payload
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:18 .
+drwxr-xr-x  28 runner  staff  896 Nov 20 11:18 ..
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:18 Payload
 
 out/Payload:
 total 0
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 .
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 ..
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 DSBot.app
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:18 .
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:18 ..
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 DSBot.app
 
 out/Payload/DSBot.app:
 total 21360
-drwxr-xr-x  23 runner  staff      736 Nov 15 13:37 .
-drwxr-xr-x   3 runner  staff       96 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff     5124 Nov 15 13:36 AppIcon60x60@2x.png
--rw-r--r--   1 runner  staff     6339 Nov 15 13:36 AppIcon76x76@2x~ipad.png
-drwxr-xr-x   3 runner  staff       96 Nov 15 13:37 assets
--rw-r--r--   1 runner  staff    61272 Nov 15 13:36 Assets.car
--rwxr-xr-x   1 runner  staff  5548384 Nov 15 13:36 DSBot
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:35 EXConstants.bundle
--rw-r--r--   1 runner  staff      173 Nov 15 13:36 Expo.plist
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:30 ExpoConstants_privacy.bundle
-drwxr-xr-x   3 runner  staff       96 Nov 15 13:30 ExpoFileSystem_privacy.bundle
-drwxr-xr-x   3 runner  staff       96 Nov 15 13:30 ExpoMediaLibrary_privacy.bundle
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 Frameworks
--rw-r--r--   1 runner  staff     2055 Nov 15 13:36 Info.plist
--rw-r--r--   1 runner  staff  5290936 Nov 15 13:37 main.jsbundle
--rw-r--r--   1 runner  staff        8 Nov 15 13:36 PkgInfo
--rw-r--r--   1 runner  staff      986 Nov 15 13:36 PrivacyInfo.xcprivacy
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:30 React-Core_privacy.bundle
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:30 React-cxxreact_privacy.bundle
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:30 React-timing_privacy.bundle
-drwxr-xr-x   4 runner  staff      128 Nov 15 13:30 RNCAsyncStorage_resources.bundle
-drwxr-xr-x   5 runner  staff      160 Nov 15 13:30 RNSVGFilters.bundle
-drwxr-xr-x   5 runner  staff      160 Nov 15 13:36 SplashScreen.storyboardc
+drwxr-xr-x  23 runner  staff      736 Nov 20 11:17 .
+drwxr-xr-x   3 runner  staff       96 Nov 20 11:18 ..
+-rw-r--r--   1 runner  staff     5124 Nov 20 11:16 AppIcon60x60@2x.png
+-rw-r--r--   1 runner  staff     6339 Nov 20 11:16 AppIcon76x76@2x~ipad.png
+drwxr-xr-x   3 runner  staff       96 Nov 20 11:17 assets
+-rw-r--r--   1 runner  staff    61272 Nov 20 11:16 Assets.car
+-rwxr-xr-x   1 runner  staff  5548384 Nov 20 11:16 DSBot
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:15 EXConstants.bundle
+-rw-r--r--   1 runner  staff      173 Nov 20 11:16 Expo.plist
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:08 ExpoConstants_privacy.bundle
+drwxr-xr-x   3 runner  staff       96 Nov 20 11:08 ExpoFileSystem_privacy.bundle
+drwxr-xr-x   3 runner  staff       96 Nov 20 11:08 ExpoMediaLibrary_privacy.bundle
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 Frameworks
+-rw-r--r--   1 runner  staff     2055 Nov 20 11:16 Info.plist
+-rw-r--r--   1 runner  staff  5290960 Nov 20 11:17 main.jsbundle
+-rw-r--r--   1 runner  staff        8 Nov 20 11:16 PkgInfo
+-rw-r--r--   1 runner  staff      986 Nov 20 11:16 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:08 React-Core_privacy.bundle
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:08 React-cxxreact_privacy.bundle
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:08 React-timing_privacy.bundle
+drwxr-xr-x   4 runner  staff      128 Nov 20 11:08 RNCAsyncStorage_resources.bundle
+drwxr-xr-x   5 runner  staff      160 Nov 20 11:08 RNSVGFilters.bundle
+drwxr-xr-x   5 runner  staff      160 Nov 20 11:16 SplashScreen.storyboardc
 
 out/Payload/DSBot.app/assets:
 total 0
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 node_modules
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:17 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:17 node_modules
 
 out/Payload/DSBot.app/assets/node_modules:
 total 0
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 .
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 ..
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 @react-navigation
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 .
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 ..
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 @react-navigation
 
 out/Payload/DSBot.app/assets/node_modules/@react-navigation:
 total 0
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 .
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 ..
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 elements
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 .
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 ..
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 elements
 
 out/Payload/DSBot.app/assets/node_modules/@react-navigation/elements:
 total 0
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 .
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 ..
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 lib
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 .
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 ..
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 lib
 
 out/Payload/DSBot.app/assets/node_modules/@react-navigation/elements/lib:
 total 0
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 .
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 ..
-drwxr-xr-x  3 runner  staff  96 Nov 15 13:37 module
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 .
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 ..
+drwxr-xr-x  3 runner  staff  96 Nov 20 11:17 module
 
 out/Payload/DSBot.app/assets/node_modules/@react-navigation/elements/lib/module:
 total 0
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 .
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 ..
-drwxr-xr-x  15 runner  staff  480 Nov 15 13:37 assets
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:17 .
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:17 ..
+drwxr-xr-x  15 runner  staff  480 Nov 20 11:17 assets
 
 out/Payload/DSBot.app/assets/node_modules/@react-navigation/elements/lib/module/assets:
 total 104
-drwxr-xr-x  15 runner  staff  480 Nov 15 13:37 .
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  653 Nov 15 13:37 back-icon-mask.png
--rw-r--r--   1 runner  staff  290 Nov 15 13:37 back-icon.png
--rw-r--r--   1 runner  staff  405 Nov 15 13:37 back-icon@2x.png
--rw-r--r--   1 runner  staff  761 Nov 15 13:37 back-icon@3x.png
--rw-r--r--   1 runner  staff  220 Nov 15 13:37 clear-icon.png
--rw-r--r--   1 runner  staff  334 Nov 15 13:37 clear-icon@2x.png
--rw-r--r--   1 runner  staff  502 Nov 15 13:37 clear-icon@3x.png
--rw-r--r--   1 runner  staff  141 Nov 15 13:37 close-icon.png
--rw-r--r--   1 runner  staff  201 Nov 15 13:37 close-icon@2x.png
--rw-r--r--   1 runner  staff  266 Nov 15 13:37 close-icon@3x.png
--rw-r--r--   1 runner  staff  317 Nov 15 13:37 search-icon.png
--rw-r--r--   1 runner  staff  589 Nov 15 13:37 search-icon@2x.png
--rw-r--r--   1 runner  staff  839 Nov 15 13:37 search-icon@3x.png
+drwxr-xr-x  15 runner  staff  480 Nov 20 11:17 .
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  653 Nov 20 11:17 back-icon-mask.png
+-rw-r--r--   1 runner  staff  290 Nov 20 11:17 back-icon.png
+-rw-r--r--   1 runner  staff  405 Nov 20 11:17 back-icon@2x.png
+-rw-r--r--   1 runner  staff  761 Nov 20 11:17 back-icon@3x.png
+-rw-r--r--   1 runner  staff  220 Nov 20 11:17 clear-icon.png
+-rw-r--r--   1 runner  staff  334 Nov 20 11:17 clear-icon@2x.png
+-rw-r--r--   1 runner  staff  502 Nov 20 11:17 clear-icon@3x.png
+-rw-r--r--   1 runner  staff  141 Nov 20 11:17 close-icon.png
+-rw-r--r--   1 runner  staff  201 Nov 20 11:17 close-icon@2x.png
+-rw-r--r--   1 runner  staff  266 Nov 20 11:17 close-icon@3x.png
+-rw-r--r--   1 runner  staff  317 Nov 20 11:17 search-icon.png
+-rw-r--r--   1 runner  staff  589 Nov 20 11:17 search-icon@2x.png
+-rw-r--r--   1 runner  staff  839 Nov 20 11:17 search-icon@3x.png
 
 out/Payload/DSBot.app/EXConstants.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:35 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  617 Nov 15 13:35 app.config
--rw-r--r--   1 runner  staff  769 Nov 15 13:30 Info.plist
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:15 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  617 Nov 20 11:15 app.config
+-rw-r--r--   1 runner  staff  769 Nov 20 11:08 Info.plist
 
 out/Payload/DSBot.app/ExpoConstants_privacy.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  791 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  607 Nov 15 13:30 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  791 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  607 Nov 20 11:08 PrivacyInfo.xcprivacy
 
 out/Payload/DSBot.app/ExpoFileSystem_privacy.bundle:
 total 8
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  792 Nov 15 13:30 Info.plist
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  792 Nov 20 11:08 Info.plist
 
 out/Payload/DSBot.app/ExpoMediaLibrary_privacy.bundle:
 total 8
-drwxr-xr-x   3 runner  staff   96 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  796 Nov 15 13:30 Info.plist
+drwxr-xr-x   3 runner  staff   96 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  796 Nov 20 11:08 Info.plist
 
 out/Payload/DSBot.app/Frameworks:
 total 0
-drwxr-xr-x  12 runner  staff  384 Nov 15 13:37 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff  384 Nov 20 11:17 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
 drwxr-xr-x   4 runner  staff  128 Sep 11 11:23 ExpoFileSystem.framework
 drwxr-xr-x   4 runner  staff  128 Sep 11 11:23 ExpoFont.framework
 drwxr-xr-x   4 runner  staff  128 Nov  5 09:29 ExpoMediaLibrary.framework
 drwxr-xr-x   4 runner  staff  128 Nov 12 13:19 ExpoModulesCore.framework
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:31 ExpoModulesJSI.framework
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:09 ExpoModulesJSI.framework
 drwxr-xr-x   4 runner  staff  128 Nov 12 13:20 ExpoModulesWorklets.framework
 drwxr-xr-x   4 runner  staff  128 Sep 24 10:10 ExpoVideo.framework
 drwxr-xr-x   4 runner  staff  128 Aug 21 10:10 hermesvm.framework
@@ -4218,70 +4218,70 @@ drwxr-xr-x   7 runner  staff  224 Aug 24 14:07 ReactNativeDependencies.framework
 out/Payload/DSBot.app/Frameworks/ExpoFileSystem.framework:
 total 2232
 drwxr-xr-x   4 runner  staff      128 Sep 11 11:23 .
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  1134712 Sep 11 11:23 ExpoFileSystem
 -rw-r--r--   1 runner  staff      766 Sep 11 11:23 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoFont.framework:
 total 416
 drwxr-xr-x   4 runner  staff     128 Sep 11 11:23 .
-drwxr-xr-x  12 runner  staff     384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff     384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  207512 Sep 11 11:23 ExpoFont
 -rw-r--r--   1 runner  staff     748 Sep 11 11:23 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoMediaLibrary.framework:
 total 1880
 drwxr-xr-x   4 runner  staff     128 Nov  5 09:29 .
-drwxr-xr-x  12 runner  staff     384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff     384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  957848 Nov  5 09:29 ExpoMediaLibrary
 -rw-r--r--   1 runner  staff     775 Nov  5 09:29 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoModulesCore.framework:
 total 7488
 drwxr-xr-x   4 runner  staff      128 Nov 12 13:19 .
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  3826376 Nov 12 13:19 ExpoModulesCore
 -rw-r--r--   1 runner  staff      772 Nov 12 13:19 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoModulesJSI.framework:
 total 1744
-drwxr-xr-x   4 runner  staff     128 Nov 15 13:31 .
-drwxr-xr-x  12 runner  staff     384 Nov 15 13:37 ..
--rwxr-xr-x   1 runner  staff  885336 Nov 15 13:31 ExpoModulesJSI
--rw-r--r--   1 runner  staff     757 Nov 15 13:31 Info.plist
+drwxr-xr-x   4 runner  staff     128 Nov 20 11:09 .
+drwxr-xr-x  12 runner  staff     384 Nov 20 11:17 ..
+-rwxr-xr-x   1 runner  staff  885336 Nov 20 11:09 ExpoModulesJSI
+-rw-r--r--   1 runner  staff     757 Nov 20 11:09 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoModulesWorklets.framework:
 total 328
 drwxr-xr-x   4 runner  staff     128 Nov 12 13:20 .
-drwxr-xr-x  12 runner  staff     384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff     384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  163216 Nov 12 13:20 ExpoModulesWorklets
 -rw-r--r--   1 runner  staff     784 Nov 12 13:20 Info.plist
 
 out/Payload/DSBot.app/Frameworks/ExpoVideo.framework:
 total 3048
 drwxr-xr-x   4 runner  staff      128 Sep 24 10:10 .
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  1555896 Sep 24 10:10 ExpoVideo
 -rw-r--r--   1 runner  staff      752 Sep 24 10:10 Info.plist
 
 out/Payload/DSBot.app/Frameworks/hermesvm.framework:
 total 9904
 drwxr-xr-x   4 runner  staff      128 Aug 21 10:10 .
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 ..
 -rwxr-xr-x   1 runner  staff  5066176 Aug 21 10:10 hermesvm
 -rw-r--r--   1 runner  staff      859 Aug 21 10:10 Info.plist
 
 out/Payload/DSBot.app/Frameworks/React.framework:
 total 23480
 drwxr-xr-x   4 runner  staff       128 Aug 24 14:28 .
-drwxr-xr-x  12 runner  staff       384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff       384 Nov 20 11:17 ..
 -rw-r--r--   1 runner  staff       744 Aug 24 14:27 Info.plist
 -rw-r--r--   1 runner  staff  12014872 Aug 24 14:27 React
 
 out/Payload/DSBot.app/Frameworks/ReactNativeDependencies.framework:
 total 2424
 drwxr-xr-x   7 runner  staff      224 Aug 24 14:07 .
-drwxr-xr-x  12 runner  staff      384 Nov 15 13:37 ..
+drwxr-xr-x  12 runner  staff      384 Nov 20 11:17 ..
 -rw-r--r--   1 runner  staff      781 Aug 24 14:07 Info.plist
 -rw-r--r--   1 runner  staff  1235616 Aug 24 14:07 ReactNativeDependencies
 drwxr-xr-x   4 runner  staff      128 Aug 24 14:07 ReactNativeDependencies_boost.bundle
@@ -4311,47 +4311,47 @@ drwxr-xr-x  7 runner  staff  224 Aug 24 14:07 ..
 
 out/Payload/DSBot.app/React-Core_privacy.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  784 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  768 Nov 15 13:30 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  784 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  768 Nov 20 11:08 PrivacyInfo.xcprivacy
 
 out/Payload/DSBot.app/React-cxxreact_privacy.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  792 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  552 Nov 15 13:30 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  792 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  552 Nov 20 11:08 PrivacyInfo.xcprivacy
 
 out/Payload/DSBot.app/React-timing_privacy.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  788 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  553 Nov 15 13:30 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  788 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  553 Nov 20 11:08 PrivacyInfo.xcprivacy
 
 out/Payload/DSBot.app/RNCAsyncStorage_resources.bundle:
 total 16
-drwxr-xr-x   4 runner  staff  128 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff  736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  797 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  512 Nov 15 13:30 PrivacyInfo.xcprivacy
+drwxr-xr-x   4 runner  staff  128 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff  736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  797 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  512 Nov 20 11:08 PrivacyInfo.xcprivacy
 
 out/Payload/DSBot.app/RNSVGFilters.bundle:
 total 24
-drwxr-xr-x   5 runner  staff   160 Nov 15 13:30 .
-drwxr-xr-x  23 runner  staff   736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff   771 Nov 15 13:30 Info.plist
--rw-r--r--   1 runner  staff  3993 Nov 15 13:30 RNSVGArithmeticFilter.iphoneos.metallib
--rw-r--r--   1 runner  staff  3509 Nov 15 13:30 RNSVGCompositeXor.iphoneos.metallib
+drwxr-xr-x   5 runner  staff   160 Nov 20 11:08 .
+drwxr-xr-x  23 runner  staff   736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff   771 Nov 20 11:08 Info.plist
+-rw-r--r--   1 runner  staff  3993 Nov 20 11:08 RNSVGArithmeticFilter.iphoneos.metallib
+-rw-r--r--   1 runner  staff  3509 Nov 20 11:08 RNSVGCompositeXor.iphoneos.metallib
 
 out/Payload/DSBot.app/SplashScreen.storyboardc:
 total 24
-drwxr-xr-x   5 runner  staff   160 Nov 15 13:36 .
-drwxr-xr-x  23 runner  staff   736 Nov 15 13:37 ..
--rw-r--r--   1 runner  staff  2143 Nov 15 13:36 EXPO-VIEWCONTROLLER-1-view-EXPO-ContainerView.nib
--rw-r--r--   1 runner  staff   225 Nov 15 13:36 Info.plist
--rw-r--r--   1 runner  staff  1004 Nov 15 13:36 SplashScreenViewController.nib
--rw-r--r--  1 runner  staff  9844942 Nov 15 13:37 ds-bot-unsigned.ipa
+drwxr-xr-x   5 runner  staff   160 Nov 20 11:16 .
+drwxr-xr-x  23 runner  staff   736 Nov 20 11:17 ..
+-rw-r--r--   1 runner  staff  2143 Nov 20 11:16 EXPO-VIEWCONTROLLER-1-view-EXPO-ContainerView.nib
+-rw-r--r--   1 runner  staff   225 Nov 20 11:16 Info.plist
+-rw-r--r--   1 runner  staff  1004 Nov 20 11:16 SplashScreenViewController.nib
+-rw-r--r--  1 runner  staff  9845331 Nov 20 11:18 ds-bot-unsigned.ipa
 
 === END ===
