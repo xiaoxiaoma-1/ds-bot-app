@@ -1,4 +1,4 @@
-﻿import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -25,6 +25,10 @@ import { dockPadding } from './workbench/Dock';
 import { setCached, useCachedResource } from '../cache';
 
 const BOARD_STATUS = [
+  // 【2026-11-20 补「构思」】原来只有四栏，老板在手机上找不到自己提过的构思卡
+  // （灵光思路、帮我管都在「构思」里），原话「没有这个栏是吧？我说我怎么找不到这个东西呢」。
+  // 看板本身是五栏（构思/待完成/进行中/阶段完成/已完成），手机端必须跟看板一致。
+  { key: 'idea', label: '构思' },
   { key: 'todo', label: '待完成' },
   { key: 'doing', label: '进行中' },
   { key: 'stage', label: '阶段完成' },
