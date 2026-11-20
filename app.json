@@ -1,25 +1,25 @@
 {
- "expo": {
-  "name": "DS Bot",
-  "slug": "ds-bot-app",
-  "version": "0.6.0",
-  "orientation": "portrait",
-  "userInterfaceStyle": "automatic",
-  "icon": "./assets/icon.png",
-  "newArchEnabled": true,
-  "ios": {
-   "supportsTablet": false,
-   "bundleIdentifier": "com.jinyu.dsbot",
-   "infoPlist": {
-    "CFBundleDevelopmentRegion": "zh_CN",
-    "CFBundleLocalizations": [
-     "zh_CN",
-     "en"
-    ],
-    "NSPhotoLibraryUsageDescription": "选一张照片发送给 AI，或设为你的头像",
-    "NSPhotoLibraryAddUsageDescription": "把图片保存到你的相册（存的是原图，不压缩）",
-    "NSCameraUsageDescription": "拍一张照片发送给 AI"
-   }
+  "expo": {
+    "name": "DS Bot",
+    "slug": "ds-bot-app",
+    "version": "0.6.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.jinyu.dsbot",
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "zh_CN",
+        "CFBundleLocalizations": [
+          "zh_CN",
+          "en"
+        ],
+        "NSPhotoLibraryUsageDescription": "选一张照片发送给 AI，或设为你的头像",
+        "NSPhotoLibraryAddUsageDescription": "把图片保存到你的相册（存的是原图，不压缩）",
+        "NSCameraUsageDescription": "拍一张照片发送给 AI"
+      }
+    }
   }
- }
 }

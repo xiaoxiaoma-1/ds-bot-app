@@ -16,14 +16,18 @@ import { useRoles } from './roles';
 import Dock, { dockPadding } from './Dock';
 
 // 看板（2026-11-14）。首页四格点进来之后落在这里：
-//   四栏 = 待完成 / 进行中 / 阶段完成 / 已完成，四栏都带数量，切栏不换页。
+//   五栏 = 构思 / 待完成 / 进行中 / 阶段完成 / 已完成，五栏都带数量，切栏不换页。
 //   卡片字段来自 /api/board/summary 的 cards[]：{id,title,status,nextStep,workspace,updatedAt}
-//   status 的取值就是 todo / doing / stage / done —— 和四栏 key 一一对应，字段名对不上会分错栏，
+//   status 的取值就是 idea / todo / doing / stage / done —— 和五栏 key 一一对应，字段名对不上会分错栏，
 //   所以这里不做任何猜测式映射。
+// 【2026-11-20 补「构思」】原来只有四栏，老板在手机上找不到自己提过的构思卡
+// （灵光思路、帮我管都在「构思」里），原话「没有这个栏是吧？我说我怎么找不到这个东西呢」。
+// 看板本身五栏，手机上必须跟看板一致。
 // 点卡片：现在没有独立的看板卡片详情页，先做只读展开（标题 + 下一步 + 工作区 + 更新时间），
 // 不接不存在的路由。
 
 const BOARD_TABS = [
+  { key: 'idea', label: '构思' },
   { key: 'todo', label: '待完成' },
   { key: 'doing', label: '进行中' },
   { key: 'stage', label: '阶段完成' },
@@ -101,7 +105,7 @@ export default function BoardScreen({
         <View style={s.headText}>
           <Text style={s.title} numberOfLines={1} allowFontScaling={false}>看板</Text>
           <Text style={s.subTitle} numberOfLines={1} allowFontScaling={false}>
-            {loading ? '正在读取' : `待办 ${countOf('todo')} · 在办 ${countOf('doing')}`}
+            {loading ? '正在读取' : `构思 ${countOf('idea')} · 待办 ${countOf('todo')} · 在办 ${countOf('doing')}`}
           </Text>
         </View>
       </View>
